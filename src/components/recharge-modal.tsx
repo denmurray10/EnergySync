@@ -22,7 +22,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import type { Activity } from "@/lib/types";
-import { Plus } from "lucide-react";
+import { LoaderCircle, Plus, Sparkles } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { suggestRechargeDetails } from "@/ai/flows/suggest-recharge-details";
 
 
 const customRechargeSchema = z.object({
@@ -51,7 +53,9 @@ export function RechargeModal({
   currentEnergy,
   onCustomRecharge,
 }: RechargeModalProps) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [recommendations, setRecommendations] = useState<RechargeRecommendationsOutput>([]);
   const [view, setView] = useState<'recommendations' | 'custom'>('recommendations');
 
@@ -69,6 +73,7 @@ export function RechargeModal({
     if (open) {
       setView('recommendations');
       form.reset();
+      setIsSuggesting(false);
 
       setLoading(true);
       const fetchRecommendations = async () => {
@@ -100,6 +105,41 @@ export function RechargeModal({
       location: 'Custom',
     });
   }
+
+  const handleSuggestDetails = async () => {
+    const activityName = form.getValues("name");
+    if (!activityName || activityName.length < 3) {
+      toast({
+        title: "💡 Enter a Name First",
+        description: "Please type a recharge activity name before asking for suggestions.",
+        variant: "default",
+      });
+      return;
+    }
+
+    setIsSuggesting(true);
+    try {
+      const suggestions = await suggestRechargeDetails({ name: activityName });
+      if (suggestions) {
+        form.setValue("impact", suggestions.impact, { shouldValidate: true });
+        form.setValue("duration", suggestions.duration, { shouldValidate: true });
+        form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
+        toast({
+          title: "🤖 Details Auto-filled!",
+          description: "AI has suggested details for your recharge activity.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+      toast({
+        title: "❌ Error",
+        description: "Could not fetch AI suggestions. Please fill in the details manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -157,7 +197,17 @@ export function RechargeModal({
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Activity Name</FormLabel>
+                                  <div className="flex justify-between items-center">
+                                    <FormLabel>Activity Name</FormLabel>
+                                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting}>
+                                      {isSuggesting ? (
+                                        <LoaderCircle className="animate-spin" />
+                                      ) : (
+                                        <Sparkles className="text-yellow-500" />
+                                      )}
+                                      <span className="ml-2">Auto-fill</span>
+                                    </Button>
+                                  </div>
                                 <FormControl>
                                     <Input placeholder="e.g., Deep breathing" {...field} />
                                 </FormControl>
