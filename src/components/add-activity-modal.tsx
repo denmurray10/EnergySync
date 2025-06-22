@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { Activity } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { suggestActivityDetails } from "@/ai/flows/suggest-activity-details";
 
 import {
   Dialog,
@@ -25,6 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Sparkles, LoaderCircle } from "lucide-react";
+
 
 const activityFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -44,6 +49,9 @@ type AddActivityModalProps = {
 };
 
 export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActivityModalProps) {
+  const { toast } = useToast();
+  const [isSuggesting, setIsSuggesting] = useState(false);
+
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
     defaultValues: {
@@ -55,6 +63,42 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActiv
       emoji: "📝",
     },
   });
+
+  const handleSuggestDetails = async () => {
+    const activityName = form.getValues("name");
+    if (!activityName || activityName.length < 3) {
+      toast({
+        title: "💡 Enter a Name First",
+        description: "Please type an activity name before asking for suggestions.",
+        variant: "default",
+      });
+      return;
+    }
+
+    setIsSuggesting(true);
+    try {
+      const suggestions = await suggestActivityDetails({ name: activityName });
+      if (suggestions) {
+        form.setValue("type", suggestions.type, { shouldValidate: true });
+        form.setValue("impact", suggestions.impact, { shouldValidate: true });
+        form.setValue("duration", suggestions.duration, { shouldValidate: true });
+        form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
+        toast({
+          title: "🤖 Details Auto-filled!",
+          description: "AI has suggested details for your activity.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+      toast({
+        title: "❌ Error",
+        description: "Could not fetch AI suggestions. Please fill in the details manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
 
   function onSubmit(data: ActivityFormValues) {
     onLogActivity(data);
@@ -70,7 +114,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActiv
         <DialogHeader>
           <DialogTitle>Log a New Activity</DialogTitle>
           <DialogDescription>
-            Track what drains and recharges you. The more you log, the smarter your insights.
+            Track what drains and recharges you. Or, let AI fill in the details for you!
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -80,7 +124,17 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActiv
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Activity Name</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel>Activity Name</FormLabel>
+                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting}>
+                      {isSuggesting ? (
+                        <LoaderCircle className="animate-spin" />
+                      ) : (
+                        <Sparkles className="text-yellow-500" />
+                      )}
+                      <span className="ml-2">Auto-fill</span>
+                    </Button>
+                  </div>
                   <FormControl>
                     <Input placeholder="e.g., Coffee with a friend" {...field} />
                   </FormControl>
@@ -107,7 +161,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActiv
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select activity type" />
@@ -135,7 +189,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActiv
                       min={-50}
                       max={50}
                       step={5}
-                      defaultValue={[field.value]}
+                      value={[field.value]}
                       onValueChange={(value) => field.onChange(value[0])}
                     />
                   </FormControl>
