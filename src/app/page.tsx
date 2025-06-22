@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
+import { ProfileTab } from "@/components/profile-tab";
 import { BottomNav } from "@/components/bottom-nav";
 import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
@@ -67,6 +68,21 @@ export default function Home() {
     localStorage.setItem('energysync_tutorial_seen', 'true');
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('energysync_user');
+    localStorage.removeItem('energysync_tutorial_seen'); // Also clear tutorial status
+    setUser(null);
+    setIsOnboarding(true);
+    setActiveTab('home'); // Reset to home tab on logout
+    toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+    });
+  };
+
+  const handleShowTutorial = () => {
+    setShowTutorial(true);
+  };
 
   const showToast = (title: string, description: string, icon: string = '✨') => {
     toast({
@@ -218,6 +234,13 @@ export default function Home() {
               activities={activities}
               openModal={openModal}
               simulateHealthSync={simulateHealthSync}
+            />
+          )}
+          {activeTab === "profile" && (
+            <ProfileTab
+              user={user}
+              onLogout={handleLogout}
+              onShowTutorial={handleShowTutorial}
             />
           )}
         </div>

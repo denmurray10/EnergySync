@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, ListChecks, LineChart } from "lucide-react";
+import { Home, ListChecks, LineChart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type BottomNavProps = {
@@ -12,6 +12,7 @@ const navItems = [
   { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
   { id: "insights", icon: LineChart, label: "Insights" },
+  { id: "profile", icon: User, label: "Profile" },
 ];
 
 export function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
