@@ -12,6 +12,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
 import { WeeklyReportModal } from "@/components/weekly-report-modal";
+import { AddActivityModal } from "@/components/add-activity-modal";
 
 
 export default function Home() {
@@ -28,6 +29,7 @@ export default function Home() {
     recharge: false,
     voiceCheckIn: false,
     weeklyReport: false,
+    addActivity: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -47,6 +49,20 @@ export default function Home() {
       setAchievements(prev => prev.map(a => a.name === name ? { ...a, unlocked: true } : a));
       showToast(`Achievement Unlocked!`, `You've earned: ${name}`, '🏆');
     }
+  };
+  
+  const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
+    const newActivity: Activity = {
+      ...newActivityData,
+      id: Date.now(),
+      date: new Date().toLocaleDateString(),
+      autoDetected: false,
+      recoveryTime: 0,
+    };
+    setActivities(prev => [newActivity, ...prev].sort((a,b) => b.id - a.id));
+    showToast('Activity Logged!', `Great job logging '${newActivity.name}'!`, '📝');
+    unlockAchievement('Mindful Logger');
+    closeModal('addActivity');
   };
 
   const handleRecharge = (rechargeAmount: number, debtReduction: number) => {
@@ -137,7 +153,7 @@ export default function Home() {
             />
           )}
           {activeTab === "activities" && (
-            <ActivitiesTab activities={activities} />
+            <ActivitiesTab activities={activities} openModal={openModal} />
           )}
           {activeTab === "insights" && (
             <InsightsTab
@@ -169,6 +185,11 @@ export default function Home() {
             open={modals.weeklyReport}
             onOpenChange={(isOpen) => closeModal('weeklyReport')}
             activities={activities}
+        />
+        <AddActivityModal
+            open={modals.addActivity}
+            onOpenChange={(isOpen) => closeModal('addActivity')}
+            onLogActivity={handleLogActivity}
         />
       </div>
     </main>

@@ -15,5 +15,6 @@ export const INITIAL_UPCOMING_EVENTS: UpcomingEvent[] = [
 export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 1, name: 'First Recharge', unlocked: true, icon: '🔋' },
     { id: 2, name: 'Self-Care Pro', unlocked: false, icon: '🧘‍♀️' },
-    { id: 3, name: 'Social Butterfly', unlocked: true, icon: '🦋' }
+    { id: 3, name: 'Social Butterfly', unlocked: true, icon: '🦋' },
+    { id: 4, name: 'Mindful Logger', unlocked: false, icon: '📝'}
 ];

@@ -2,18 +2,25 @@
 
 import type { Activity } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
 
 type ActivitiesTabProps = {
   activities: Activity[];
+  openModal: (modalName: string) => void;
 };
 
-export function ActivitiesTab({ activities }: ActivitiesTabProps) {
+export function ActivitiesTab({ activities, openModal }: ActivitiesTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           Activity History
         </h2>
+        <Button onClick={() => openModal('addActivity')} size="icon" variant="ghost" className="text-primary">
+            <PlusCircle className="h-8 w-8"/>
+            <span className="sr-only">Log Activity</span>
+        </Button>
       </div>
       <div className="space-y-4">
         {activities.map((activity) => (
