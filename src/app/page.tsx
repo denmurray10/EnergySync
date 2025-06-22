@@ -55,11 +55,11 @@ export default function Home() {
     const newActivity: Activity = {
       ...newActivityData,
       id: Date.now(),
-      date: new Date().toLocaleDateString(),
+      date: new Date().toISOString().split('T')[0],
       autoDetected: false,
       recoveryTime: 0,
     };
-    setActivities(prev => [newActivity, ...prev].sort((a,b) => b.id - a.id));
+    setActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     showToast('Activity Logged!', `Great job logging '${newActivity.name}'!`, '📝');
     unlockAchievement('Mindful Logger');
     closeModal('addActivity');
@@ -161,6 +161,7 @@ export default function Home() {
               selfCareStreak={selfCareStreak}
               achievements={achievements}
               currentEnergy={currentEnergy}
+              activities={activities}
               openModal={openModal}
               simulateHealthSync={simulateHealthSync}
             />

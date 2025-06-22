@@ -1,16 +1,18 @@
 "use client";
 
-import type { Achievement } from "@/lib/types";
+import type { Achievement, Activity } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, BrainCircuit, Users, Link as LinkIcon } from "lucide-react";
+import { Trophy, BrainCircuit, Users, Link as LinkIcon, BarChart } from "lucide-react";
+import { WeeklyEnergyChart } from "./weekly-energy-chart";
 
 type InsightsTabProps = {
   dynamicInsights: { drainPattern: string; rechargePattern: string };
   selfCareStreak: number;
   achievements: Achievement[];
   currentEnergy: number;
+  activities: Activity[];
   openModal: (modalName: string) => void;
   simulateHealthSync: () => void;
 };
@@ -20,6 +22,7 @@ export function InsightsTab({
   selfCareStreak,
   achievements,
   currentEnergy,
+  activities,
   openModal,
   simulateHealthSync,
 }: InsightsTabProps) {
@@ -28,6 +31,17 @@ export function InsightsTab({
       <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
         Insights
       </h2>
+
+      <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <BarChart className="text-cyan-500 mr-3" /> Weekly Energy Flow
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WeeklyEnergyChart activities={activities} />
+        </CardContent>
+      </Card>
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
