@@ -14,6 +14,7 @@ import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
 import { WeeklyReportModal } from "@/components/weekly-report-modal";
 import { AddActivityModal } from "@/components/add-activity-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
+import { TutorialModal } from "@/components/tutorial-modal";
 
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
 
   const [user, setUser] = useState<User | null>(null);
   const [isOnboarding, setIsOnboarding] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
@@ -53,6 +55,16 @@ export default function Home() {
     setUser(newUser);
     setIsOnboarding(false);
     localStorage.setItem('energysync_user', JSON.stringify(newUser));
+
+    const hasSeenTutorial = localStorage.getItem('energysync_tutorial_seen');
+    if (!hasSeenTutorial) {
+      setShowTutorial(true);
+    }
+  };
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    localStorage.setItem('energysync_tutorial_seen', 'true');
   };
 
 
@@ -234,6 +246,11 @@ export default function Home() {
             open={modals.addActivity}
             onOpenChange={(isOpen) => closeModal('addActivity')}
             onLogActivity={handleLogActivity}
+        />
+        <TutorialModal
+            open={showTutorial}
+            onOpenChange={setShowTutorial}
+            onComplete={handleTutorialComplete}
         />
       </div>
     </main>
