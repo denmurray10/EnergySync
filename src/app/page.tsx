@@ -78,6 +78,24 @@ export default function Home() {
     }
   };
 
+  const handleCustomRecharge = (rechargeData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
+    // 1. Log the activity
+    const newActivity: Activity = {
+        ...rechargeData,
+        id: Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        autoDetected: false,
+        recoveryTime: 0,
+    };
+    setActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    
+    // 2. Apply recharge (toast is shown here)
+    handleRecharge(newActivity.impact, newActivity.impact);
+
+    // 3. Close modal
+    closeModal('recharge');
+  };
+
   const getEnergyStatus = (energy: number) => {
     if (energy >= 80) return "Feeling great 🌟";
     if (energy >= 50) return "Doing okay 😊";
@@ -176,6 +194,7 @@ export default function Home() {
           handleRecharge={handleRecharge}
           activities={activities}
           currentEnergy={currentEnergy}
+          onCustomRecharge={handleCustomRecharge}
         />
         <VoiceCheckinModal
             open={modals.voiceCheckIn}
