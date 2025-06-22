@@ -48,19 +48,19 @@ const tutorialSteps = [
 ];
 
 const placeholderImages = [
-    "https://placehold.co/400x300.png",
-    "https://placehold.co/400x300.png",
-    "https://placehold.co/400x300.png",
-    "https://placehold.co/400x300.png",
-    "https://placehold.co/400x300.png",
+    "https://placehold.co/400x225.png",
+    "https://placehold.co/400x225.png",
+    "https://placehold.co/400x225.png",
+    "https://placehold.co/400x225.png",
+    "https://placehold.co/400x225.png",
 ];
 
 const dataAiHints = [
     "app dashboard",
     "activity list",
-    "meditation suggestion",
-    "analytics chart",
-    "calendar schedule",
+    "recharge options",
+    "energy chart",
+    "calendar view",
 ];
 
 
@@ -111,7 +111,7 @@ export function TutorialModal({ open, onOpenChange, onComplete }: TutorialModalP
                     src={placeholderImages[step]}
                     alt={currentStepData.title}
                     width={400}
-                    height={300}
+                    height={225}
                     className="object-cover w-full h-full"
                     data-ai-hint={dataAiHints[step]}
                  />
