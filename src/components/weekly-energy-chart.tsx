@@ -2,7 +2,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
+import { Line, LineChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts"
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -56,7 +56,7 @@ export function WeeklyEnergyChart({ activities }: WeeklyEnergyChartProps) {
   return (
     <div className="h-60 w-full">
         <ChartContainer config={chartConfig} className="w-full h-full">
-            <BarChart data={data} accessibilityLayer>
+            <LineChart data={data} accessibilityLayer>
                 <CartesianGrid vertical={false} />
                 <XAxis
                 dataKey="date"
@@ -73,17 +73,21 @@ export function WeeklyEnergyChart({ activities }: WeeklyEnergyChartProps) {
                 cursor={false}
                 content={<ChartTooltipContent indicator="dot" />}
                 />
-                <Bar
-                dataKey="recharge"
-                fill="var(--color-recharge)"
-                radius={[4, 4, 0, 0]}
+                <Line
+                  dataKey="recharge"
+                  type="monotone"
+                  stroke="var(--color-recharge)"
+                  strokeWidth={2}
+                  dot={false}
                 />
-                <Bar
-                dataKey="drain"
-                fill="var(--color-drain)"
-                radius={[4, 4, 0, 0]}
+                <Line
+                  dataKey="drain"
+                  type="monotone"
+                  stroke="var(--color-drain)"
+                  strokeWidth={2}
+                  dot={false}
                 />
-            </BarChart>
+            </LineChart>
         </ChartContainer>
     </div>
   )

@@ -4,7 +4,7 @@ import type { Achievement, Activity } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, BrainCircuit, Users, Link as LinkIcon, BarChart } from "lucide-react";
+import { Trophy, BrainCircuit, Users, Link as LinkIcon, LineChart } from "lucide-react";
 import { WeeklyEnergyChart } from "./weekly-energy-chart";
 
 type InsightsTabProps = {
@@ -35,7 +35,7 @@ export function InsightsTab({
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
-            <BarChart className="text-cyan-500 mr-3" /> Weekly Energy Flow
+            <LineChart className="text-cyan-500 mr-3" /> Weekly Energy Flow
           </CardTitle>
         </CardHeader>
         <CardContent>
