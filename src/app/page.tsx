@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData } from "@/lib/types";
+import { useState, useMemo, useEffect } from "react";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,10 +13,14 @@ import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
 import { WeeklyReportModal } from "@/components/weekly-report-modal";
 import { AddActivityModal } from "@/components/add-activity-modal";
+import { OnboardingScreen } from "@/components/onboarding-screen";
 
 
 export default function Home() {
   const { toast } = useToast();
+
+  const [user, setUser] = useState<User | null>(null);
+  const [isOnboarding, setIsOnboarding] = useState(true);
 
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
@@ -35,6 +39,22 @@ export default function Home() {
   const [communityMode, setCommunityMode] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
   const [selfCareStreak, setSelfCareStreak] = useState(5);
+
+  useEffect(() => {
+    // In a real app, you'd check for user data in localStorage or from an API
+    const storedUser = localStorage.getItem('energysync_user');
+    if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setIsOnboarding(false);
+    }
+  }, []);
+
+  const handleOnboardingComplete = (newUser: User) => {
+    setUser(newUser);
+    setIsOnboarding(false);
+    localStorage.setItem('energysync_user', JSON.stringify(newUser));
+  };
+
 
   const showToast = (title: string, description: string, icon: string = '✨') => {
     toast({
@@ -151,6 +171,9 @@ export default function Home() {
     };
   }, [activities]);
 
+  if (isOnboarding) {
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <main className="min-h-dvh bg-background">
@@ -158,6 +181,7 @@ export default function Home() {
         <div className="p-6 h-dvh overflow-y-auto pb-32 custom-scrollbar">
           {activeTab === "home" && (
             <HomeTab
+              user={user}
               currentEnergy={currentEnergy}
               energyDebt={energyDebt}
               biometricData={biometricData}

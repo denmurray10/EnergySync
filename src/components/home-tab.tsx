@@ -1,6 +1,6 @@
 "use client";
 
-import type { BiometricData, UpcomingEvent } from "@/lib/types";
+import type { BiometricData, UpcomingEvent, User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,10 +15,10 @@ import {
   Zap,
   Mic,
   Calendar,
-  Shield,
 } from "lucide-react";
 
 type HomeTabProps = {
+  user: User | null;
   currentEnergy: number;
   energyDebt: number;
   biometricData: BiometricData;
@@ -48,6 +48,7 @@ const getEnergyEmoji = (energy: number) => {
 };
 
 export function HomeTab({
+  user,
   currentEnergy,
   energyDebt,
   biometricData,
@@ -61,6 +62,15 @@ export function HomeTab({
 }: HomeTabProps) {
   return (
     <div className="space-y-6">
+       <div className="mb-4">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent">
+          Hello, {user?.name}!
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          {getEnergyStatus(currentEnergy)}
+        </p>
+      </div>
+
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardContent className="p-3 flex items-center justify-center space-x-3">
           <Users
@@ -121,8 +131,8 @@ export function HomeTab({
       <Card className="bg-card/80 backdrop-blur-sm text-center">
         <CardContent className="p-6">
           <div className="text-6xl mb-4">{getEnergyEmoji(currentEnergy)}</div>
-          <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent mb-4">
-            Social Energy
+          <h2 className="text-2xl font-bold text-card-foreground mb-4">
+            Current Energy
           </h2>
           <div className="relative w-40 h-8 mx-auto mb-6 bg-muted rounded-full overflow-hidden shadow-inner">
             <div
@@ -174,7 +184,7 @@ export function HomeTab({
             onClick={() => openModal("recharge")}
             className="group flex flex-col items-center h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-6"
           >
-            <Shield className="w-6 h-6 mb-3" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             <span className="font-semibold">Start Recharge</span>
           </Button>
           <Button

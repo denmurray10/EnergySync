@@ -35,3 +35,7 @@ export interface BiometricData {
   sleepQuality: number;
   stressLevel: number;
 }
+
+export interface User {
+  name: string;
+}
