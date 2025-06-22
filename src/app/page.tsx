@@ -16,7 +16,32 @@ import { WeeklyReportModal } from "@/components/weekly-report-modal";
 import { AddActivityModal } from "@/components/add-activity-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
 import { TutorialModal } from "@/components/tutorial-modal";
+import {
+  Home as HomeIcon,
+  ListChecks,
+  LineChart,
+  User as UserIcon,
+  Zap
+} from "lucide-react";
+import {
+  SidebarProvider,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
+const navItems = [
+  { id: "home", icon: HomeIcon, label: "Home" },
+  { id: "activities", icon: ListChecks, label: "Activities" },
+  { id: "insights", icon: LineChart, label: "Insights" },
+  { id: "profile", icon: UserIcon, label: "Profile" },
+];
 
 export default function Home() {
   const { toast } = useToast();
@@ -204,78 +229,117 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-dvh bg-background">
-      <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative">
-        <div className="p-6 h-dvh overflow-y-auto pb-32 custom-scrollbar">
-          {activeTab === "home" && (
-            <HomeTab
-              user={user}
-              currentEnergy={currentEnergy}
-              energyDebt={energyDebt}
-              biometricData={biometricData}
-              upcomingEvents={upcomingEvents}
-              communityMode={communityMode}
-              setCommunityMode={setCommunityMode}
-              getEnergyStatus={getEnergyStatus}
-              copyToClipboard={copyToClipboard}
-              openModal={openModal}
-              simulateCalendarSync={simulateCalendarSync}
-            />
-          )}
-          {activeTab === "activities" && (
-            <ActivitiesTab activities={activities} openModal={openModal} />
-          )}
-          {activeTab === "insights" && (
-            <InsightsTab
-              dynamicInsights={dynamicInsights}
-              selfCareStreak={selfCareStreak}
-              achievements={achievements}
-              currentEnergy={currentEnergy}
-              activities={activities}
-              openModal={openModal}
-              simulateHealthSync={simulateHealthSync}
-            />
-          )}
-          {activeTab === "profile" && (
-            <ProfileTab
-              user={user}
-              onLogout={handleLogout}
-              onShowTutorial={handleShowTutorial}
-            />
-          )}
-        </div>
+    <SidebarProvider>
+      <Sidebar className="hidden md:flex md:flex-col">
+          <SidebarHeader>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shrink-0">
+                    <Zap />
+                </Button>
+                <h2 className="text-xl font-bold tracking-tighter group-data-[collapsible=icon]:hidden">
+                    EnergySync
+                </h2>
+            </div>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => setActiveTab(item.id)}
+                    isActive={activeTab === item.id}
+                    tooltip={item.label}
+                    className="justify-start"
+                  >
+                    <item.icon />
+                    <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
 
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-        
-        <RechargeModal
-          open={modals.recharge}
-          onOpenChange={(isOpen) => setModals(m => ({ ...m, recharge: isOpen }))}
-          handleRecharge={handleRecharge}
-          activities={activities}
-          currentEnergy={currentEnergy}
-          onCustomRecharge={handleCustomRecharge}
-        />
-        <VoiceCheckinModal
-            open={modals.voiceCheckIn}
-            onOpenChange={(isOpen) => closeModal('voiceCheckIn')}
-            simulateVoiceCheckIn={simulateVoiceCheckIn}
-        />
-        <WeeklyReportModal
-            open={modals.weeklyReport}
-            onOpenChange={(isOpen) => closeModal('weeklyReport')}
-            activities={activities}
-        />
-        <AddActivityModal
-            open={modals.addActivity}
-            onOpenChange={(isOpen) => closeModal('addActivity')}
-            onLogActivity={handleLogActivity}
-        />
-        <TutorialModal
-            open={showTutorial}
-            onOpenChange={setShowTutorial}
-            onComplete={handleTutorialComplete}
-        />
-      </div>
-    </main>
+        <SidebarInset>
+            <main className="min-h-dvh bg-background">
+              <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative md:max-w-none md:mx-0 md:shadow-none md:bg-transparent">
+                <div className="p-6 h-dvh overflow-y-auto pb-32 custom-scrollbar md:pb-6">
+                   <div className="hidden md:flex items-center gap-4 mb-6">
+                      <SidebarTrigger />
+                      <h1 className="text-2xl font-semibold capitalize">{activeTab}</h1>
+                  </div>
+
+                  {activeTab === "home" && (
+                    <HomeTab
+                      user={user}
+                      currentEnergy={currentEnergy}
+                      energyDebt={energyDebt}
+                      biometricData={biometricData}
+                      upcomingEvents={upcomingEvents}
+                      communityMode={communityMode}
+                      setCommunityMode={setCommunityMode}
+                      getEnergyStatus={getEnergyStatus}
+                      copyToClipboard={copyToClipboard}
+                      openModal={openModal}
+                      simulateCalendarSync={simulateCalendarSync}
+                    />
+                  )}
+                  {activeTab === "activities" && (
+                    <ActivitiesTab activities={activities} openModal={openModal} />
+                  )}
+                  {activeTab === "insights" && (
+                    <InsightsTab
+                      dynamicInsights={dynamicInsights}
+                      selfCareStreak={selfCareStreak}
+                      achievements={achievements}
+                      currentEnergy={currentEnergy}
+                      activities={activities}
+                      openModal={openModal}
+                      simulateHealthSync={simulateHealthSync}
+                    />
+                  )}
+                  {activeTab === "profile" && (
+                    <ProfileTab
+                      user={user}
+                      onLogout={handleLogout}
+                      onShowTutorial={handleShowTutorial}
+                    />
+                  )}
+                </div>
+
+                <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+                
+                <RechargeModal
+                  open={modals.recharge}
+                  onOpenChange={(isOpen) => setModals(m => ({ ...m, recharge: isOpen }))}
+                  handleRecharge={handleRecharge}
+                  activities={activities}
+                  currentEnergy={currentEnergy}
+                  onCustomRecharge={handleCustomRecharge}
+                />
+                <VoiceCheckinModal
+                    open={modals.voiceCheckIn}
+                    onOpenChange={(isOpen) => closeModal('voiceCheckIn')}
+                    simulateVoiceCheckIn={simulateVoiceCheckIn}
+                />
+                <WeeklyReportModal
+                    open={modals.weeklyReport}
+                    onOpenChange={(isOpen) => closeModal('weeklyReport')}
+                    activities={activities}
+                />
+                <AddActivityModal
+                    open={modals.addActivity}
+                    onOpenChange={(isOpen) => closeModal('addActivity')}
+                    onLogActivity={handleLogActivity}
+                />
+                <TutorialModal
+                    open={showTutorial}
+                    onOpenChange={setShowTutorial}
+                    onComplete={handleTutorialComplete}
+                />
+              </div>
+            </main>
+        </SidebarInset>
+    </SidebarProvider>
   );
 }

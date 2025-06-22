@@ -17,7 +17,7 @@ const navItems = [
 
 export function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40">
+    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 md:hidden">
       <div className="bg-white/90 backdrop-blur-lg border-t m-4 rounded-3xl shadow-2xl">
         <div className="flex justify-around py-2">
           {navItems.map((item) => (
