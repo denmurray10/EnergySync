@@ -36,9 +36,19 @@ export interface BiometricData {
   stressLevel: number;
 }
 
+export interface PetCustomization {
+  color: string;
+  accessory: 'none' | 'bowtie';
+  background: 'default' | 'park' | 'cozy';
+  unlockedColors: string[];
+  unlockedAccessories: string[];
+  unlockedBackgrounds: string[];
+}
+
 export interface User {
   name: string;
   membershipTier: 'free' | 'pro';
+  petCustomization: PetCustomization;
 }
 
 export interface Goal {
@@ -88,4 +98,14 @@ export interface PetTask {
   name: string;
   completed: boolean;
   icon: string;
+}
+
+export interface EnergyHotspot {
+  location: string;
+  averageImpact: number;
+}
+
+export interface EnergyHotspotAnalysis {
+  drainingHotspots: EnergyHotspot[];
+  rechargingHotspots: EnergyHotspot[];
 }

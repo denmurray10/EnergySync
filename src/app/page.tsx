@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask } from "@/lib/types";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
@@ -10,6 +10,7 @@ import { getEnergyStory } from "@/ai/flows/energy-story-flow";
 import { chatWithCoach } from "@/ai/flows/conversational-coach-flow";
 import { suggestGoals } from "@/ai/flows/suggest-goals-flow";
 import { getEnergyForecast } from "@/ai/flows/energy-forecast-flow";
+import { analyzeEnergyHotspots } from "@/ai/flows/energy-hotspot-flow";
 import { subDays, startOfDay, format } from 'date-fns';
 
 
@@ -29,9 +30,18 @@ import { DailyDebriefModal } from "@/components/daily-debrief-modal";
 import { ChatCoachModal } from "@/components/chat-coach-modal";
 import { ImageCheckinModal } from "@/components/image-checkin-modal";
 import { AddEventModal } from "@/components/add-event-modal";
+import { PetCustomizationModal } from "@/components/pet-customization-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
+const defaultPetCustomization: PetCustomization = {
+    color: '#a8a29e', // stone-400
+    accessory: 'none',
+    background: 'default',
+    unlockedColors: ['#a8a29e'],
+    unlockedAccessories: ['none'],
+    unlockedBackgrounds: ['default'],
+};
 
 export default function HomePage() {
   const { toast } = useToast();
@@ -56,6 +66,7 @@ export default function HomePage() {
     chatCoach: false,
     imageCheckin: false,
     addEvent: false,
+    petCustomization: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -73,7 +84,7 @@ export default function HomePage() {
   const [locationIndex, setLocationIndex] = useState(0);
   const currentUserLocation = locations[locationIndex];
 
-  // New state for advanced features
+  // Advanced features state
   const [readinessReport, setReadinessReport] = useState<ReadinessReport | null>(null);
   const [isReadinessLoading, setIsReadinessLoading] = useState(false);
   const [energyStory, setEnergyStory] = useState<string | null>(null);
@@ -82,8 +93,10 @@ export default function HomePage() {
   const [isChatting, setIsChatting] = useState(false);
   const [energyForecast, setEnergyForecast] = useState<EnergyForecastData[] | null>(null);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
+  const [energyHotspots, setEnergyHotspots] = useState<EnergyHotspotAnalysis | null>(null);
+  const [isHotspotsLoading, setIsHotspotsLoading] = useState(false);
 
-  // New state for pet feature
+  // Pet feature state
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
   const [petHunger, setPetHunger] = useState(80);
@@ -110,14 +123,22 @@ export default function HomePage() {
   useEffect(() => {
     const storedUser = localStorage.getItem('energysync_user');
     if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
+        const parsedUser: User = JSON.parse(storedUser);
         if (!parsedUser.membershipTier) {
             parsedUser.membershipTier = 'free';
+        }
+        if (!parsedUser.petCustomization) {
+            parsedUser.petCustomization = defaultPetCustomization;
         }
         setUser(parsedUser);
         setIsOnboarding(false);
     }
   }, []);
+  
+  const saveUser = (updatedUser: User) => {
+      setUser(updatedUser);
+      localStorage.setItem('energysync_user', JSON.stringify(updatedUser));
+  };
 
   const fetchProactiveSuggestion = useCallback(async () => {
     if (!isProMember) {
@@ -169,6 +190,24 @@ export default function HomePage() {
     }
   }, [isProMember, readinessReport, currentEnergy, upcomingEvents, activities, toast]);
 
+  const fetchEnergyHotspots = useCallback(async () => {
+    if (!isProMember) return;
+    setIsHotspotsLoading(true);
+    try {
+        const result = await analyzeEnergyHotspots({ activities });
+        setEnergyHotspots(result);
+    } catch (error) {
+        console.error("Failed to analyze energy hotspots:", error);
+        setEnergyHotspots(null);
+        toast({
+            title: "Analysis Failed",
+            description: "Could not analyze your energy hotspots.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsHotspotsLoading(false);
+    }
+}, [isProMember, activities, toast]);
 
   useEffect(() => {
     if (activeTab === 'home') {
@@ -177,13 +216,19 @@ export default function HomePage() {
         fetchEnergyForecast();
       }
     }
-  }, [activeTab, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast]);
+    if (activeTab === 'insights') {
+        fetchEnergyHotspots();
+    }
+  }, [activeTab, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast, fetchEnergyHotspots]);
 
-  const handleOnboardingComplete = (newUser: Omit<User, 'membershipTier'>) => {
-    const userWithTier = { ...newUser, membershipTier: 'free' as const };
-    setUser(userWithTier);
+  const handleOnboardingComplete = (newUser: Omit<User, 'membershipTier' | 'petCustomization'>) => {
+    const userWithTierAndPet: User = { 
+        ...newUser, 
+        membershipTier: 'free' as const,
+        petCustomization: defaultPetCustomization
+    };
+    saveUser(userWithTierAndPet);
     setIsOnboarding(false);
-    localStorage.setItem('energysync_user', JSON.stringify(userWithTier));
 
     const hasSeenTutorial = localStorage.getItem('energysync_tutorial_seen');
     if (!hasSeenTutorial) {
@@ -194,8 +239,7 @@ export default function HomePage() {
   const handleTierChange = (newTier: 'free' | 'pro') => {
     if (user) {
         const updatedUser = { ...user, membershipTier: newTier };
-        setUser(updatedUser);
-        localStorage.setItem('energysync_user', JSON.stringify(updatedUser));
+        saveUser(updatedUser);
         toast({
             title: `Membership Updated!`,
             description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
@@ -305,7 +349,6 @@ export default function HomePage() {
   };
 
   const handleCustomRecharge = (rechargeData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
-    // 1. Log the activity
     const newActivity: Activity = {
         ...rechargeData,
         id: Date.now(),
@@ -314,11 +357,7 @@ export default function HomePage() {
         recoveryTime: 0,
     };
     setActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    
-    // 2. Apply recharge (toast is shown here)
     handleRecharge(newActivity.impact, newActivity.impact);
-
-    // 3. Close modal
     closeModal('recharge');
   };
 
@@ -357,9 +396,7 @@ export default function HomePage() {
   
   const handleScheduleAction = (action: ActionableSuggestion) => {
     if (!action) return;
-
     const eventName = `(${action.type}) ${action.activityName}`;
-    
     const newEvent: UpcomingEvent = {
         id: Date.now(),
         name: eventName,
@@ -385,17 +422,14 @@ export default function HomePage() {
     setIsReadinessLoading(true);
     setReadinessReport(null);
     try {
-        // Simulate more realistic data for demo
         const newHeartRate = Math.floor(Math.random() * (85 - 60 + 1)) + 60;
         const newStressLevel = Math.floor(Math.random() * (50 - 20 + 1)) + 20;
         const newSleepQuality = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
         const updatedBiometrics = { heartRate: newHeartRate, stressLevel: newStressLevel, sleepQuality: newSleepQuality };
         setBiometricData(updatedBiometrics);
-        
         const recentActivities = activities.slice(0, 3);
         const report = await getReadinessScore({ biometrics: updatedBiometrics, recentActivities });
         setReadinessReport(report);
-        
         toast({
             title: "Health Readiness Synced!",
             description: "We've analyzed your latest data to generate a readiness score.",
@@ -403,11 +437,7 @@ export default function HomePage() {
         unlockAchievement('Bio-Scanner');
     } catch (error) {
         console.error("Failed to get readiness score:", error);
-        toast({
-            title: "Sync Failed",
-            description: "Could not get readiness score at this time.",
-            variant: "destructive"
-        });
+        toast({ title: "Sync Failed", description: "Could not get readiness score.", variant: "destructive" });
     } finally {
         setIsReadinessLoading(false);
     }
@@ -420,12 +450,10 @@ export default function HomePage() {
     try {
         const yesterday = startOfDay(subDays(new Date(), 1));
         const yesterdayActivities = activities.filter(a => startOfDay(new Date(a.date)).getTime() === yesterday.getTime());
-
         if (yesterdayActivities.length === 0) {
             setEnergyStory("You didn't log any activities yesterday. Log some today to get your story tomorrow!");
             return;
         }
-
         const result = await getEnergyStory({ activities: yesterdayActivities });
         setEnergyStory(result.story);
         unlockAchievement('Storyteller');
@@ -442,7 +470,6 @@ export default function HomePage() {
       const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: query }];
       setChatHistory(newHistory);
       setIsChatting(true);
-
       try {
           const result = await chatWithCoach({
               query,
@@ -451,7 +478,6 @@ export default function HomePage() {
               activities: JSON.stringify(activities.slice(0, 10)),
               events: JSON.stringify(upcomingEvents),
           });
-
           setChatHistory(prev => [...prev, { role: 'model', content: result.response }]);
           unlockAchievement('Chatterbox');
       } catch (error) {
@@ -462,14 +488,10 @@ export default function HomePage() {
       }
   }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
 
-
   const changeLocation = () => {
     setLocationIndex((prevIndex) => {
         const newIndex = (prevIndex + 1) % locations.length;
-        toast({
-            title: 'Location Changed',
-            description: `Your location is now set to ${locations[newIndex]}. AI suggestions will adapt.`,
-        });
+        toast({ title: 'Location Changed', description: `Your location is now set to ${locations[newIndex]}.` });
         return newIndex;
     });
   };
@@ -492,36 +514,16 @@ export default function HomePage() {
     try {
         const recentActivities = activities.slice(0, 15);
         const currentGoalNames = goals.map(g => ({ name: g.name }));
-
         const result = await suggestGoals({ activities: recentActivities, currentGoals: currentGoalNames });
-
-        const newGoals = result.goals.map((g, i) => ({
-            ...g,
-            id: Date.now() + i,
-            completed: false,
-        }));
-
-        const newChallenges = result.challenges.map((c, i) => ({
-            ...c,
-            id: Date.now() + i,
-        }));
-        
+        const newGoals = result.goals.map((g, i) => ({ ...g, id: Date.now() + i, completed: false }));
+        const newChallenges = result.challenges.map((c, i) => ({ ...c, id: Date.now() + i }));
         setGoals(newGoals);
         setChallenges(newChallenges);
-        
-        toast({
-            title: "Suggestions Loaded!",
-            description: "Your new AI-powered goals and challenges are ready.",
-        });
+        toast({ title: "Suggestions Loaded!", description: "New AI goals and challenges are ready." });
         unlockAchievement('Goal Setter');
-
     } catch (error) {
         console.error("Failed to suggest goals:", error);
-        toast({
-            title: "Suggestion Failed",
-            description: "Could not get AI suggestions at this time.",
-            variant: "destructive"
-        });
+        toast({ title: "Suggestion Failed", description: "Could not get AI suggestions.", variant: "destructive" });
     } finally {
         setIsGoalsLoading(false);
     }
@@ -530,11 +532,9 @@ export default function HomePage() {
   const dynamicInsights = useMemo(() => {
     const drainers = activities.filter(a => a.impact < 0);
     if (drainers.length === 0) return { drainPattern: 'No draining activities logged yet.', rechargePattern: 'Log some activities to see patterns.' };
-
     const mostDraining = drainers.reduce((max, act) => act.impact < max.impact ? act : max);
     const rechargers = activities.filter(a => a.impact > 0);
     const mostEffectiveRecharge = rechargers.length > 0 ? rechargers.reduce((max, act) => act.impact > max.impact ? act : max) : null;
-
     return {
       drainPattern: `'${mostDraining.name}' activities seem to be your biggest energy drain (${mostDraining.impact}%).`,
       rechargePattern: mostEffectiveRecharge ? `'${mostEffectiveRecharge.name}' gives you the biggest boost (+${mostEffectiveRecharge.impact}%).` : 'Try logging a recharge activity!'
@@ -545,24 +545,15 @@ export default function HomePage() {
     let interactionChange = 0;
     const updatedTasks = petTasks.map(task => {
         if (task.id === taskId) {
-            if (!task.completed) {
-                interactionChange = 5; // Add 5 interactions for completing
-            } else {
-                interactionChange = -5; // Subtract 5 for un-completing
-            }
+            if (!task.completed) { interactionChange = 5; } else { interactionChange = -5; }
             return { ...task, completed: !task.completed };
         }
         return task;
     });
-
     setPetTasks(updatedTasks);
     setPetInteractions(prev => Math.max(0, prev + interactionChange));
-
     if (interactionChange > 0) {
-        toast({
-            title: "Task Complete!",
-            description: "You've earned 5 interactions with your pet! 🎉",
-        });
+        toast({ title: "Task Complete!", description: "You've earned 5 interactions! 🎉" });
     }
   };
 
@@ -592,6 +583,51 @@ export default function HomePage() {
         unlockAchievement('Pet Pal');
     }
   };
+
+  const handlePurchaseAndEquipItem = (
+    category: 'color' | 'accessory' | 'background', 
+    item: string, 
+    cost: number
+  ) => {
+    if (!user) return;
+
+    if (petInteractions < cost) {
+      toast({ title: 'Not enough interactions!', description: `You need ${cost} interactions to buy this.`, variant: 'destructive' });
+      return;
+    }
+
+    setPetInteractions(prev => prev - cost);
+
+    const updatedCustomization = { ...user.petCustomization };
+    if (category === 'color') {
+      updatedCustomization.unlockedColors.push(item);
+      updatedCustomization.color = item;
+    } else if (category === 'accessory') {
+      updatedCustomization.unlockedAccessories.push(item);
+      updatedCustomization.accessory = item as 'none' | 'bowtie';
+    } else if (category === 'background') {
+      updatedCustomization.unlockedBackgrounds.push(item);
+      updatedCustomization.background = item as 'default' | 'park' | 'cozy';
+    }
+    
+    saveUser({ ...user, petCustomization: updatedCustomization });
+    toast({ title: 'Item Purchased!', description: 'You can equip it from the customization menu.' });
+    unlockAchievement('Pet Customizer');
+  };
+
+  const handleEquipItem = (
+    category: 'color' | 'accessory' | 'background', 
+    item: string
+  ) => {
+    if (!user) return;
+    const updatedCustomization = { ...user.petCustomization };
+    if (category === 'color') updatedCustomization.color = item;
+    if (category === 'accessory') updatedCustomization.accessory = item as 'none' | 'bowtie';
+    if (category === 'background') updatedCustomization.background = item as 'default' | 'park' | 'cozy';
+    saveUser({ ...user, petCustomization: updatedCustomization });
+    toast({ title: 'Item Equipped!', description: 'Your pet has a new look!' });
+  };
+
 
   if (isOnboarding) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
@@ -636,7 +672,7 @@ export default function HomePage() {
               onDeleteActivity={handleDeleteActivity}
             />
           )}
-          {activeTab === "pet" && (
+          {activeTab === "pet" && user && (
             <PetTab
               tasks={petTasks}
               onTaskComplete={handleTaskComplete}
@@ -648,6 +684,8 @@ export default function HomePage() {
               onFeedPet={handleFeedPet}
               onSleepPet={handleSleepPet}
               onToiletPet={handleToiletPet}
+              customization={user.petCustomization}
+              openCustomization={() => openModal('petCustomization')}
             />
           )}
           {activeTab === "insights" && (
@@ -664,6 +702,8 @@ export default function HomePage() {
               onGoalComplete={handleGoalComplete}
               onSuggestGoals={handleSuggestGoals}
               isGoalsLoading={isGoalsLoading}
+              energyHotspots={energyHotspots}
+              isHotspotsLoading={isHotspotsLoading}
             />
           )}
           {activeTab === "profile" && (
@@ -687,6 +727,7 @@ export default function HomePage() {
           activities={activities}
           currentEnergy={currentEnergy}
           onCustomRecharge={handleCustomRecharge}
+          onLogActivity={handleLogActivity}
           isProMember={isProMember}
         />
         <VoiceCheckinModal
@@ -737,6 +778,16 @@ export default function HomePage() {
             onLogEvent={handleLogEvent}
             isProMember={isProMember}
         />
+        {user && (
+            <PetCustomizationModal
+                open={modals.petCustomization}
+                onOpenChange={() => closeModal('petCustomization')}
+                customization={user.petCustomization}
+                interactions={petInteractions}
+                onPurchase={handlePurchaseAndEquipItem}
+                onEquip={handleEquipItem}
+            />
+        )}
       </div>
     </main>
   );

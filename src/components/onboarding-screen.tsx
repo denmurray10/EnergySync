@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { User } from "@/lib/types";
+import type { User, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,7 +17,7 @@ const onboardingFormSchema = z.object({
 type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
 
 type OnboardingScreenProps = {
-  onComplete: (user: Omit<User, 'membershipTier'>) => void;
+  onComplete: (user: Omit<User, 'membershipTier' | 'petCustomization'>) => void;
 };
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {

@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import type { PetTask } from "@/lib/types";
+import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { PawPrint, Heart, Utensils, Bed, ShowerHead } from "lucide-react";
+import { PawPrint, Heart, Utensils, Bed, ShowerHead, Paintbrush } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // A component to render the animated, interactive pet
-const VirtualPet = ({ happiness, isInteracting }: { happiness: number, isInteracting: boolean }) => {
+const VirtualPet = ({ happiness, isInteracting, customization }: { happiness: number; isInteracting: boolean, customization: PetCustomization }) => {
     const getFace = () => {
         const strokeColor = "hsl(var(--foreground))";
         if (happiness >= 80) { // Ecstatic, happy eyes and wide smile
@@ -55,15 +55,22 @@ const VirtualPet = ({ happiness, isInteracting }: { happiness: number, isInterac
         return "Needs some love!";
     }
 
+    const backgroundClass = {
+        default: 'bg-card',
+        park: 'bg-green-100',
+        cozy: 'bg-amber-100'
+    }[customization.background] || 'bg-card';
+
+
     return (
-        <div className="text-center">
+        <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
              <div className={cn("relative w-48 h-48 mx-auto", isInteracting && "animate-jump")}>
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                     <g className="animate-breathe">
                         {/* Cat Body */}
                         <path 
                             d="M 50,95 C 25,95 20,70 20,55 C 20,30 30,20 50,20 C 70,20 80,30 80,55 C 80,70 75,95 50,95 Z"
-                            fill="hsl(var(--primary) / 0.2)"
+                            fill={customization.color}
                             stroke="hsl(var(--primary))"
                             strokeWidth="3"
                             strokeLinejoin="round"
@@ -71,14 +78,14 @@ const VirtualPet = ({ happiness, isInteracting }: { happiness: number, isInterac
                          {/* Cat Ears */}
                         <path
                             d="M 32 32 C 32 32, 20 15, 35 15 C 40 15, 40 25, 40 25 Z"
-                            fill="hsl(var(--primary) / 0.2)"
+                            fill={customization.color}
                             stroke="hsl(var(--primary))"
                             strokeWidth="3"
                             strokeLinejoin="round"
                         />
                         <path
                             d="M 68 32 C 68 32, 80 15, 65 15 C 60 15, 60 25, 60 25 Z"
-                            fill="hsl(var(--primary) / 0.2)"
+                            fill={customization.color}
                             stroke="hsl(var(--primary))"
                             strokeWidth="3"
                             strokeLinejoin="round"
@@ -94,6 +101,17 @@ const VirtualPet = ({ happiness, isInteracting }: { happiness: number, isInterac
                         </g>
                         {getFace().eyes}
                         {getFace().mouth}
+
+                        {/* Accessory */}
+                        {customization.accessory === 'bowtie' && (
+                             <path
+                                d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
+                                fill="hsl(var(--destructive))"
+                                stroke="hsl(var(--primary))"
+                                strokeWidth="1.5"
+                                strokeLinejoin="round"
+                            />
+                        )}
                     </g>
                 </svg>
             </div>
@@ -124,6 +142,8 @@ type PetTabProps = {
   onFeedPet: () => void;
   onSleepPet: () => void;
   onToiletPet: () => void;
+  customization: PetCustomization;
+  openCustomization: () => void;
 };
 
 export function PetTab({ 
@@ -137,6 +157,8 @@ export function PetTab({
     onFeedPet,
     onSleepPet,
     onToiletPet,
+    customization,
+    openCustomization,
 }: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
 
@@ -152,13 +174,19 @@ export function PetTab({
 
     return (
         <div className="space-y-6">
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
-                Your Energy Pet
-            </h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
+                    Your Energy Pet
+                </h2>
+                <Button onClick={openCustomization} size="icon" variant="ghost" className="text-primary">
+                    <Paintbrush className="h-7 w-7"/>
+                    <span className="sr-only">Customize Pet</span>
+                </Button>
+            </div>
 
             <Card className="bg-card/80 backdrop-blur-sm overflow-hidden">
-                <CardContent className="p-6">
-                    <VirtualPet happiness={petHappiness} isInteracting={isInteracting} />
+                <CardContent className="p-0">
+                    <VirtualPet happiness={petHappiness} isInteracting={isInteracting} customization={customization} />
                 </CardContent>
             </Card>
 

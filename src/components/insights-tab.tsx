@@ -1,12 +1,12 @@
 "use client";
 
-import type { Achievement, Activity, Goal, Challenge } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Achievement, Activity, Goal, Challenge, EnergyHotspotAnalysis } from "@/lib/types";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, Sparkles, LoaderCircle } from "lucide-react";
+import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, Sparkles, LoaderCircle, MapPin, TrendingUp, TrendingDown } from "lucide-react";
 import { WeeklyEnergyChart } from "./weekly-energy-chart";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
 import { Skeleton } from "./ui/skeleton";
@@ -24,6 +24,8 @@ type InsightsTabProps = {
   onGoalComplete: (goalId: number) => void;
   onSuggestGoals: () => void;
   isGoalsLoading: boolean;
+  energyHotspots: EnergyHotspotAnalysis | null;
+  isHotspotsLoading: boolean;
 };
 
 export function InsightsTab({
@@ -38,7 +40,9 @@ export function InsightsTab({
   challenges,
   onGoalComplete,
   onSuggestGoals,
-  isGoalsLoading
+  isGoalsLoading,
+  energyHotspots,
+  isHotspotsLoading,
 }: InsightsTabProps) {
   return (
     <div className="space-y-6">
@@ -56,6 +60,55 @@ export function InsightsTab({
           <WeeklyEnergyChart activities={activities} />
         </CardContent>
       </Card>
+
+      <ProFeatureWrapper isPro={isProMember}>
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <CardTitle className="flex items-center text-xl">
+                    <MapPin className="text-orange-500 mr-3" />
+                    Energy Hotspots
+                </CardTitle>
+                 <CardDescription>AI-powered analysis of where your energy changes most.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isHotspotsLoading ? (
+                     <div className="space-y-4">
+                        <div className="flex gap-4"><TrendingDown className="h-5 w-5 text-red-500 mt-1" /><Skeleton className="h-8 w-4/5" /></div>
+                        <div className="flex gap-4"><TrendingUp className="h-5 w-5 text-green-500 mt-1" /><Skeleton className="h-8 w-3/5" /></div>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {energyHotspots?.drainingHotspots && energyHotspots.drainingHotspots.length > 0 ? (
+                            energyHotspots.drainingHotspots.map(hotspot => (
+                                <div key={hotspot.location} className="flex items-start gap-3">
+                                    <TrendingDown className="h-5 w-5 text-red-500 mt-1 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">{hotspot.location}</p>
+                                        <p className="text-sm text-muted-foreground">Average impact: <span className="font-bold text-red-500">{hotspot.averageImpact.toFixed(0)}%</span></p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                             <div className="flex items-start gap-3"><TrendingDown className="h-5 w-5 text-muted-foreground mt-1" /><p className="text-sm text-muted-foreground">No significant draining locations found yet.</p></div>
+                        )}
+                        {energyHotspots?.rechargingHotspots && energyHotspots.rechargingHotspots.length > 0 ? (
+                            energyHotspots.rechargingHotspots.map(hotspot => (
+                                <div key={hotspot.location} className="flex items-start gap-3">
+                                    <TrendingUp className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                                    <div>
+                                        <p className="font-semibold">{hotspot.location}</p>
+                                        <p className="text-sm text-muted-foreground">Average impact: <span className="font-bold text-green-500">+{hotspot.averageImpact.toFixed(0)}%</span></p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                           <div className="flex items-start gap-3"><TrendingUp className="h-5 w-5 text-muted-foreground mt-1" /><p className="text-sm text-muted-foreground">No significant recharging locations found yet.</p></div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+      </ProFeatureWrapper>
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">

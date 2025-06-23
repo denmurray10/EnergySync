@@ -15,3 +15,5 @@ import '@/ai/flows/suggest-event-details.ts';
 import '@/ai/flows/suggest-goals-flow.ts';
 import '@/ai/flows/energy-forecast-flow.ts';
 import '@/ai/tools/energy-analysis-tools.ts';
+import '@/ai/flows/guided-recharge-flow.ts';
+import '@/ai/flows/energy-hotspot-flow.ts';
