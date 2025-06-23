@@ -17,7 +17,7 @@ import { AddActivityModal } from "@/components/add-activity-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
 import { TutorialModal } from "@/components/tutorial-modal";
 import {
-  Home as HomeIcon,
+  Home,
   ListChecks,
   LineChart,
   User as UserIcon,
@@ -37,13 +37,13 @@ import {
 import { Button } from "@/components/ui/button";
 
 const navItems = [
-  { id: "home", icon: HomeIcon, label: "Home" },
+  { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
   { id: "insights", icon: LineChart, label: "Insights" },
   { id: "profile", icon: UserIcon, label: "Profile" },
 ];
 
-export default function Home() {
+export default function HomePage() {
   const { toast } = useToast();
 
   const [user, setUser] = useState<User | null>(null);
