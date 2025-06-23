@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization } from "@/lib/types";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
@@ -93,6 +93,7 @@ export default function HomePage() {
   // Pet feature state
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
+  const [lastTaskCompletionTime, setLastTaskCompletionTime] = useState<number | null>(null);
   
   const petHappiness = currentEnergy; // Pet's happiness is now directly linked to user's energy
   
@@ -147,7 +148,11 @@ export default function HomePage() {
     const storedPetExp = localStorage.getItem('energysync_pet_exp_local');
     const storedPetName = localStorage.getItem('energysync_pet_name_local');
     const storedPetType = localStorage.getItem('energysync_pet_type_local');
-
+    const storedLastCompletion = localStorage.getItem('energysync_last_task_completion');
+    
+    if (storedLastCompletion) {
+        setLastTaskCompletionTime(Number(storedLastCompletion));
+    }
 
     setUser({
         name: 'Alex', // A default name
@@ -564,6 +569,9 @@ export default function HomePage() {
         setPetInteractions(prev => prev + 5);
         gainPetExp(10);
         toast({ title: "Task Complete!", description: "You've earned 5 interactions & 10 pet XP! 🎉" });
+        const now = Date.now();
+        setLastTaskCompletionTime(now);
+        localStorage.setItem('energysync_last_task_completion', now.toString());
     } else {
         setPetInteractions(prev => Math.max(0, prev - 5));
     }
@@ -695,6 +703,7 @@ export default function HomePage() {
               exp={user.petExp}
               petName={user.petName}
               petType={user.petType}
+              lastTaskCompletionTime={lastTaskCompletionTime}
             />
           )}
           {activeTab === "insights" && (

@@ -196,6 +196,7 @@ type PetTabProps = {
   exp: number;
   petName: string;
   petType: PetType;
+  lastTaskCompletionTime: number | null;
 };
 
 export function PetTab({ 
@@ -210,7 +211,8 @@ export function PetTab({
     level,
     exp,
     petName,
-    petType
+    petType,
+    lastTaskCompletionTime
 }: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
     const expToNextLevel = 100 * level;
@@ -220,6 +222,13 @@ export function PetTab({
     const shouldShowSuggestion = petHappiness < 80 && uncompletedTask;
 
     const petSuggestion = useMemo(() => {
+        if (lastTaskCompletionTime) {
+            const thirtyMinutes = 30 * 60 * 1000;
+            if (Date.now() - lastTaskCompletionTime < thirtyMinutes) {
+                return null; // Cooldown is active
+            }
+        }
+
         if (!shouldShowSuggestion || !uncompletedTask) {
         return null;
         }
@@ -232,7 +241,7 @@ export function PetTab({
         } else {
         return `I bet we'd both feel better if we completed "${uncompletedTask.name}"!`;
         }
-    }, [shouldShowSuggestion, uncompletedTask]);
+    }, [shouldShowSuggestion, uncompletedTask, lastTaskCompletionTime]);
 
 
     const handleAction = (toast: {title: string, description: string}) => {
