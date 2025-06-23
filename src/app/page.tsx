@@ -124,6 +124,11 @@ export default function HomePage() {
     }
   }, [appUser, setAppUser, toast]);
 
+  useEffect(() => {
+    if (!authLoading && !firebaseUser) {
+      router.push('/login');
+    }
+  }, [authLoading, firebaseUser, router]);
 
   useEffect(() => {
     // This effect initializes the default user state.
@@ -648,16 +653,7 @@ export default function HomePage() {
     }
   };
 
-  if (authLoading) {
-      return (
-        <div className="min-h-dvh bg-background flex items-center justify-center">
-            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </div>
-      );
-  }
-
-  if (!firebaseUser) {
-      router.push('/login');
+  if (authLoading || !firebaseUser) {
       return (
         <div className="min-h-dvh bg-background flex items-center justify-center">
             <LoaderCircle className="w-12 h-12 animate-spin text-primary" />

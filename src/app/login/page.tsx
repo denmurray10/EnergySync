@@ -1,7 +1,7 @@
 // src/app/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
+  const { firebaseUser, loading: authLoading } = useAuth();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -37,6 +39,12 @@ export default function LoginPage() {
       password: '',
     },
   });
+  
+  useEffect(() => {
+    if (!authLoading && firebaseUser) {
+      router.push('/');
+    }
+  }, [authLoading, firebaseUser, router]);
 
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
@@ -57,9 +65,17 @@ export default function LoginPage() {
       if (isApiKeyError) {
         description = "The Firebase configuration is invalid. Please make sure you have set the correct NEXT_PUBLIC_FIREBASE variables in your .env file.";
       } else {
-        // Only log unexpected errors to the console
         console.error(`${activeTab} error:`, error);
-        description = error.message || description;
+         switch (error.code) {
+          case 'auth/invalid-credential':
+            description = "Invalid email or password. Please try again.";
+            break;
+          case 'auth/email-already-in-use':
+            description = "This email address is already in use. Please sign in or use a different email.";
+            break;
+          default:
+            description = error.message || description;
+        }
       }
 
       toast({
@@ -71,6 +87,14 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+  
+  if (authLoading || firebaseUser) {
+    return (
+      <main className="min-h-dvh bg-background flex items-center justify-center p-4">
+        <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-dvh bg-background flex items-center justify-center p-4">
