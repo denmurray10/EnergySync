@@ -14,49 +14,49 @@ type PetType = 'cat' | 'dog' | 'horse' | 'chicken';
 
 const PetFace = ({ happiness }: { happiness: number }) => {
     const strokeColor = "hsl(var(--foreground))";
+    let face;
     if (happiness >= 80) { // Ecstatic
-        return (
+        face = (
             <g>
                 <path d="M 35 48 C 38 42, 42 42, 45 48" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
                 <path d="M 55 48 C 58 42, 62 42, 65 48" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
                 <path d="M 40 63 Q 50 73, 60 63" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
             </g>
         );
-    }
-    if (happiness >= 60) { // Happy
-        return (
+    } else if (happiness >= 60) { // Happy
+        face = (
             <g>
                 <circle cx="40" cy="48" r="3" fill={strokeColor} />
                 <circle cx="60" cy="48" r="3" fill={strokeColor} />
                 <path d="M 42 63 Q 50 69, 58 63" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
             </g>
         );
-    }
-    if (happiness >= 40) { // Neutral
-        return (
+    } else if (happiness >= 40) { // Neutral
+       face = (
             <g>
                 <circle cx="40" cy="48" r="3" fill={strokeColor} />
                 <circle cx="60" cy="48" r="3" fill={strokeColor} />
                 <line x1="45" y1="65" x2="55" y2="65" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" />
             </g>
         );
-    }
-    if (happiness >= 20) { // Worried
-        return (
+    } else if (happiness >= 20) { // Worried
+        face = (
             <g>
                 <circle cx="40" cy="48" r="2.5" fill={strokeColor} />
                 <circle cx="60" cy="48" r="2.5" fill={strokeColor} />
                 <path d="M 42 67 Q 50 61, 58 67" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
             </g>
         );
+    } else { // Sad
+        face = (
+            <g>
+                <circle cx="40" cy="48" r="2.5" fill={strokeColor} />
+                <circle cx="60" cy="48" r="2.5" fill={strokeColor} />
+                <path d="M 40 70 Q 50 60, 60 70" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            </g>
+        );
     }
-    return ( // Sad
-        <g>
-            <circle cx="40" cy="48" r="2.5" fill={strokeColor} />
-            <circle cx="60" cy="48" r="2.5" fill={strokeColor} />
-            <path d="M 40 70 Q 50 60, 60 70" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        </g>
-    );
+    return <g>{face}</g>;
 };
 
 const PetBody = ({ type, color }: { type: PetType, color: string }) => {
