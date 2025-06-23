@@ -126,7 +126,7 @@ export default function HomePage() {
     if (!appUser || !appUser.petEnabled) return;
     
     setAppUser(currentUser => {
-      if (!currentUser) return null;
+      if (!currentUser) return currentUser;
       const newExp = currentUser.petExp + amount;
       const expToNextLevel = 100 * currentUser.petLevel;
       
@@ -311,15 +311,18 @@ export default function HomePage() {
   };
 
   const unlockAchievement = useCallback((name: string) => {
-    const isAlreadyUnlocked = achievements.some(a => a.name === name && a.unlocked);
-    if (!isAlreadyUnlocked) {
-        setAchievements(prev => prev.map(a => a.name === name ? { ...a, unlocked: true } : a));
-        const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
-        if (achievement) {
-            showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+    setAchievements(prev => {
+        const isAlreadyUnlocked = prev.some(a => a.name === name && a.unlocked);
+        if (!isAlreadyUnlocked) {
+            const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
+            if (achievement) {
+                showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+            }
+            return prev.map(a => a.name === name ? { ...a, unlocked: true } : a);
         }
-    }
-  }, [achievements, showToast]);
+        return prev;
+    });
+  }, [showToast]);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {

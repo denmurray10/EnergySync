@@ -5,7 +5,7 @@ import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint, Users, LogOut } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";

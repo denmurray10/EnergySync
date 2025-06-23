@@ -3,14 +3,13 @@
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { HeartPulse, RefreshCw, BarChart } from "lucide-react";
+import { HeartPulse, RefreshCw } from "lucide-react";
 import type { ReadinessReport } from "@/lib/types";
 
 type ReadinessCardProps = {
   report: ReadinessReport | null;
   loading: boolean;
   onSync: () => void;
-  isProMember: boolean;
 };
 
 const getScoreColor = (score: number) => {
@@ -19,7 +18,7 @@ const getScoreColor = (score: number) => {
     return "text-red-500";
 };
 
-export function ReadinessCard({ report, loading, onSync, isProMember }: ReadinessCardProps) {
+export function ReadinessCard({ report, loading, onSync }: ReadinessCardProps) {
   return (
     <Card className="bg-card/80 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -27,7 +26,7 @@ export function ReadinessCard({ report, loading, onSync, isProMember }: Readines
           <HeartPulse className="text-red-500 mr-3" />
           Health Readiness
         </CardTitle>
-        <Button onClick={onSync} variant="ghost" size="icon" disabled={loading || !isProMember}>
+        <Button onClick={onSync} variant="ghost" size="icon" disabled={loading}>
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>

@@ -48,8 +48,9 @@ const customizationOptions = {
 export function PetCustomizationModal({ open, onOpenChange, customization, interactions, onPurchase, onEquip }: PetCustomizationModalProps) {
 
   const renderItem = (category: 'color' | 'accessory' | 'background' | 'outline', item: any) => {
-    const isUnlocked = (customization?.[`unlocked${category.charAt(0).toUpperCase() + category.slice(1)}s` as keyof PetCustomization] ?? []).includes(item.value);
-    const isEquipped = customization?.[category] === item.value;
+    const unlockedKey = `unlocked${category.charAt(0).toUpperCase() + category.slice(1)}s` as keyof PetCustomization;
+    const isUnlocked = (customization[unlockedKey] as string[] | undefined)?.includes(item.value) ?? false;
+    const isEquipped = customization[category as keyof Omit<PetCustomization, 'unlockedColors' | 'unlockedOutlineColors' | 'unlockedAccessories' | 'unlockedBackgrounds'>] === item.value;
     const canAfford = interactions >= item.cost;
     
     let display: React.ReactNode;

@@ -195,7 +195,6 @@ export function HomeTab({
             report={readinessReport}
             loading={isReadinessLoading}
             onSync={onSyncHealth}
-            isProMember={isProMember}
           />
         </ProFeatureWrapper>
       )}
@@ -230,7 +229,7 @@ export function HomeTab({
                 <Zap className="w-5 h-5 mr-2" />
                 <span className="font-semibold">Start Recharge</span>
             </Button>
-             <ProFeatureWrapper isPro={isProMember} className="w-full">
+             <ProFeatureWrapper isPro={isProMember}>
                 <Button
                     onClick={() => openModal("voiceCheckIn")}
                     className="group w-full h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
