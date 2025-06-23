@@ -113,22 +113,33 @@ export function InsightsTab({
             <Users className="text-blue-500 mr-3" /> Community Insights
           </CardTitle>
         </CardHeader>
-        <CardContent className="text-center">
+        <CardContent>
           <p className="text-sm text-muted-foreground mb-4">
-            How you compare to the community (anonymised).
+            How you compare to the EnergySync community (anonymised).
           </p>
-          <div className="space-y-2">
-            <p className="text-sm text-card-foreground">
-              Your Avg. Energy:{" "}
-              <span className="font-bold text-blue-600">
-                {Math.round(currentEnergy)}%
-              </span>{" "}
-              vs. Community Avg: <span className="font-bold">68%</span>
-            </p>
-            <p className="text-sm text-card-foreground">
-              Most common recharge:{" "}
-              <span className="font-bold text-blue-600">🎵 Music</span>
-            </p>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+                <p className="text-muted-foreground">Your Avg. Energy</p>
+                <p className="font-bold text-blue-600 text-lg">{Math.round(currentEnergy)}%</p>
+            </div>
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+                <p className="text-muted-foreground">Community Avg.</p>
+                <p className="font-bold text-lg">68%</p>
+            </div>
+          </div>
+          <div className="mt-4 bg-purple-50 border border-purple-100 rounded-xl p-4 text-left flex items-center gap-4">
+            <span className="text-2xl">🔥</span>
+            <div>
+              <p className="font-semibold text-purple-800">Trending Recharge</p>
+              <p className="text-sm text-purple-700 mt-1">The most effective activity this week is <span className="font-bold">"Short Walk" (+15%)</span>.</p>
+            </div>
+          </div>
+          <div className="mt-3 bg-red-50 border border-red-100 rounded-xl p-4 text-left flex items-center gap-4">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="font-semibold text-red-800">Common Drainer</p>
+              <p className="text-sm text-red-700 mt-1">Many users are drained by <span className="font-bold">"Long Meetings" (-25%)</span>.</p>
+            </div>
           </div>
         </CardContent>
       </Card>

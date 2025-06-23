@@ -43,5 +43,8 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 1, name: 'First Recharge', unlocked: true, icon: '🔋' },
     { id: 2, name: 'Self-Care Pro', unlocked: false, icon: '🧘‍♀️' },
     { id: 3, name: 'Social Butterfly', unlocked: true, icon: '🦋' },
-    { id: 4, name: 'Mindful Logger', unlocked: false, icon: '📝'}
+    { id: 4, name: 'Mindful Logger', unlocked: false, icon: '📝'},
+    { id: 5, name: 'Scheduler Supreme', unlocked: false, icon: '📅' },
+    { id: 6, name: 'Bio-Scanner', unlocked: false, icon: '❤️' },
+    { id: 7, name: 'Community Member', unlocked: false, icon: '🤝' },
 ];

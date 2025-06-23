@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { EnergyAssistantCard } from "./energy-assistant-card";
 import {
   Users,
   Share2,
@@ -15,6 +16,7 @@ import {
   Zap,
   Mic,
   Calendar,
+  BrainCircuit,
 } from "lucide-react";
 
 type HomeTabProps = {
@@ -29,6 +31,8 @@ type HomeTabProps = {
   copyToClipboard: (text: string) => void;
   openModal: (modalName: string) => void;
   simulateCalendarSync: () => void;
+  aiSuggestion: string | null;
+  isSuggestionLoading: boolean;
 };
 
 const getEnergyColour = (energy: number) => {
@@ -59,6 +63,8 @@ export function HomeTab({
   copyToClipboard,
   openModal,
   simulateCalendarSync,
+  aiSuggestion,
+  isSuggestionLoading,
 }: HomeTabProps) {
   return (
     <div className="space-y-6">
@@ -127,6 +133,18 @@ export function HomeTab({
           </CardContent>
         </Card>
       )}
+
+       <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <BrainCircuit className="text-blue-500 mr-3" />
+            AI Energy Coach
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="!p-4">
+            <EnergyAssistantCard suggestion={aiSuggestion} loading={isSuggestionLoading} />
+        </CardContent>
+      </Card>
 
       <Card className="bg-card/80 backdrop-blur-sm text-center">
         <CardContent className="p-6">
