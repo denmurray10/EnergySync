@@ -232,11 +232,11 @@ export default function HomePage() {
     <SidebarProvider>
       <Sidebar className="hidden md:flex md:flex-col">
           <SidebarHeader>
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-primary shrink-0">
-                    <Zap />
+            <div className="flex flex-col items-center gap-4 py-4">
+                <Button variant="ghost" size="icon" className="h-12 w-12 text-primary shrink-0">
+                    <Zap className="h-8 w-8" />
                 </Button>
-                <h2 className="text-xl font-bold tracking-tighter group-data-[collapsible=icon]:hidden">
+                <h2 className="text-2xl font-bold group-data-[collapsible=icon]:hidden">
                     EnergySync
                 </h2>
             </div>
@@ -249,7 +249,6 @@ export default function HomePage() {
                     onClick={() => setActiveTab(item.id)}
                     isActive={activeTab === item.id}
                     tooltip={item.label}
-                    className="justify-start"
                   >
                     <item.icon />
                     <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
