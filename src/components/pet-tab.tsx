@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
-import dynamic from 'next/dynamic';
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import dogAnimationData from '@/lib/lottie/dog.json';
-
-const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 type PetType = 'cat' | 'dog' | 'horse' | 'chicken';
 
@@ -131,7 +128,12 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     const petContent = (
       <div className={cn("relative transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
           {petType === 'dog' ? (
-              <Lottie animationData={dogAnimationData} loop={true} className="w-48 h-48" />
+                <DotLottieReact
+                    src="https://lottie.host/3bbd91cc-ba48-495b-a4d3-7ca6a5320bbb/Da2Qpef4ix.lottie"
+                    loop
+                    autoplay
+                    className="w-48 h-48"
+                />
           ) : (
               <svg viewBox="0 0 100 100" className="w-48 h-48">
                   <g className="animate-breathe">
