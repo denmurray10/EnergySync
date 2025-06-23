@@ -23,7 +23,7 @@ export function ProfileTab({ user, isProMember, onLogout, onShowTutorial, onShow
     <div className="space-y-6">
       <div className="flex flex-col items-center space-y-4 pt-4">
         <Avatar className="h-24 w-24 border-4 border-primary">
-          <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="profile picture" />
+          <AvatarImage src={user ? `https://placehold.co/100x100.png?text=${user.name.charAt(0)}` : ''} data-ai-hint="profile picture" />
           <AvatarFallback className="text-4xl bg-muted">
             {user?.name?.charAt(0).toUpperCase()}
           </AvatarFallback>
