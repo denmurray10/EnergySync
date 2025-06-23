@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge } from "@/lib/types";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
+import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
+import { getEnergyStory } from "@/ai/flows/energy-story-flow";
+import { subDays, startOfDay, format } from 'date-fns';
+
 
 import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
@@ -17,6 +21,10 @@ import { WeeklyReportModal } from "@/components/weekly-report-modal";
 import { AddActivityModal } from "@/components/add-activity-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
 import { TutorialModal } from "@/components/tutorial-modal";
+import { DailyDebriefModal } from "@/components/daily-debrief-modal";
+import { ChatCoachModal } from "@/components/chat-coach-modal";
+import { ImageCheckinModal } from "@/components/image-checkin-modal";
+
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
 
@@ -39,6 +47,9 @@ export default function HomePage() {
     voiceCheckIn: false,
     weeklyReport: false,
     addActivity: false,
+    dailyDebrief: false,
+    chatCoach: false,
+    imageCheckin: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -46,6 +57,7 @@ export default function HomePage() {
   const [selfCareStreak, setSelfCareStreak] = useState(5);
 
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [actionableSuggestion, setActionableSuggestion] = useState<ActionableSuggestion | null>(null);
   const [isSuggestionLoading, setIsSuggestionLoading] = useState(true);
   
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
@@ -53,6 +65,15 @@ export default function HomePage() {
   
   const [locationIndex, setLocationIndex] = useState(0);
   const currentUserLocation = locations[locationIndex];
+
+  // New state for advanced features
+  const [readinessReport, setReadinessReport] = useState<ReadinessReport | null>(null);
+  const [isReadinessLoading, setIsReadinessLoading] = useState(false);
+  const [energyStory, setEnergyStory] = useState<string | null>(null);
+  const [isStoryLoading, setIsStoryLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [isChatting, setIsChatting] = useState(false);
+
 
   useEffect(() => {
     // In a real app, you'd check for user data in localStorage or from an API
@@ -63,30 +84,33 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchSuggestion = async () => {
-      if (activeTab !== 'home') return;
-      
-      setIsSuggestionLoading(true);
-      try {
-        const recentActivities = activities.slice(0, 5);
-        const result = await getProactiveSuggestion({ 
-          currentEnergy, 
-          upcomingEvents, 
-          recentActivities,
-          currentUserLocation
-        });
-        setAiSuggestion(result.suggestion);
-      } catch (error) {
-        console.error("Failed to get proactive suggestion:", error);
-        setAiSuggestion("Could not load a suggestion at this time.");
-      } finally {
-        setIsSuggestionLoading(false);
-      }
-    };
+  const fetchProactiveSuggestion = useCallback(async () => {
+    setIsSuggestionLoading(true);
+    try {
+      const recentActivities = activities.slice(0, 5);
+      const result = await getProactiveSuggestion({ 
+        currentEnergy, 
+        upcomingEvents, 
+        recentActivities,
+        currentUserLocation
+      });
+      setAiSuggestion(result.suggestion);
+      setActionableSuggestion(result.action || null);
+    } catch (error) {
+      console.error("Failed to get proactive suggestion:", error);
+      setAiSuggestion("Could not load a suggestion at this time.");
+      setActionableSuggestion(null);
+    } finally {
+      setIsSuggestionLoading(false);
+    }
+  }, [activities, upcomingEvents, currentEnergy, currentUserLocation]);
 
-    fetchSuggestion();
-  }, [activities, upcomingEvents, currentEnergy, activeTab, currentUserLocation]);
+
+  useEffect(() => {
+    if (activeTab === 'home') {
+      fetchProactiveSuggestion();
+    }
+  }, [activeTab, fetchProactiveSuggestion]);
 
   const handleOnboardingComplete = (newUser: User) => {
     setUser(newUser);
@@ -127,13 +151,13 @@ export default function HomePage() {
     });
   };
 
-  const unlockAchievement = (name: string) => {
+  const unlockAchievement = useCallback((name: string) => {
     const alreadyUnlocked = achievements.find(a => a.name === name)?.unlocked;
     if (!alreadyUnlocked) {
       setAchievements(prev => prev.map(a => a.name === name ? { ...a, unlocked: true } : a));
       showToast(`Achievement Unlocked!`, `You've earned: ${name}`, '🏆');
     }
-  };
+  }, [achievements, toast]);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
@@ -147,6 +171,7 @@ export default function HomePage() {
     showToast('Activity Logged!', `Great job logging '${newActivity.name}'!`, '📝');
     unlockAchievement('Mindful Logger');
     closeModal('addActivity');
+    closeModal('imageCheckin'); // Close image modal if it was used
   };
 
   const handleRecharge = (rechargeAmount: number, debtReduction: number) => {
@@ -212,41 +237,118 @@ export default function HomePage() {
       unlockAchievement('Community Member');
     }
   };
+  
+  const handleScheduleAction = (action: ActionableSuggestion) => {
+    if (!action) return;
 
-  const simulateCalendarSync = () => {
-    const newEvents: UpcomingEvent[] = [
-      { id: Date.now(), name: 'Team Presentation (Synced)', type: 'work', estimatedImpact: -30, date: 'Wednesday', time: '11:00 AM', emoji: '📊', conflictRisk: 'medium', bufferSuggested: 60 },
-      { id: Date.now() + 1, name: 'Dentist Appointment (Synced)', type: 'personal', estimatedImpact: -5, date: 'Thursday', time: '3:00 PM', emoji: '🦷', conflictRisk: 'low', bufferSuggested: 0 }
-    ];
-    setUpcomingEvents(prev => {
-        const existingNames = new Set(prev.map(e => e.name));
-        const uniqueNewEvents = newEvents.filter(e => !existingNames.has(e.name));
-        return [...prev, ...uniqueNewEvents];
-    });
+    const eventName = `(${action.type}) ${action.activityName}`;
+    
+    const newEvent: UpcomingEvent = {
+        id: Date.now(),
+        name: eventName,
+        type: 'personal',
+        estimatedImpact: action.impact,
+        date: 'Today',
+        time: 'In your schedule',
+        emoji: action.emoji,
+        conflictRisk: 'low',
+        bufferSuggested: 0
+    };
+    setUpcomingEvents(prev => [...prev, newEvent]);
     toast({
-        title: "Calendar Synced!",
-        description: "New events added to your schedule.",
+        title: "Action Scheduled!",
+        description: `We've added "${eventName}" to your smart schedule.`,
     });
+    setActionableSuggestion(null); // Clear the suggestion after scheduling
     unlockAchievement('Scheduler Supreme');
   };
 
-  const simulateHealthSync = () => {
-    const newHeartRate = Math.floor(Math.random() * (85 - 60 + 1)) + 60;
-    const newStressLevel = Math.floor(Math.random() * (50 - 20 + 1)) + 20;
-    const newSleepQuality = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
-    setBiometricData({ heartRate: newHeartRate, stressLevel: newStressLevel, sleepQuality: newSleepQuality });
-    toast({
-      title: "Health Data Updated!",
-      description: "Biometrics have been synced from your health provider.",
-    });
-    unlockAchievement('Bio-Scanner');
-  };
+  const simulateHealthSync = useCallback(async () => {
+    setIsReadinessLoading(true);
+    setReadinessReport(null);
+    try {
+        // Simulate more realistic data for demo
+        const newHeartRate = Math.floor(Math.random() * (85 - 60 + 1)) + 60;
+        const newStressLevel = Math.floor(Math.random() * (50 - 20 + 1)) + 20;
+        const newSleepQuality = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
+        const updatedBiometrics = { heartRate: newHeartRate, stressLevel: newStressLevel, sleepQuality: newSleepQuality };
+        setBiometricData(updatedBiometrics);
+        
+        const recentActivities = activities.slice(0, 3);
+        const report = await getReadinessScore({ biometrics: updatedBiometrics, recentActivities });
+        setReadinessReport(report);
+        
+        toast({
+            title: "Health Readiness Synced!",
+            description: "We've analyzed your latest data to generate a readiness score.",
+        });
+        unlockAchievement('Bio-Scanner');
+    } catch (error) {
+        console.error("Failed to get readiness score:", error);
+        toast({
+            title: "Sync Failed",
+            description: "Could not get readiness score at this time.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsReadinessLoading(false);
+    }
+  }, [activities, unlockAchievement, toast]);
+
+  const handleShowDebrief = useCallback(async () => {
+    openModal('dailyDebrief');
+    setIsStoryLoading(true);
+    try {
+        const yesterday = startOfDay(subDays(new Date(), 1));
+        const yesterdayActivities = activities.filter(a => startOfDay(new Date(a.date)).getTime() === yesterday.getTime());
+
+        if (yesterdayActivities.length === 0) {
+            setEnergyStory("You didn't log any activities yesterday. Log some today to get your story tomorrow!");
+            return;
+        }
+
+        const result = await getEnergyStory({ activities: yesterdayActivities });
+        setEnergyStory(result.story);
+        unlockAchievement('Storyteller');
+    } catch (error) {
+        console.error("Failed to get energy story:", error);
+        setEnergyStory("Could not generate your energy story at this time.");
+    } finally {
+        setIsStoryLoading(false);
+    }
+  }, [activities, unlockAchievement]);
+  
+  const handleChatSubmit = useCallback(async (query: string) => {
+      const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: query }];
+      setChatHistory(newHistory);
+      setIsChatting(true);
+
+      try {
+          const result = await getProactiveSuggestion({ 
+              currentEnergy, 
+              upcomingEvents, 
+              recentActivities: activities.slice(0, 5),
+          });
+
+          setChatHistory(prev => [...prev, { role: 'model', content: result.suggestion }]);
+          unlockAchievement('Chatterbox');
+      } catch (error) {
+          console.error("Chat error:", error);
+          setChatHistory(prev => [...prev, { role: 'model', content: "Sorry, I'm having trouble connecting right now." }]);
+      } finally {
+          setIsChatting(false);
+      }
+  }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement]);
+
 
   const changeLocation = () => {
-    setLocationIndex((prevIndex) => (prevIndex + 1) % locations.length);
-    toast({
-        title: 'Location Changed',
-        description: `Your location is now set to ${locations[(locationIndex + 1) % locations.length]}.`,
+    setLocationIndex((prevIndex) => {
+        const newIndex = (prevIndex + 1) % locations.length;
+        toast({
+            title: 'Location Changed',
+            description: `Your location is now set to ${locations[newIndex]}. AI suggestions will adapt.`,
+        });
+        return newIndex;
     });
   };
   
@@ -290,18 +392,21 @@ export default function HomePage() {
               user={user}
               currentEnergy={currentEnergy}
               energyDebt={energyDebt}
-              biometricData={biometricData}
               upcomingEvents={upcomingEvents}
               communityMode={communityMode}
               setCommunityMode={toggleCommunityMode}
               getEnergyStatus={getEnergyStatus}
               copyToClipboard={copyToClipboard}
               openModal={openModal}
-              simulateCalendarSync={simulateCalendarSync}
               aiSuggestion={aiSuggestion}
+              actionableSuggestion={actionableSuggestion}
+              handleScheduleAction={handleScheduleAction}
               isSuggestionLoading={isSuggestionLoading}
               currentUserLocation={currentUserLocation}
               changeLocation={changeLocation}
+              readinessReport={readinessReport}
+              isReadinessLoading={isReadinessLoading}
+              onSyncHealth={simulateHealthSync}
             />
           )}
           {activeTab === "activities" && (
@@ -315,7 +420,6 @@ export default function HomePage() {
               currentEnergy={currentEnergy}
               activities={activities}
               openModal={openModal}
-              simulateHealthSync={simulateHealthSync}
               goals={goals}
               challenges={challenges}
               onGoalComplete={handleGoalComplete}
@@ -326,6 +430,7 @@ export default function HomePage() {
               user={user}
               onLogout={handleLogout}
               onShowTutorial={handleShowTutorial}
+              onShowDebrief={handleShowDebrief}
             />
           )}
         </div>
@@ -334,7 +439,7 @@ export default function HomePage() {
         
         <RechargeModal
           open={modals.recharge}
-          onOpenChange={(isOpen) => setModals(m => ({ ...m, recharge: isOpen }))}
+          onOpenChange={(isOpen) => closeModal('recharge')}
           handleRecharge={handleRecharge}
           activities={activities}
           currentEnergy={currentEnergy}
@@ -359,6 +464,24 @@ export default function HomePage() {
             open={showTutorial}
             onOpenChange={setShowTutorial}
             onComplete={handleTutorialComplete}
+        />
+        <DailyDebriefModal
+          open={modals.dailyDebrief}
+          onOpenChange={(isOpen) => closeModal('dailyDebrief')}
+          story={energyStory}
+          loading={isStoryLoading}
+        />
+        <ChatCoachModal
+            open={modals.chatCoach}
+            onOpenChange={(isOpen) => closeModal('chatCoach')}
+            chatHistory={chatHistory}
+            isThinking={isChatting}
+            onSendMessage={handleChatSubmit}
+        />
+        <ImageCheckinModal
+            open={modals.imageCheckin}
+            onOpenChange={(isOpen) => closeModal('imageCheckin')}
+            onLogActivity={handleLogActivity}
         />
       </div>
     </main>

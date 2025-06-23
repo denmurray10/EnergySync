@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Volume2, Mic } from "lucide-react";
 import { analyzeCheckin, AnalyzeCheckinOutput } from "@/ai/flows/analyze-checkin-flow";
+import { textToSpeech } from "@/ai/flows/text-to-speech-flow";
 import { useToast } from "@/hooks/use-toast";
-
 
 type VoiceCheckinModalProps = {
   open: boolean;
@@ -30,7 +30,17 @@ export function VoiceCheckinModal({
   const { toast } = useToast();
   const [text, setText] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<AnalyzeCheckinOutput | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
+  const resetState = () => {
+      setText('');
+      setIsAnalyzing(false);
+      setIsSpeaking(false);
+      setAnalysisResult(null);
+  };
+  
   const handleAnalyze = async () => {
     if (!text.trim()) {
       toast({
@@ -42,10 +52,19 @@ export function VoiceCheckinModal({
     }
     
     setIsAnalyzing(true);
+    setAnalysisResult(null);
     try {
       const result = await analyzeCheckin({ checkInText: text });
-      onCheckinComplete(result);
-      setText(""); // Clear text on success
+      setAnalysisResult(result);
+      
+      const { media } = await textToSpeech(result.responseForSpeech);
+      
+      if (audioRef.current) {
+        audioRef.current.src = media;
+        audioRef.current.play();
+        setIsSpeaking(true);
+      }
+
     } catch (e) {
       console.error("Failed to analyze check-in:", e);
       toast({
@@ -53,61 +72,77 @@ export function VoiceCheckinModal({
         description: "Sorry, we couldn't analyze your message right now. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsAnalyzing(false);
     }
   };
+  
+  const handleAudioEnded = () => {
+      setIsSpeaking(false);
+      setIsAnalyzing(false);
+  };
 
+  const handleConfirm = () => {
+    if (analysisResult) {
+      onCheckinComplete(analysisResult);
+    }
+    resetState();
+  };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
-        setText('');
-        setIsAnalyzing(false);
+        resetState();
       }
       onOpenChange(isOpen);
     }}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
-        <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <DialogHeader className="text-center items-center">
+            <div className="p-3 rounded-full bg-primary/10 mb-2">
+                <Mic className="w-8 h-8 text-primary"/>
+            </div>
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
             AI Voice Check-in
           </DialogTitle>
           <DialogDescription>
-            Tell me how you're feeling, and I'll log your energy.
-            <br/>
-            e.g., "I'm feeling great!" or "I'm exhausted."
+            Tell me how you're feeling, and I'll log your energy and respond.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
             <Textarea
-                placeholder="Type or speak how you feel..."
+                placeholder="e.g., I'm feeling great after a good night's sleep!"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={4}
                 disabled={isAnalyzing}
             />
+            <audio ref={audioRef} onEnded={handleAudioEnded} className="hidden" />
         </div>
+        
+        {analysisResult && !isAnalyzing && (
+            <div className="p-4 bg-muted rounded-lg text-center">
+                <p className="font-semibold">"{analysisResult.summary}"</p>
+                <p className="text-sm text-primary font-bold mt-2">Energy Impact: {analysisResult.energyImpact > 0 ? '+' : ''}{analysisResult.energyImpact}%</p>
+            </div>
+        )}
+
         <DialogFooter className="gap-2">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="w-full"
-            disabled={isAnalyzing}
-          >
-            Cancel
-          </Button>
-           <Button
-            onClick={handleAnalyze}
-            className="w-full"
-            disabled={isAnalyzing}
-          >
-            {isAnalyzing ? (
+            {!analysisResult ? (
                 <>
-                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                 Analyzing...
+                    <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full" disabled={isAnalyzing}>Cancel</Button>
+                    <Button onClick={handleAnalyze} className="w-full" disabled={isAnalyzing || !text.trim()}>
+                        {isAnalyzing ? <><LoaderCircle className="mr-2 h-4 w-4 animate-spin" />Analyzing...</> : "Analyze My Mood"}
+                    </Button>
                 </>
-            ) : "Log My Energy"}
-          </Button>
+            ) : (
+                <>
+                    <Button variant="outline" onClick={handleAnalyze} className="w-full" disabled={isAnalyzing}>
+                        <Volume2 className="mr-2 h-4 w-4" /> Replay
+                    </Button>
+                    <Button onClick={handleConfirm} className="w-full" disabled={isAnalyzing}>
+                        Confirm & Log
+                    </Button>
+                </>
+            )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

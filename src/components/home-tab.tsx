@@ -1,41 +1,44 @@
 "use client";
 
-import type { BiometricData, UpcomingEvent, User } from "@/lib/types";
+import type { UpcomingEvent, User, ActionableSuggestion, ReadinessReport } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { EnergyAssistantCard } from "./energy-assistant-card";
+import { ReadinessCard } from "./readiness-card";
 import {
   Users,
   Share2,
   Hourglass,
-  Heart,
-  Moon,
-  Wind,
   Zap,
   Mic,
   Calendar,
   BrainCircuit,
   Globe,
+  CalendarPlus,
 } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
 
 type HomeTabProps = {
   user: User | null;
   currentEnergy: number;
   energyDebt: number;
-  biometricData: BiometricData;
   upcomingEvents: UpcomingEvent[];
   communityMode: boolean;
   setCommunityMode: (value: boolean) => void;
   getEnergyStatus: (energy: number) => string;
   copyToClipboard: (text: string) => void;
   openModal: (modalName: string) => void;
-  simulateCalendarSync: () => void;
   aiSuggestion: string | null;
+  actionableSuggestion: ActionableSuggestion | null;
+  handleScheduleAction: (action: ActionableSuggestion) => void;
   isSuggestionLoading: boolean;
   currentUserLocation: string;
   changeLocation: () => void;
+  readinessReport: ReadinessReport | null;
+  isReadinessLoading: boolean;
+  onSyncHealth: () => void;
 };
 
 const getEnergyColour = (energy: number) => {
@@ -58,18 +61,21 @@ export function HomeTab({
   user,
   currentEnergy,
   energyDebt,
-  biometricData,
   upcomingEvents,
   communityMode,
   setCommunityMode,
   getEnergyStatus,
   copyToClipboard,
   openModal,
-  simulateCalendarSync,
   aiSuggestion,
+  actionableSuggestion,
+  handleScheduleAction,
   isSuggestionLoading,
   currentUserLocation,
-  changeLocation
+  changeLocation,
+  readinessReport,
+  isReadinessLoading,
+  onSyncHealth,
 }: HomeTabProps) {
   return (
     <div className="space-y-6">
@@ -146,10 +152,16 @@ export function HomeTab({
             AI Energy Coach
           </CardTitle>
         </CardHeader>
-        <CardContent className="!p-4">
-            <EnergyAssistantCard suggestion={aiSuggestion} loading={isSuggestionLoading} />
+        <CardContent className="!pt-0 !p-4">
+            <EnergyAssistantCard onClick={() => openModal('chatCoach')} />
         </CardContent>
       </Card>
+      
+      <ReadinessCard
+        report={readinessReport}
+        loading={isReadinessLoading}
+        onSync={onSyncHealth}
+      />
 
       <Card className="bg-card/80 backdrop-blur-sm text-center">
         <CardContent className="p-6">
@@ -172,53 +184,54 @@ export function HomeTab({
               </span>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-4 mb-2">
-            <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-3 border border-red-100 text-center">
-              <Heart className="text-red-500 mb-1 mx-auto" />
-              <p className="text-xs text-red-700 font-medium">
-                {biometricData.heartRate} BPM
-              </p>
+          
+           <div className="grid grid-cols-2 gap-4">
+            <Button
+                onClick={() => openModal("recharge")}
+                className="group h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
+            >
+                <Zap className="w-5 h-5 mr-2" />
+                <span className="font-semibold">Start Recharge</span>
+            </Button>
+            <Button
+                onClick={() => openModal("voiceCheckIn")}
+                className="group h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
+            >
+                <Mic className="w-5 h-5 mr-2" />
+                <span className="font-semibold">Voice Check-in</span>
+            </Button>
             </div>
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-3 border border-blue-100 text-center">
-              <Moon className="text-blue-500 mb-1 mx-auto" />
-              <p className="text-xs text-blue-700 font-medium">
-                {biometricData.sleepQuality}% Sleep
-              </p>
-            </div>
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 border border-green-100 text-center">
-              <Wind className="text-green-500 mb-1 mx-auto" />
-              <p className="text-xs text-green-700 font-medium">
-                {biometricData.stressLevel}% Stress
-              </p>
-            </div>
-          </div>
+
         </CardContent>
       </Card>
-
-      <Card className="bg-card/80 backdrop-blur-sm">
+      
+       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
             <Zap className="text-yellow-500 mr-3" />
-            Smart Actions
+            Proactive Suggestion
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-          <Button
-            onClick={() => openModal("recharge")}
-            className="group flex flex-col items-center h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-6"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 mb-3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            <span className="font-semibold">Start Recharge</span>
-          </Button>
-          <Button
-            onClick={() => openModal("voiceCheckIn")}
-            className="group flex flex-col items-center h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-6"
-          >
-            <Mic className="w-6 h-6 mb-3" />
-            <span className="font-semibold">Voice Check-in</span>
-          </Button>
+        <CardContent>
+            {isSuggestionLoading ? (
+                 <div className="space-y-2">
+                    <Skeleton className="h-4 w-4/5" />
+                    <Skeleton className="h-4 w-2/3" />
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground mb-4">
+                    {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
+                </p>
+            )}
+            {actionableSuggestion && (
+                <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
+                    <CalendarPlus className="mr-2 h-4 w-4" />
+                    Add "{actionableSuggestion.activityName}" to Schedule
+                </Button>
+            )}
         </CardContent>
       </Card>
+
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -235,14 +248,6 @@ export function HomeTab({
                 >
                     <Globe className="mr-1.5 h-4 w-4" />
                     {currentUserLocation}
-                </Button>
-                <Button
-                    onClick={simulateCalendarSync}
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-3 py-1 rounded-full hover:bg-indigo-200"
-                >
-                    Sync
                 </Button>
             </div>
         </CardHeader>

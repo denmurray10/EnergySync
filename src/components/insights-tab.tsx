@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Trophy, BrainCircuit, Users, Link as LinkIcon, LineChart, Target, Star, Users2 } from "lucide-react";
+import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, HeartPulse } from "lucide-react";
 import { WeeklyEnergyChart } from "./weekly-energy-chart";
 
 type InsightsTabProps = {
@@ -16,7 +16,6 @@ type InsightsTabProps = {
   currentEnergy: number;
   activities: Activity[];
   openModal: (modalName: string) => void;
-  simulateHealthSync: () => void;
   goals: Goal[];
   challenges: Challenge[];
   onGoalComplete: (goalId: number) => void;
@@ -29,7 +28,6 @@ export function InsightsTab({
   currentEnergy,
   activities,
   openModal,
-  simulateHealthSync,
   goals,
   challenges,
   onGoalComplete
@@ -198,22 +196,16 @@ export function InsightsTab({
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
-            <LinkIcon className="text-gray-500 mr-3" /> Integrations
+            <BarChart2 className="text-gray-500 mr-3" /> Reports
           </CardTitle>
         </CardHeader>
         <CardContent className="flex justify-around">
-          <Button
-            onClick={simulateHealthSync}
-            className="text-sm bg-red-100 text-red-700 font-semibold px-4 py-2 rounded-full hover:bg-red-200"
-            variant="ghost"
-          >
-            Sync Health Data
-          </Button>
           <Button
             onClick={() => openModal("weeklyReport")}
             className="text-sm bg-blue-100 text-blue-700 font-semibold px-4 py-2 rounded-full hover:bg-blue-200"
             variant="ghost"
           >
+            <FileText className="mr-2 h-4 w-4" />
             Weekly Report
           </Button>
         </CardContent>

@@ -4,15 +4,16 @@ import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Film, Star } from "lucide-react";
+import { LogOut, Film, Star, BookOpen } from "lucide-react";
 
 type ProfileTabProps = {
   user: User | null;
   onLogout: () => void;
   onShowTutorial: () => void;
+  onShowDebrief: () => void;
 };
 
-export function ProfileTab({ user, onLogout, onShowTutorial }: ProfileTabProps) {
+export function ProfileTab({ user, onLogout, onShowTutorial, onShowDebrief }: ProfileTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center space-y-4 pt-4">
@@ -40,12 +41,16 @@ export function ProfileTab({ user, onLogout, onShowTutorial }: ProfileTabProps) 
       
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
-            <CardTitle>Settings</CardTitle>
+            <CardTitle>Settings & Reports</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
              <Button onClick={onShowTutorial} variant="outline" className="w-full justify-start">
                 <Film className="mr-2 h-4 w-4" />
                 Re-watch Tutorial
+            </Button>
+            <Button onClick={onShowDebrief} variant="outline" className="w-full justify-start">
+                <BookOpen className="mr-2 h-4 w-4" />
+                Yesterday's Debrief
             </Button>
             <Button onClick={onLogout} variant="destructive" className="w-full justify-start">
                 <LogOut className="mr-2 h-4 w-4" />

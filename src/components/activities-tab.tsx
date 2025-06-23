@@ -3,7 +3,7 @@
 import type { Activity } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Camera } from "lucide-react";
 
 type ActivitiesTabProps = {
   activities: Activity[];
@@ -17,10 +17,16 @@ export function ActivitiesTab({ activities, openModal }: ActivitiesTabProps) {
         <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           Activity History
         </h2>
-        <Button onClick={() => openModal('addActivity')} size="icon" variant="ghost" className="text-primary">
-            <PlusCircle className="h-8 w-8"/>
-            <span className="sr-only">Log Activity</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button onClick={() => openModal('imageCheckin')} size="icon" variant="ghost" className="text-primary">
+                <Camera className="h-7 w-7"/>
+                <span className="sr-only">Visual Check-in</span>
+            </Button>
+            <Button onClick={() => openModal('addActivity')} size="icon" variant="ghost" className="text-primary">
+                <PlusCircle className="h-8 w-8"/>
+                <span className="sr-only">Log Activity</span>
+            </Button>
+        </div>
       </div>
       <div className="space-y-4">
         {activities.map((activity) => (

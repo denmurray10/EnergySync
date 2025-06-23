@@ -14,6 +14,7 @@ import { z } from 'genkit';
 const ProactiveSuggestionInputSchema = z.object({
     currentEnergy: z.number().describe("The user's current energy level (0-100)."),
     upcomingEvents: z.array(z.object({
+        id: z.number(),
         name: z.string(),
         type: z.string(),
         estimatedImpact: z.number(),
@@ -30,6 +31,14 @@ export type ProactiveSuggestionInput = z.infer<typeof ProactiveSuggestionInputSc
 
 const ProactiveSuggestionOutputSchema = z.object({
     suggestion: z.string().describe("A single, short, actionable suggestion for the user to manage their energy. Should be friendly and encouraging. Should start with a relevant emoji."),
+    action: z.object({
+        type: z.enum(['ritual', 'buffer']).describe("The type of action: 'ritual' for before an event, 'buffer' for after."),
+        eventId: z.number().describe("The ID of the event this action is related to."),
+        activityName: z.string().describe("The suggested name for the ritual or buffer activity."),
+        duration: z.number().describe("The suggested duration in minutes for the activity."),
+        impact: z.number().describe("The expected energy impact of the activity."),
+        emoji: z.string().describe("A relevant emoji for the activity."),
+    }).optional().describe("An optional, structured action the user can take, like scheduling a buffer time after a draining event."),
 });
 export type ProactiveSuggestionOutput = z.infer<typeof ProactiveSuggestionOutputSchema>;
 
@@ -48,7 +57,10 @@ const prompt = ai.definePrompt({
     Based on this context, generate one proactive suggestion.
 
     - If their energy is low and they have a draining event coming up, suggest a quick recharge activity.
-    - If they have a high-impact event soon, suggest a buffer or preparation.
+    - If they have a high-impact event soon, you can suggest scheduling a preparatory 'ritual' (a short recharge before) or a recovery 'buffer' (a short recharge after).
+      - A 'ritual' example: For a "Job Interview", suggest a 10-minute "Deep Breathing" ritual.
+      - A 'buffer' example: For a "Team Presentation", suggest a 20-minute "Relaxing Walk" buffer.
+      - If you suggest a ritual or buffer, populate the 'action' object in the output.
     - If they've had many draining activities recently, recommend a break.
     - If their energy is high, give them an encouraging message.
     - If their location is provided, try to make the suggestion relevant to it. For example, if they are at a 'Park', suggest a walk. If at 'Home', suggest a home-based activity.
@@ -59,7 +71,7 @@ const prompt = ai.definePrompt({
     {{#if currentUserLocation}}
     - Current Location: {{{currentUserLocation}}}
     {{/if}}
-    - Upcoming Events: {{#each upcomingEvents}}'{{name}}' (Impact: {{estimatedImpact}}), {{/each}}
+    - Upcoming Events: {{#each upcomingEvents}}'{{name}}' (ID: {{id}}, Impact: {{estimatedImpact}}), {{/each}}
     - Recent Activities: {{#each recentActivities}}'{{name}}' (Impact: {{impact}}), {{/each}}
     `
 });

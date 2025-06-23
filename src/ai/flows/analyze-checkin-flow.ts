@@ -18,7 +18,8 @@ export type AnalyzeCheckinInput = z.infer<typeof AnalyzeCheckinInputSchema>;
 
 const AnalyzeCheckinOutputSchema = z.object({
     energyImpact: z.number().min(-50).max(50).describe("The estimated energy impact, from -50 (very draining) to +50 (very recharging), based on the text's sentiment."),
-    summary: z.string().describe("A short, encouraging summary acknowledging the user's feeling. e.g., 'Sounds like you had a tough meeting.'"),
+    summary: z.string().describe("A short, empathetic, one-sentence summary acknowledging the user's feeling. e.g., 'Sounds like you had a tough meeting.' or 'It's wonderful that you're feeling so great!'"),
+    responseForSpeech: z.string().describe("A slightly more conversational version of the summary, suitable for text-to-speech. Should be friendly and encouraging."),
 });
 export type AnalyzeCheckinOutput = z.infer<typeof AnalyzeCheckinOutputSchema>;
 
@@ -40,6 +41,7 @@ const prompt = ai.definePrompt({
     - Very negative (e.g., "I'm totally exhausted."): -20 to -40
 
     Then, write a short, one-sentence summary that acknowledges their feeling in a supportive tone.
+    Finally, create a slightly more conversational version of the summary that can be spoken back to the user via text-to-speech.
 
     User's check-in: "{{{checkInText}}}"
     `

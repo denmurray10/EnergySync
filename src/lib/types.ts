@@ -56,3 +56,23 @@ export interface Challenge {
   participants: number;
   daysLeft: number;
 }
+
+export interface ReadinessReport {
+    score: number;
+    title: string;
+    summary: string;
+}
+
+export interface ChatMessage {
+    role: 'user' | 'model';
+    content: string;
+}
+
+export interface ActionableSuggestion {
+    type: 'ritual' | 'buffer';
+    eventId: number;
+    activityName: string;
+    duration: number;
+    impact: number;
+    emoji: string;
+}

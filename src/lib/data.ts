@@ -48,6 +48,9 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 6, name: 'Bio-Scanner', unlocked: false, icon: '❤️' },
     { id: 7, name: 'Community Member', unlocked: false, icon: '🤝' },
     { id: 8, name: 'Goal Getter', unlocked: false, icon: '🎯' },
+    { id: 9, name: 'Storyteller', unlocked: false, icon: '📖' },
+    { id: 10, name: 'Chatterbox', unlocked: false, icon: '💬' },
+    { id: 11, name: 'Pixel Perfect', unlocked: false, icon: '📸' },
 ];
 
 export const INITIAL_GOALS: Goal[] = [
