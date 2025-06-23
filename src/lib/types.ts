@@ -1,3 +1,4 @@
+
 export interface Activity {
   id: number;
   name: string;
@@ -38,9 +39,11 @@ export interface BiometricData {
 
 export interface PetCustomization {
   color: string;
+  outlineColor: string;
   accessory: 'none' | 'bowtie';
   background: 'default' | 'park' | 'cozy';
   unlockedColors: string[];
+  unlockedOutlineColors: string[];
   unlockedAccessories: string[];
   unlockedBackgrounds: string[];
 }

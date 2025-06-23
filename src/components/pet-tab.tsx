@@ -60,10 +60,10 @@ const PetFace = ({ happiness }: { happiness: number }) => {
     return <g>{face}</g>;
 };
 
-const PetBody = ({ type, color }: { type: PetType, color: string }) => {
+const PetBody = ({ type, color, outlineColor }: { type: PetType, color: string, outlineColor: string }) => {
     const bodyProps = {
         fill: color,
-        stroke: "hsl(var(--primary))",
+        stroke: outlineColor,
         strokeWidth: "3",
         strokeLinejoin: "round" as const
     };
@@ -146,7 +146,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
                 )}
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                     <g className="animate-breathe">
-                        <PetBody type={petType} color={customization.color} />
+                        <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
                         {(petType === 'cat' || petType === 'dog') && (
                           <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
                               <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
@@ -158,7 +158,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
                         {customization.accessory === 'bowtie' && (
                              <path
                                 d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
-                                fill="hsl(var(--destructive))" stroke="hsl(var(--primary))" strokeWidth="1.5" strokeLinejoin="round" />
+                                fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
                         )}
                     </g>
                 </svg>
@@ -213,9 +213,9 @@ export function PetTab({
         if (suggestionType === 0) {
         return `I think doing "${uncompletedTask.name}" would be great!`;
         } else if (suggestionType === 1) {
-        return `What do you say we do "${uncompletedTask.name}"?`;
+        return `Hey, what do you say we do "${uncompletedTask.name}"?`;
         } else {
-        return `Hey, let's tackle "${uncompletedTask.name}"!`;
+        return `I bet we'd both feel better if we completed "${uncompletedTask.name}"!`;
         }
     }, [shouldShowSuggestion, uncompletedTask]);
 

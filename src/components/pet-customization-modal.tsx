@@ -16,8 +16,8 @@ type PetCustomizationModalProps = {
   onOpenChange: (open: boolean) => void;
   customization: PetCustomization;
   interactions: number;
-  onPurchase: (category: 'color' | 'accessory' | 'background', item: string, cost: number) => void;
-  onEquip: (category: 'color' | 'accessory' | 'background', item: string) => void;
+  onPurchase: (category: 'color' | 'accessory' | 'background' | 'outline', item: string, cost: number) => void;
+  onEquip: (category: 'color' | 'accessory' | 'background' | 'outline', item: string) => void;
 };
 
 const customizationOptions = {
@@ -27,6 +27,12 @@ const customizationOptions = {
         { name: 'Sky', value: '#38bdf8', cost: 20 },
         { name: 'Emerald', value: '#34d399', cost: 25 },
         { name: 'Rose', value: '#f43f5e', cost: 25 },
+    ],
+    outlines: [
+        { name: 'Primary', value: '#4c51bf', cost: 0 },
+        { name: 'Slate', value: '#475569', cost: 15 },
+        { name: 'Gold', value: '#facc15', cost: 30 },
+        { name: 'Hot Pink', value: '#ec4899', cost: 30 },
     ],
     accessories: [
         { name: 'None', value: 'none', cost: 0 },
@@ -41,13 +47,13 @@ const customizationOptions = {
 
 export function PetCustomizationModal({ open, onOpenChange, customization, interactions, onPurchase, onEquip }: PetCustomizationModalProps) {
 
-  const renderItem = (category: 'color' | 'accessory' | 'background', item: any) => {
+  const renderItem = (category: 'color' | 'accessory' | 'background' | 'outline', item: any) => {
     const isUnlocked = (customization?.[`unlocked${category.charAt(0).toUpperCase() + category.slice(1)}s` as keyof PetCustomization] ?? []).includes(item.value);
     const isEquipped = customization?.[category] === item.value;
     const canAfford = interactions >= item.cost;
     
     let display: React.ReactNode;
-    if (category === 'color') {
+    if (category === 'color' || category === 'outline') {
         display = <div className="w-10 h-10 rounded-full border" style={{ backgroundColor: item.value }} />;
     } else {
         display = <div className="text-center p-2"><span className="text-sm font-medium">{item.name}</span></div>;
@@ -84,8 +90,9 @@ export function PetCustomizationModal({ open, onOpenChange, customization, inter
           <DialogDescription>Use your interactions to unlock new styles for your pet. You have <span className="font-bold text-primary">{interactions}</span> interactions.</DialogDescription>
         </DialogHeader>
         <Tabs defaultValue="colors" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="colors">Colors</TabsTrigger>
+            <TabsTrigger value="outlines">Outlines</TabsTrigger>
             <TabsTrigger value="accessories">Accessories</TabsTrigger>
             <TabsTrigger value="backgrounds">Backgrounds</TabsTrigger>
           </TabsList>
@@ -93,6 +100,11 @@ export function PetCustomizationModal({ open, onOpenChange, customization, inter
             <TabsContent value="colors">
               <div className="grid grid-cols-3 gap-2 p-1">
                 {customizationOptions.colors.map(item => renderItem('color', item))}
+              </div>
+            </TabsContent>
+            <TabsContent value="outlines">
+              <div className="grid grid-cols-3 gap-2 p-1">
+                {customizationOptions.outlines.map(item => renderItem('outline', item))}
               </div>
             </TabsContent>
             <TabsContent value="accessories">

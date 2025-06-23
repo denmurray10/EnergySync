@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -129,11 +130,13 @@ export default function HomePage() {
 
   useEffect(() => {
     // This effect initializes the default user state.
-    const defaultPetCustomization = {
+    const defaultPetCustomization: PetCustomization = {
         color: '#a8a29e',
+        outlineColor: '#4c51bf', // Default primary-like color
         accessory: 'none' as const,
         background: 'default' as const,
         unlockedColors: ['#a8a29e'],
+        unlockedOutlineColors: ['#4c51bf'],
         unlockedAccessories: ['none'],
         unlockedBackgrounds: ['default'],
     };
@@ -575,7 +578,7 @@ export default function HomePage() {
   };
 
   const handlePurchaseAndEquipItem = (
-    category: 'color' | 'accessory' | 'background', 
+    category: 'color' | 'accessory' | 'background' | 'outline', 
     item: string, 
     cost: number
   ) => {
@@ -592,6 +595,9 @@ export default function HomePage() {
     if (category === 'color') {
       updatedCustomization.unlockedColors.push(item);
       updatedCustomization.color = item;
+    } else if (category === 'outline') {
+      updatedCustomization.unlockedOutlineColors.push(item);
+      updatedCustomization.outlineColor = item;
     } else if (category === 'accessory') {
       updatedCustomization.unlockedAccessories.push(item);
       updatedCustomization.accessory = item as 'none' | 'bowtie';
@@ -606,12 +612,13 @@ export default function HomePage() {
   };
 
   const handleEquipItem = (
-    category: 'color' | 'accessory' | 'background', 
+    category: 'color' | 'accessory' | 'background' | 'outline', 
     item: string
   ) => {
     if (!user) return;
     const updatedCustomization = { ...user.petCustomization };
     if (category === 'color') updatedCustomization.color = item;
+    if (category === 'outline') updatedCustomization.outlineColor = item;
     if (category === 'accessory') updatedCustomization.accessory = item as 'none' | 'bowtie';
     if (category === 'background') updatedCustomization.background = item as 'default' | 'park' | 'cozy';
     saveUser({ ...user, petCustomization: updatedCustomization });
