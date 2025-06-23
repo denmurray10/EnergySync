@@ -244,31 +244,33 @@ export function HomeTab({
         </CardContent>
       </Card>
 
-      <ProFeatureWrapper isPro={isProMember}>
-         <Card className="bg-card/80 backdrop-blur-sm">
-            <CardHeader>
-                <CardTitle className="flex items-center text-xl">
-                    <TrendingUp className="text-cyan-500 mr-3" />
-                    Energy Forecast
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                {isForecastLoading ? (
-                    <div className="space-y-2">
-                        <Skeleton className="h-48 w-full" />
-                        <div className="flex justify-between">
-                            <Skeleton className="h-4 w-10" />
-                            <Skeleton className="h-4 w-10" />
-                            <Skeleton className="h-4 w-10" />
-                            <Skeleton className="h-4 w-10" />
-                        </div>
-                    </div>
-                ) : (
-                    <EnergyForecastChart data={energyForecast || []} />
-                )}
-            </CardContent>
-        </Card>
-      </ProFeatureWrapper>
+      {ageGroup === 'over14' && (
+        <ProFeatureWrapper isPro={isProMember}>
+          <Card className="bg-card/80 backdrop-blur-sm">
+              <CardHeader>
+                  <CardTitle className="flex items-center text-xl">
+                      <TrendingUp className="text-cyan-500 mr-3" />
+                      Energy Forecast
+                  </CardTitle>
+              </CardHeader>
+              <CardContent>
+                  {isForecastLoading ? (
+                      <div className="space-y-2">
+                          <Skeleton className="h-48 w-full" />
+                          <div className="flex justify-between">
+                              <Skeleton className="h-4 w-10" />
+                              <Skeleton className="h-4 w-10" />
+                              <Skeleton className="h-4 w-10" />
+                              <Skeleton className="h-4 w-10" />
+                          </div>
+                      </div>
+                  ) : (
+                      <EnergyForecastChart data={energyForecast || []} />
+                  )}
+              </CardContent>
+          </Card>
+        </ProFeatureWrapper>
+      )}
       
        {showPetFeatures && (
         <ProFeatureWrapper isPro={isProMember}>
@@ -388,3 +390,5 @@ export function HomeTab({
     </div>
   );
 }
+
+    
