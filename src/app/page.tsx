@@ -17,32 +17,6 @@ import { WeeklyReportModal } from "@/components/weekly-report-modal";
 import { AddActivityModal } from "@/components/add-activity-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
 import { TutorialModal } from "@/components/tutorial-modal";
-import {
-  Home,
-  ListChecks,
-  LineChart,
-  User as UserIcon,
-  Zap
-} from "lucide-react";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarInset,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-
-const navItems = [
-  { id: "home", icon: Home, label: "Home" },
-  { id: "activities", icon: ListChecks, label: "Activities" },
-  { id: "insights", icon: LineChart, label: "Insights" },
-  { id: "profile", icon: UserIcon, label: "Profile" },
-];
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
 
@@ -307,124 +281,86 @@ export default function HomePage() {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="shrink-0">
-                    <Zap className="h-6 w-6 text-primary" />
-                </Button>
-                <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">
-                    EnergySync
-                </h2>
-            </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  onClick={() => setActiveTab(item.id)}
-                  isActive={activeTab === item.id}
-                  tooltip={item.label}
-                  className="mx-6 justify-start group-data-[collapsible=icon]:mx-auto"
-                >
-                  <item.icon />
-                  <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
+    <main className="min-h-dvh bg-background">
+      <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative">
+        <div className="p-6 h-dvh overflow-y-auto pb-32 custom-scrollbar">
 
-      <SidebarInset>
-          <main className="min-h-dvh bg-background">
-            <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative md:max-w-none md:mx-0 md:shadow-none md:bg-transparent md:peer-data-[state=expanded]:[--sidebar-inset-margin-left:22rem] md:[--sidebar-inset-margin-left:3rem] transition-[margin-left] duration-300 ease-in-out">
-              <div className="p-6 h-dvh overflow-y-auto pb-32 custom-scrollbar md:pb-6">
-                 <div className="hidden md:flex items-center gap-4 mb-6">
-                    <SidebarTrigger />
-                    <h1 className="text-2xl font-semibold capitalize">{activeTab}</h1>
-                </div>
+          {activeTab === "home" && (
+            <HomeTab
+              user={user}
+              currentEnergy={currentEnergy}
+              energyDebt={energyDebt}
+              biometricData={biometricData}
+              upcomingEvents={upcomingEvents}
+              communityMode={communityMode}
+              setCommunityMode={toggleCommunityMode}
+              getEnergyStatus={getEnergyStatus}
+              copyToClipboard={copyToClipboard}
+              openModal={openModal}
+              simulateCalendarSync={simulateCalendarSync}
+              aiSuggestion={aiSuggestion}
+              isSuggestionLoading={isSuggestionLoading}
+              currentUserLocation={currentUserLocation}
+              changeLocation={changeLocation}
+            />
+          )}
+          {activeTab === "activities" && (
+            <ActivitiesTab activities={activities} openModal={openModal} />
+          )}
+          {activeTab === "insights" && (
+            <InsightsTab
+              dynamicInsights={dynamicInsights}
+              selfCareStreak={selfCareStreak}
+              achievements={achievements}
+              currentEnergy={currentEnergy}
+              activities={activities}
+              openModal={openModal}
+              simulateHealthSync={simulateHealthSync}
+              goals={goals}
+              challenges={challenges}
+              onGoalComplete={handleGoalComplete}
+            />
+          )}
+          {activeTab === "profile" && (
+            <ProfileTab
+              user={user}
+              onLogout={handleLogout}
+              onShowTutorial={handleShowTutorial}
+            />
+          )}
+        </div>
 
-                {activeTab === "home" && (
-                  <HomeTab
-                    user={user}
-                    currentEnergy={currentEnergy}
-                    energyDebt={energyDebt}
-                    biometricData={biometricData}
-                    upcomingEvents={upcomingEvents}
-                    communityMode={communityMode}
-                    setCommunityMode={toggleCommunityMode}
-                    getEnergyStatus={getEnergyStatus}
-                    copyToClipboard={copyToClipboard}
-                    openModal={openModal}
-                    simulateCalendarSync={simulateCalendarSync}
-                    aiSuggestion={aiSuggestion}
-                    isSuggestionLoading={isSuggestionLoading}
-                    currentUserLocation={currentUserLocation}
-                    changeLocation={changeLocation}
-                  />
-                )}
-                {activeTab === "activities" && (
-                  <ActivitiesTab activities={activities} openModal={openModal} />
-                )}
-                {activeTab === "insights" && (
-                  <InsightsTab
-                    dynamicInsights={dynamicInsights}
-                    selfCareStreak={selfCareStreak}
-                    achievements={achievements}
-                    currentEnergy={currentEnergy}
-                    activities={activities}
-                    openModal={openModal}
-                    simulateHealthSync={simulateHealthSync}
-                    goals={goals}
-                    challenges={challenges}
-                    onGoalComplete={handleGoalComplete}
-                  />
-                )}
-                {activeTab === "profile" && (
-                  <ProfileTab
-                    user={user}
-                    onLogout={handleLogout}
-                    onShowTutorial={handleShowTutorial}
-                  />
-                )}
-              </div>
-
-              <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
-              
-              <RechargeModal
-                open={modals.recharge}
-                onOpenChange={(isOpen) => setModals(m => ({ ...m, recharge: isOpen }))}
-                handleRecharge={handleRecharge}
-                activities={activities}
-                currentEnergy={currentEnergy}
-                onCustomRecharge={handleCustomRecharge}
-              />
-              <VoiceCheckinModal
-                  open={modals.voiceCheckIn}
-                  onOpenChange={(isOpen) => closeModal('voiceCheckIn')}
-                  onCheckinComplete={handleVoiceCheckinComplete}
-              />
-              <WeeklyReportModal
-                  open={modals.weeklyReport}
-                  onOpenChange={(isOpen) => closeModal('weeklyReport')}
-                  activities={activities}
-              />
-              <AddActivityModal
-                  open={modals.addActivity}
-                  onOpenChange={(isOpen) => closeModal('addActivity')}
-                  onLogActivity={handleLogActivity}
-              />
-              <TutorialModal
-                  open={showTutorial}
-                  onOpenChange={setShowTutorial}
-                  onComplete={handleTutorialComplete}
-              />
-            </div>
-          </main>
-      </SidebarInset>
-    </SidebarProvider>
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        
+        <RechargeModal
+          open={modals.recharge}
+          onOpenChange={(isOpen) => setModals(m => ({ ...m, recharge: isOpen }))}
+          handleRecharge={handleRecharge}
+          activities={activities}
+          currentEnergy={currentEnergy}
+          onCustomRecharge={handleCustomRecharge}
+        />
+        <VoiceCheckinModal
+            open={modals.voiceCheckIn}
+            onOpenChange={(isOpen) => closeModal('voiceCheckIn')}
+            onCheckinComplete={handleVoiceCheckinComplete}
+        />
+        <WeeklyReportModal
+            open={modals.weeklyReport}
+            onOpenChange={(isOpen) => closeModal('weeklyReport')}
+            activities={activities}
+        />
+        <AddActivityModal
+            open={modals.addActivity}
+            onOpenChange={(isOpen) => closeModal('addActivity')}
+            onLogActivity={handleLogActivity}
+        />
+        <TutorialModal
+            open={showTutorial}
+            onOpenChange={setShowTutorial}
+            onComplete={handleTutorialComplete}
+        />
+      </div>
+    </main>
   );
 }
