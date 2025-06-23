@@ -1,11 +1,12 @@
 
 "use client";
 
+import { useRef, ChangeEvent } from "react";
 import type { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint, Users } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -20,21 +21,51 @@ type ProfileTabProps = {
   onTierChange: (tier: 'free' | 'pro') => void;
   onTogglePet: (enabled: boolean) => void;
   onAgeGroupChange: (group: 'under14' | 'over14') => void;
+  onUpdateUser: (updatedData: Partial<User>) => void;
 };
 
-export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange }: ProfileTabProps) {
-  
+export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser }: ProfileTabProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUri = e.target?.result as string;
+        onUpdateUser({ avatar: dataUri });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (!user) return null;
 
   return (
     <div className="space-y-6">
+       <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="image/*"
+          className="hidden"
+        />
       <div className="flex flex-col items-center space-y-4 pt-4">
-        <Avatar className="h-24 w-24 border-4 border-primary">
-          <AvatarImage src="https://placehold.co/100x100.png" data-ai-hint="profile picture" />
-          <AvatarFallback className="text-4xl bg-muted">
-            {user.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative group">
+            <Avatar className="h-24 w-24 border-4 border-primary">
+                <AvatarImage src={user.avatar || 'https://placehold.co/100x100.png'} data-ai-hint="profile picture" />
+                <AvatarFallback className="text-4xl bg-muted">
+                {user.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+            </Avatar>
+            <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                aria-label="Upload profile picture"
+            >
+                <Camera className="h-8 w-8 text-white" />
+            </button>
+        </div>
         <h2 className="text-3xl font-bold">{user.name}</h2>
         {user.petEnabled && (
             <p className="font-semibold text-muted-foreground -mt-2">Pet Level: {user.petLevel}</p>

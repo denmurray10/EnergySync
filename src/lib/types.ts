@@ -51,6 +51,7 @@ export interface PetCustomization {
 
 export interface User {
   name: string;
+  avatar?: string;
   membershipTier: 'free' | 'pro';
   petCustomization: PetCustomization;
   petLevel: number;

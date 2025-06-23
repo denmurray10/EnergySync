@@ -50,6 +50,7 @@ const defaultPetCustomization: PetCustomization = {
 
 const initialUser: User = {
     name: 'Alex',
+    avatar: 'https://placehold.co/100x100.png',
     membershipTier: 'free',
     petCustomization: defaultPetCustomization,
     petLevel: 1,
@@ -304,6 +305,10 @@ export default function HomePage() {
 
   const handleShowTutorial = () => {
     setShowTutorial(true);
+  };
+  
+  const handleUpdateUser = (updatedData: Partial<User>) => {
+    setAppUser(prev => ({ ...prev, ...updatedData }));
   };
 
   const showToast = (title: string, description: string, icon: string = '✨') => {
@@ -772,6 +777,7 @@ export default function HomePage() {
               onTierChange={handleTierChange}
               onTogglePet={handleTogglePet}
               onAgeGroupChange={handleAgeGroupChange}
+              onUpdateUser={handleUpdateUser}
             />
           )}
         </div>
