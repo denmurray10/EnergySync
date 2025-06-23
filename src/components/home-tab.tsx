@@ -189,14 +189,16 @@ export function HomeTab({
         </ProFeatureWrapper>
        )}
       
-      <ProFeatureWrapper isPro={isProMember}>
-        <ReadinessCard
-          report={readinessReport}
-          loading={isReadinessLoading}
-          onSync={onSyncHealth}
-          isProMember={isProMember}
-        />
-      </ProFeatureWrapper>
+      {ageGroup === 'over14' && (
+        <ProFeatureWrapper isPro={isProMember}>
+          <ReadinessCard
+            report={readinessReport}
+            loading={isReadinessLoading}
+            onSync={onSyncHealth}
+            isProMember={isProMember}
+          />
+        </ProFeatureWrapper>
+      )}
 
       <Card className="bg-card/80 backdrop-blur-sm text-center">
         <CardContent className="p-6">
