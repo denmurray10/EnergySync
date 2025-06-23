@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Check, Lock, Gem } from "lucide-react";
+import { Check, Lock, PawPrint } from "lucide-react";
 import { cn } from '@/lib/utils';
 
 type PetCustomizationModalProps = {
@@ -66,7 +66,7 @@ export function PetCustomizationModal({ open, onOpenChange, customization, inter
             ) : (
                 <Button onClick={() => onPurchase(category, item.value, item.cost)} disabled={!canAfford} size="sm" className="w-full">
                     {!canAfford && <Lock className="mr-2 h-4 w-4"/>}
-                    <Gem className="mr-2 h-4 w-4"/>
+                    <PawPrint className="mr-2 h-4 w-4"/>
                     {item.cost}
                 </Button>
             )}
