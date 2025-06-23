@@ -49,6 +49,8 @@ export interface User {
   name: string;
   membershipTier: 'free' | 'pro';
   petCustomization: PetCustomization;
+  petLevel: number;
+  petExp: number;
 }
 
 export interface Goal {

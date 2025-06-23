@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { PawPrint, Heart, Utensils, Bed, ShowerHead, Paintbrush } from "lucide-react";
+import { PawPrint, Utensils, Bed, ShowerHead, Paintbrush, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // A component to render the animated, interactive pet
-const VirtualPet = ({ happiness, isInteracting, customization }: { happiness: number; isInteracting: boolean, customization: PetCustomization }) => {
+const VirtualPet = ({ happiness, isInteracting, customization, level }: { happiness: number; isInteracting: boolean, customization: PetCustomization, level: number }) => {
     const getFace = () => {
         const strokeColor = "hsl(var(--foreground))";
         if (happiness >= 80) { // Ecstatic, happy eyes and wide smile
@@ -48,11 +48,11 @@ const VirtualPet = ({ happiness, isInteracting, customization }: { happiness: nu
     };
 
     const getHappinessText = () => {
-        if (happiness >= 80) return "Feeling ecstatic!";
-        if (happiness >= 60) return "Very happy!";
-        if (happiness >= 40) return "Doing okay.";
-        if (happiness >= 20) return "A little sad...";
-        return "Needs some love!";
+        if (happiness >= 80) return "Feeling ecstatic because you are!";
+        if (happiness >= 60) return "Feeling great, just like you!";
+        if (happiness >= 40) return "Feeling a bit sluggish...";
+        if (happiness >= 20) return "Needs an energy boost...";
+        return "Feeling drained, needs a recharge!";
     }
 
     const backgroundClass = {
@@ -60,11 +60,13 @@ const VirtualPet = ({ happiness, isInteracting, customization }: { happiness: nu
         park: 'bg-green-100',
         cozy: 'bg-amber-100'
     }[customization.background] || 'bg-card';
+    
+    const scale = 1 + (level - 1) * 0.05;
 
 
     return (
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
-             <div className={cn("relative w-48 h-48 mx-auto", isInteracting && "animate-jump")}>
+             <div className={cn("relative w-48 h-48 mx-auto transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                     <g className="animate-breathe">
                         {/* Cat Body */}
@@ -120,30 +122,16 @@ const VirtualPet = ({ happiness, isInteracting, customization }: { happiness: nu
     );
 };
 
-const StatBar = ({ label, value, icon, colorClass }: { label: string; value: number; icon: React.ReactNode; colorClass: string }) => (
-    <div className="space-y-1">
-        <div className="flex justify-between items-center text-sm font-medium">
-            <span className="flex items-center">{icon} <span className="ml-2">{label}</span></span>
-            <span>{Math.round(value)}%</span>
-        </div>
-        <Progress value={value} indicatorClassName={colorClass} />
-    </div>
-);
-
-
 type PetTabProps = {
   tasks: PetTask[];
   onTaskComplete: (taskId: number) => void;
   interactions: number;
   petHappiness: number;
-  petHunger: number;
-  petEnergy: number;
-  petHygiene: number;
-  onFeedPet: () => void;
-  onSleepPet: () => void;
-  onToiletPet: () => void;
+  onPetInteraction: (toast: {title: string, description: string}) => void;
   customization: PetCustomization;
   openCustomization: () => void;
+  level: number;
+  exp: number;
 };
 
 export function PetTab({ 
@@ -151,20 +139,19 @@ export function PetTab({
     onTaskComplete, 
     interactions, 
     petHappiness,
-    petHunger,
-    petEnergy,
-    petHygiene,
-    onFeedPet,
-    onSleepPet,
-    onToiletPet,
+    onPetInteraction,
     customization,
     openCustomization,
+    level,
+    exp,
 }: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
+    const expToNextLevel = 100 * level;
+    const expPercentage = (exp / expToNextLevel) * 100;
 
-    const handleAction = (action: () => void) => {
+    const handleAction = (toast: {title: string, description: string}) => {
         if (interactions > 0 && !isInteracting) {
-            action();
+            onPetInteraction(toast);
             setIsInteracting(true);
             setTimeout(() => {
                 setIsInteracting(false);
@@ -186,18 +173,22 @@ export function PetTab({
 
             <Card className="bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-0">
-                    <VirtualPet happiness={petHappiness} isInteracting={isInteracting} customization={customization} />
+                    <VirtualPet happiness={petHappiness} isInteracting={isInteracting} customization={customization} level={level} />
                 </CardContent>
             </Card>
 
             <Card className="bg-card/80 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle className="flex items-center text-xl">Pet's Needs</CardTitle>
+                 <CardHeader>
+                    <CardTitle className="flex items-center text-xl">Pet Stats</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <StatBar label="Hunger" value={petHunger} icon={<Utensils className="h-4 w-4 text-orange-500" />} colorClass="bg-orange-500" />
-                    <StatBar label="Energy" value={petEnergy} icon={<Bed className="h-4 w-4 text-blue-500" />} colorClass="bg-blue-500" />
-                    <StatBar label="Hygiene" value={petHygiene} icon={<ShowerHead className="h-4 w-4 text-cyan-500" />} colorClass="bg-cyan-500" />
+                    <div className="space-y-1">
+                        <div className="flex justify-between items-center text-sm font-medium">
+                            <span className="flex items-center"><Star className="h-4 w-4 mr-2 text-yellow-500 fill-yellow-500" /> <span>Level {level}</span></span>
+                            <span className="text-xs text-muted-foreground">{Math.floor(exp)} / {expToNextLevel} XP</span>
+                        </div>
+                        <Progress value={expPercentage} indicatorClassName="bg-yellow-500" />
+                    </div>
                 </CardContent>
             </Card>
 
@@ -207,14 +198,14 @@ export function PetTab({
                     <CardDescription>Use your {interactions} interactions to care for your pet.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-3 gap-2">
-                    <Button onClick={() => handleAction(onFeedPet)} disabled={interactions <= 0 || isInteracting}>
+                    <Button onClick={() => handleAction({title: "Yum!", description: "Your pet enjoyed the snack!"})} disabled={interactions <= 0 || isInteracting}>
                         <Utensils className="mr-2 h-4 w-4" /> Feed
                     </Button>
-                    <Button onClick={() => handleAction(onSleepPet)} disabled={interactions <= 0 || isInteracting}>
-                        <Bed className="mr-2 h-4 w-4" /> Sleep
+                    <Button onClick={() => handleAction({title: "Aww!", description: "Your pet loves being petted."})} disabled={interactions <= 0 || isInteracting}>
+                        <PawPrint className="mr-2 h-4 w-4" /> Pet
                     </Button>
-                    <Button onClick={() => handleAction(onToiletPet)} disabled={interactions <= 0 || isInteracting}>
-                        <ShowerHead className="mr-2 h-4 w-4" /> Toilet
+                    <Button onClick={() => handleAction({title: "So fun!", description: "Your pet loves to play."})} disabled={interactions <= 0 || isInteracting}>
+                        <Bed className="mr-2 h-4 w-4" /> Play
                     </Button>
                 </CardContent>
             </Card>

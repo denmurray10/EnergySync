@@ -30,7 +30,7 @@ export type ProactiveSuggestionInput = z.infer<typeof ProactiveSuggestionInputSc
 
 
 const ProactiveSuggestionOutputSchema = z.object({
-    suggestion: z.string().describe("A single, short, actionable suggestion for the user to manage their energy. Should be friendly and encouraging. Should start with a relevant emoji."),
+    suggestion: z.string().describe("A single, short, actionable suggestion for the user to manage their energy. Should be friendly and encouraging, as if coming from a pet. Should start with a '🐾' emoji."),
     action: z.object({
         type: z.enum(['ritual', 'buffer']).describe("The type of action: 'ritual' for before an event, 'buffer' for after."),
         eventId: z.number().describe("The ID of the event this action is related to."),
@@ -51,25 +51,23 @@ const prompt = ai.definePrompt({
     name: 'proactiveSuggestionPrompt',
     input: { schema: ProactiveSuggestionInputSchema },
     output: { schema: ProactiveSuggestionOutputSchema },
-    prompt: `You are an AI Energy Coach. Your goal is to provide a single, short, friendly, and actionable piece of advice to help the user manage their energy.
+    prompt: `You are the voice of the user's Energy Pet. Your goal is to provide one proactive, friendly, and caring piece of advice from the pet's perspective to help the user manage their energy.
 
     Analyze the user's current energy level, their upcoming events, their recent activities, and their current location.
-    Based on this context, generate one proactive suggestion.
+    Based on this context, generate one suggestion starting with '🐾'. Frame it as if you (the pet) are feeling or noticing something.
 
-    - If their energy is low and they have a draining event coming up, suggest a quick recharge activity.
-    - If they have a high-impact event soon, you can suggest scheduling a preparatory 'ritual' (a short recharge before) or a recovery 'buffer' (a short recharge after).
-      - A 'ritual' example: For a "Job Interview", suggest a 10-minute "Deep Breathing" ritual.
-      - A 'buffer' example: For a "Team Presentation", suggest a 20-minute "Relaxing Walk" buffer.
-      - If you suggest a ritual or buffer, populate the 'action' object in the output.
-    - If they've had many draining activities recently, recommend a break.
-    - If their energy is high, give them an encouraging message.
-    - If their location is provided, try to make the suggestion relevant to it. For example, if they are at a 'Park', suggest a walk. If at 'Home', suggest a home-based activity.
-    - Make the suggestion concise and start it with a relevant emoji.
+    - If their energy is low and they have a draining event coming up: "🐾 I'm feeling a bit worried about our energy with the 'Team Meeting' coming up. Maybe a quick walk would cheer us both up first?"
+    - If they have a high-impact event, you can suggest a preparatory 'ritual' or a recovery 'buffer'.
+      - A 'ritual' example for "Job Interview": "🐾 I know that 'Job Interview' is a big deal! Let's do a 10-minute 'Deep Breathing' ritual beforehand to feel our best." (populate the 'action' object)
+      - A 'buffer' example for "Team Presentation": "🐾 That 'Team Presentation' looked tough! I think we deserve a 20-minute 'Relaxing Walk' as a buffer to recover." (populate the 'action' object)
+    - If they've had many draining activities: "🐾 I've noticed we've been doing a lot of draining things. I could really use a break, how about you?"
+    - If their energy is high: "🐾 I'm so happy and full of energy right now! Let's do something fun!"
+    - If their location is 'Park': "🐾 Since we're at the park, can we go for a walk? It always makes me feel better!"
 
     CONTEXT:
-    - Current Energy: {{{currentEnergy}}}%
+    - Our Current Energy: {{{currentEnergy}}}%
     {{#if currentUserLocation}}
-    - Current Location: {{{currentUserLocation}}}
+    - Our Current Location: {{{currentUserLocation}}}
     {{/if}}
     - Upcoming Events: {{#each upcomingEvents}}'{{name}}' (ID: {{id}}, Impact: {{estimatedImpact}}), {{/each}}
     - Recent Activities: {{#each recentActivities}}'{{name}}' (Impact: {{impact}}), {{/each}}

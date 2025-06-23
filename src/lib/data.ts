@@ -57,6 +57,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 12, name: 'Goal Setter', unlocked: false, icon: '💡' },
     { id: 13, name: 'Pet Pal', unlocked: false, icon: '🐾' },
     { id: 14, name: 'Pet Customizer', unlocked: false, icon: '🎨' },
+    { id: 15, name: 'Pet Trainer', unlocked: false, icon: '🏆' },
 ];
 
 export const INITIAL_GOALS: Goal[] = [

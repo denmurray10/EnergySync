@@ -28,6 +28,9 @@ export function ProfileTab({ user, isProMember, onShowTutorial, onShowDebrief, o
           </AvatarFallback>
         </Avatar>
         <h2 className="text-3xl font-bold">{user?.name}</h2>
+        {user && (
+            <p className="font-semibold text-muted-foreground -mt-2">Pet Level: {user.petLevel}</p>
+        )}
       </div>
 
       <Card className="bg-card/80 backdrop-blur-sm">

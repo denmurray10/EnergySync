@@ -90,23 +90,38 @@ export default function HomePage() {
   // Pet feature state
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
-  const [petHunger, setPetHunger] = useState(80);
-  const [petEnergy, setPetEnergy] = useState(70);
-  const [petHygiene, setPetHygiene] = useState(90);
-
-  const petHappiness = useMemo(() => {
-    return (petHunger + petEnergy + petHygiene) / 3;
-  }, [petHunger, petEnergy, petHygiene]);
   
-  useEffect(() => {
-    const statDecayInterval = setInterval(() => {
-        setPetHunger(h => Math.max(0, h - 1));
-        setPetEnergy(e => Math.max(0, e - 0.75));
-        setPetHygiene(h => Math.max(0, h - 0.5));
-    }, 15000); // Decrease stats every 15 seconds
-
-    return () => clearInterval(statDecayInterval);
+  const petHappiness = currentEnergy; // Pet's happiness is now directly linked to user's energy
+  
+  const saveUser = useCallback((updatedUser: User) => {
+    setUser(updatedUser);
+    localStorage.setItem(`energysync_membership_local`, JSON.stringify(updatedUser.membershipTier));
+    localStorage.setItem(`energysync_pet_customization_local`, JSON.stringify(updatedUser.petCustomization));
+    localStorage.setItem(`energysync_pet_level_local`, JSON.stringify(updatedUser.petLevel));
+    localStorage.setItem(`energysync_pet_exp_local`, JSON.stringify(updatedUser.petExp));
   }, []);
+
+  const gainPetExp = useCallback((amount: number) => {
+    if (!user) return;
+    
+    const newExp = user.petExp + amount;
+    const expToNextLevel = 100 * user.petLevel;
+    
+    if (newExp >= expToNextLevel) {
+        // Level up!
+        const newLevel = user.petLevel + 1;
+        const remainingExp = newExp - expToNextLevel;
+        saveUser({ ...user, petLevel: newLevel, petExp: remainingExp });
+        toast({
+            title: '🎉 Pet Level Up! 🎉',
+            description: `Your energy companion grew to Level ${newLevel}!`,
+        });
+        unlockAchievement('Pet Trainer');
+    } else {
+        saveUser({ ...user, petExp: newExp });
+    }
+  }, [user, saveUser, toast]);
+
 
   useEffect(() => {
     // This effect initializes the default user state.
@@ -121,11 +136,16 @@ export default function HomePage() {
 
     const storedMembership = localStorage.getItem('energysync_membership_local');
     const storedPet = localStorage.getItem('energysync_pet_customization_local');
+    const storedPetLevel = localStorage.getItem('energysync_pet_level_local');
+    const storedPetExp = localStorage.getItem('energysync_pet_exp_local');
+
 
     setUser({
         name: 'Alex', // A default name
         membershipTier: storedMembership ? JSON.parse(storedMembership) : 'free',
         petCustomization: storedPet ? JSON.parse(storedPet) : defaultPetCustomization,
+        petLevel: storedPetLevel ? JSON.parse(storedPetLevel) : 1,
+        petExp: storedPetExp ? JSON.parse(storedPetExp) : 0,
     });
 
     const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
@@ -137,12 +157,6 @@ export default function HomePage() {
 
   const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
   
-  const saveUser = (updatedUser: User) => {
-    setUser(updatedUser);
-    localStorage.setItem(`energysync_membership_local`, JSON.stringify(updatedUser.membershipTier));
-    localStorage.setItem(`energysync_pet_customization_local`, JSON.stringify(updatedUser.petCustomization));
-  };
-
   const fetchProactiveSuggestion = useCallback(async () => {
     if (!isProMember) {
         setAiSuggestion("Upgrade to Pro to get proactive suggestions from your AI coach.");
@@ -263,7 +277,7 @@ export default function HomePage() {
             showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
         }
     }
-  }, [achievements, toast]);
+  }, [achievements, showToast]);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
@@ -276,6 +290,11 @@ export default function HomePage() {
     setActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     showToast('Activity Logged!', `Great job logging '${newActivity.name}'!`, '📝');
     unlockAchievement('Mindful Logger');
+
+    if (newActivity.impact > 0) {
+        gainPetExp(newActivity.impact);
+    }
+
     closeModal('addActivity');
     closeModal('imageCheckin'); // Close image modal if it was used
   };
@@ -322,6 +341,7 @@ export default function HomePage() {
     } else {
       showToast(`Energy Recharged!`, `+${rechargeAmount}% Energy`, '🔋');
     }
+    gainPetExp(rechargeAmount);
   };
 
   const handleCustomRecharge = (rechargeData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
@@ -360,6 +380,9 @@ export default function HomePage() {
     setCurrentEnergy(prev => Math.max(0, Math.min(100, prev + result.energyImpact)));
     const toastMessage = `${result.energyImpact > 0 ? '+' : ''}${result.energyImpact}% - ${result.summary}`;
     showToast('Voice Check-in Complete', toastMessage, '🎤');
+    if (result.energyImpact > 0) {
+        gainPetExp(result.energyImpact);
+    }
     closeModal('voiceCheckIn');
   };
 
@@ -480,6 +503,7 @@ export default function HomePage() {
       if (!wasCompleted) {
         unlockAchievement('Goal Getter');
         showToast('Goal Complete!', `You've completed: ${goal.name}`, '🎯');
+        gainPetExp(50);
       }
     }
   };
@@ -518,44 +542,26 @@ export default function HomePage() {
   }, [activities]);
 
   const handleTaskComplete = (taskId: number) => {
-    let interactionChange = 0;
-    const updatedTasks = petTasks.map(task => {
-        if (task.id === taskId) {
-            if (!task.completed) { interactionChange = 5; } else { interactionChange = -5; }
-            return { ...task, completed: !task.completed };
-        }
-        return task;
-    });
-    setPetTasks(updatedTasks);
-    setPetInteractions(prev => Math.max(0, prev + interactionChange));
-    if (interactionChange > 0) {
-        toast({ title: "Task Complete!", description: "You've earned 5 interactions! 🎉" });
+    const task = petTasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const wasCompleted = task.completed;
+    
+    setPetTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, completed: !wasCompleted } : t));
+
+    if (!wasCompleted) {
+        setPetInteractions(prev => prev + 5);
+        gainPetExp(10);
+        toast({ title: "Task Complete!", description: "You've earned 5 interactions & 10 pet XP! 🎉" });
+    } else {
+        setPetInteractions(prev => Math.max(0, prev - 5));
     }
   };
 
-  const handleFeedPet = () => {
+  const handlePetInteraction = (actionToast: {title: string, description: string}) => {
     if (petInteractions > 0) {
         setPetInteractions(prev => prev - 1);
-        setPetHunger(prev => Math.min(100, prev + 30));
-        toast({ title: "Yum!", description: "Your pet enjoyed the meal!" });
-        unlockAchievement('Pet Pal');
-    }
-  };
-  
-  const handleSleepPet = () => {
-    if (petInteractions > 0) {
-        setPetInteractions(prev => prev - 1);
-        setPetEnergy(prev => Math.min(100, prev + 40));
-        toast({ title: "Zzzz...", description: "Your pet feels rested." });
-        unlockAchievement('Pet Pal');
-    }
-  };
-  
-  const handleToiletPet = () => {
-    if (petInteractions > 0) {
-        setPetInteractions(prev => prev - 1);
-        setPetHygiene(prev => Math.min(100, prev + 50));
-        toast({ title: "Phew!", description: "Your pet feels much better." });
+        toast(actionToast);
         unlockAchievement('Pet Pal');
     }
   };
@@ -658,14 +664,11 @@ export default function HomePage() {
               onTaskComplete={handleTaskComplete}
               interactions={petInteractions}
               petHappiness={petHappiness}
-              petHunger={petHunger}
-              petEnergy={petEnergy}
-              petHygiene={petHygiene}
-              onFeedPet={handleFeedPet}
-              onSleepPet={handleSleepPet}
-              onToiletPet={handleToiletPet}
+              onPetInteraction={handlePetInteraction}
               customization={user.petCustomization}
               openCustomization={() => openModal('petCustomization')}
+              level={user.petLevel}
+              exp={user.petExp}
             />
           )}
           {activeTab === "insights" && (

@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { EnergyAssistantCard } from "./energy-assistant-card";
+import { PetCompanionCard } from "./pet-companion-card";
 import { ReadinessCard } from "./readiness-card";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
 import { EnergyForecastChart } from "./energy-forecast-chart";
@@ -17,7 +17,6 @@ import {
   Zap,
   Mic,
   Calendar,
-  BrainCircuit,
   Globe,
   CalendarPlus,
   PlusCircle,
@@ -178,19 +177,9 @@ export function HomeTab({
         </Card>
       )}
 
-       <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <BrainCircuit className="text-blue-500 mr-3" />
-            AI Energy Coach
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="!pt-0 !p-4">
-          <ProFeatureWrapper isPro={isProMember}>
-            <EnergyAssistantCard onClick={() => openModal('chatCoach')} />
-          </ProFeatureWrapper>
-        </CardContent>
-      </Card>
+       <ProFeatureWrapper isPro={isProMember}>
+          <PetCompanionCard onClick={() => openModal('chatCoach')} />
+       </ProFeatureWrapper>
       
       <ProFeatureWrapper isPro={isProMember}>
         <ReadinessCard
@@ -276,7 +265,7 @@ export function HomeTab({
           <CardHeader>
             <CardTitle className="flex items-center text-xl">
               <Zap className="text-yellow-500 mr-3" />
-              Proactive Suggestion
+              Your Pet's Thoughts
             </CardTitle>
           </CardHeader>
           <CardContent>
