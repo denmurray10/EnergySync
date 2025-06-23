@@ -4,8 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
 import { getEnergyStory } from "@/ai/flows/energy-story-flow";
@@ -14,8 +12,6 @@ import { suggestGoals } from "@/ai/flows/suggest-goals-flow";
 import { getEnergyForecast } from "@/ai/flows/energy-forecast-flow";
 import { analyzeEnergyHotspots } from "@/ai/flows/energy-hotspot-flow";
 import { subDays, startOfDay } from 'date-fns';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
 
 import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
@@ -27,7 +23,6 @@ import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
 import { WeeklyReportModal } from "@/components/weekly-report-modal";
 import { AddActivityModal } from "@/components/add-activity-modal";
-import { OnboardingScreen } from "@/components/onboarding-screen";
 import { TutorialModal } from "@/components/tutorial-modal";
 import { DailyDebriefModal } from "@/components/daily-debrief-modal";
 import { ChatCoachModal } from "@/components/chat-coach-modal";
@@ -40,13 +35,11 @@ import { LoaderCircle } from "lucide-react";
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
 
 export default function HomePage() {
-  const { user: firebaseUser, loading: authLoading, appUser, setAppUser } = useAuth();
-  const router = useRouter();
   const { toast } = useToast();
   
   const [showTutorial, setShowTutorial] = useState(false);
   
-  const user = appUser;
+  const [user, setUser] = useState<User | null>(null);
 
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
@@ -115,21 +108,39 @@ export default function HomePage() {
     return () => clearInterval(statDecayInterval);
   }, []);
 
+  useEffect(() => {
+    // This effect initializes the default user state.
+    const defaultPetCustomization = {
+        color: '#a8a29e',
+        accessory: 'none' as const,
+        background: 'default' as const,
+        unlockedColors: ['#a8a29e'],
+        unlockedAccessories: ['none'],
+        unlockedBackgrounds: ['default'],
+    };
+
+    const storedMembership = localStorage.getItem('energysync_membership_local');
+    const storedPet = localStorage.getItem('energysync_pet_customization_local');
+
+    setUser({
+        name: 'Alex', // A default name
+        membershipTier: storedMembership ? JSON.parse(storedMembership) : 'free',
+        petCustomization: storedPet ? JSON.parse(storedPet) : defaultPetCustomization,
+    });
+
+    const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
+    if (!tutorialSeen) {
+        setShowTutorial(true);
+    }
+  }, []);
+
 
   const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
-
-  // Auth redirection logic
-  useEffect(() => {
-    if (!authLoading && !firebaseUser) {
-      router.push('/login');
-    }
-  }, [firebaseUser, authLoading, router]);
   
   const saveUser = (updatedUser: User) => {
-    if (!firebaseUser) return;
-    setAppUser(updatedUser);
-    localStorage.setItem(`energysync_membership_${firebaseUser.uid}`, JSON.stringify(updatedUser.membershipTier));
-    localStorage.setItem(`energysync_pet_customization_${firebaseUser.uid}`, JSON.stringify(updatedUser.petCustomization));
+    setUser(updatedUser);
+    localStorage.setItem(`energysync_membership_local`, JSON.stringify(updatedUser.membershipTier));
+    localStorage.setItem(`energysync_pet_customization_local`, JSON.stringify(updatedUser.petCustomization));
   };
 
   const fetchProactiveSuggestion = useCallback(async () => {
@@ -230,19 +241,6 @@ export default function HomePage() {
   const handleTutorialComplete = () => {
     setShowTutorial(false);
     localStorage.setItem('energysync_tutorial_seen', 'true');
-  };
-
-  const handleLogout = async () => {
-    try {
-        await signOut(auth);
-        toast({
-            title: 'Logged Out',
-            description: 'You have been successfully logged out.',
-        });
-        // The AuthProvider will handle redirecting to /login
-    } catch (error) {
-        toast({ title: 'Logout Failed', description: 'Could not log you out.', variant: 'destructive' });
-    }
   };
 
   const handleShowTutorial = () => {
@@ -607,17 +605,12 @@ export default function HomePage() {
   };
 
 
-  if (authLoading) {
+  if (!user) {
     return (
         <div className="min-h-dvh bg-background flex items-center justify-center">
             <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
         </div>
     );
-  }
-
-  if (!user) {
-    // User is logged in with Firebase, but has not set up their profile (displayName).
-    return <OnboardingScreen onComplete={saveUser} />;
   }
 
   return (
@@ -696,7 +689,6 @@ export default function HomePage() {
           {activeTab === "profile" && (
             <ProfileTab
               user={user}
-              onLogout={handleLogout}
               onShowTutorial={handleShowTutorial}
               onShowDebrief={handleShowDebrief}
               isProMember={isProMember}

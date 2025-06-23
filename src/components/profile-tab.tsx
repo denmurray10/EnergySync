@@ -4,7 +4,7 @@ import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Film, Star, BookOpen, Crown } from "lucide-react";
+import { Film, Star, BookOpen, Crown } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
@@ -12,13 +12,12 @@ import { ProFeatureWrapper } from "./pro-feature-wrapper";
 type ProfileTabProps = {
   user: User | null;
   isProMember: boolean;
-  onLogout: () => void;
   onShowTutorial: () => void;
   onShowDebrief: () => void;
   onTierChange: (tier: 'free' | 'pro') => void;
 };
 
-export function ProfileTab({ user, isProMember, onLogout, onShowTutorial, onShowDebrief, onTierChange }: ProfileTabProps) {
+export function ProfileTab({ user, isProMember, onShowTutorial, onShowDebrief, onTierChange }: ProfileTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center space-y-4 pt-4">
@@ -74,10 +73,6 @@ export function ProfileTab({ user, isProMember, onLogout, onShowTutorial, onShow
                     Yesterday's Debrief
                 </Button>
             </ProFeatureWrapper>
-            <Button onClick={onLogout} variant="destructive" className="w-full justify-start">
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out
-            </Button>
         </CardContent>
       </Card>
     </div>
