@@ -71,14 +71,6 @@ const PetBody = ({ type, color, outlineColor }: { type: PetType, color: string, 
     };
 
     switch (type) {
-        case 'dog':
-            return (
-                <g>
-                    <path d="M 50,95 C 25,95 20,70 20,55 C 20,30 35,22 50,22 C 65,22 80,30 80,55 C 80,70 75,95 50,95 Z" {...bodyProps} />
-                    <path d="M 25 35 C 15 45, 15 60, 28 60 L 28 40 Z" {...bodyProps} />
-                    <path d="M 75 35 C 85 45, 85 60, 72 60 L 72 40 Z" {...bodyProps} />
-                </g>
-            );
         case 'horse':
              return (
                 <g>
@@ -146,26 +138,24 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     
     const scale = 1 + (level - 1) * 0.05;
 
-    const petDisplay = useMemo(() => {
-        if (petType === 'dog') {
-            return (
-                 <div className="w-48 h-48">
-                    <Lottie
-                        lottieRef={lottieRef}
-                        animationData={dogAnimationData}
-                        loop={true}
-                        style={{ transform: `scale(${scale})` }}
-                        className={cn("transition-transform", isInteracting && "animate-jump")}
-                    />
-                </div>
-            )
-        }
-        return (
+    const petContent = (
+        <>
+        {petType === 'dog' ? (
+            <div className="w-48 h-48">
+                <Lottie
+                    lottieRef={lottieRef}
+                    animationData={dogAnimationData}
+                    loop={true}
+                    style={{ transform: `scale(${scale})`, width: '100%', height: '100%' }}
+                    className={cn("transition-transform", isInteracting && "animate-jump")}
+                />
+            </div>
+        ) : (
             <div className={cn("relative w-48 h-48 transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                     <g className="animate-breathe">
                         <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
-                        {(petType === 'cat' || petType === 'dog') && (
+                        {(petType === 'cat') && (
                         <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
                             <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
                             <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
@@ -181,8 +171,9 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
                     </g>
                 </svg>
             </div>
-        );
-    }, [petType, isInteracting, scale, customization, happiness]);
+        )}
+        </>
+    );
 
     return (
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
@@ -197,12 +188,12 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
                             </div>
                         </div>
                         <div className="flex-shrink-0">
-                           {petDisplay}
+                           {petContent}
                         </div>
                     </div>
                 ) : (
                     <div className="pt-8">
-                       {petDisplay}
+                       {petContent}
                     </div>
                 )}
             </div>
@@ -372,5 +363,3 @@ export function PetTab({
         </div>
     );
 }
-
-    
