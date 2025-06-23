@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
 import { getEnergyStory } from "@/ai/flows/energy-story-flow";
+import { chatWithCoach } from "@/ai/flows/conversational-coach-flow";
 import { subDays, startOfDay, format } from 'date-fns';
 
 
@@ -324,13 +325,15 @@ export default function HomePage() {
       setIsChatting(true);
 
       try {
-          const result = await getProactiveSuggestion({ 
-              currentEnergy, 
-              upcomingEvents, 
-              recentActivities: activities.slice(0, 5),
+          const result = await chatWithCoach({
+              query,
+              chatHistory: newHistory.slice(0, -1),
+              currentEnergy,
+              activities: JSON.stringify(activities.slice(0, 10)),
+              events: JSON.stringify(upcomingEvents),
           });
 
-          setChatHistory(prev => [...prev, { role: 'model', content: result.suggestion }]);
+          setChatHistory(prev => [...prev, { role: 'model', content: result.response }]);
           unlockAchievement('Chatterbox');
       } catch (error) {
           console.error("Chat error:", error);
@@ -338,7 +341,7 @@ export default function HomePage() {
       } finally {
           setIsChatting(false);
       }
-  }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement]);
+  }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, toast]);
 
 
   const changeLocation = () => {
