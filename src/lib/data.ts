@@ -1,4 +1,4 @@
-import type { Activity, UpcomingEvent, Achievement, Goal, Challenge } from './types';
+import type { Activity, UpcomingEvent, Achievement, Goal, Challenge, PetTask } from './types';
 import { subDays, format } from 'date-fns';
 
 const today = new Date();
@@ -52,6 +52,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 10, name: 'Chatterbox', unlocked: false, icon: '💬' },
     { id: 11, name: 'Pixel Perfect', unlocked: false, icon: '📸' },
     { id: 12, name: 'Goal Setter', unlocked: false, icon: '💡' },
+    { id: 13, name: 'Pet Pal', unlocked: false, icon: '🐾' },
 ];
 
 export const INITIAL_GOALS: Goal[] = [
@@ -63,4 +64,12 @@ export const INITIAL_GOALS: Goal[] = [
 export const INITIAL_CHALLENGES: Challenge[] = [
     { id: 1, name: "7-Day Meditation Streak", description: "Meditate every day for one week.", icon: '🧘', participants: 142, daysLeft: 5 },
     { id: 2, name: "Weekend Warrior", description: "Log one social and one recharge activity this weekend.", icon: '🎉', participants: 89, daysLeft: 2 },
+];
+
+export const INITIAL_PET_TASKS: PetTask[] = [
+    { id: 1, name: "Make Your Bed", completed: false, icon: '🛏️' },
+    { id: 2, name: "Drink a Glass of Water", completed: false, icon: '💧' },
+    { id: 3, name: "Stretch for 5 Minutes", completed: false, icon: '🧘' },
+    { id: 4, name: "Tidy Up Your Workspace", completed: false, icon: '🧹' },
+    { id: 5, name: "Step Outside for Fresh Air", completed: false, icon: '🌳' },
 ];

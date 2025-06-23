@@ -82,3 +82,10 @@ export interface EnergyForecastData {
     hour: string;
     predictedEnergy: number;
 }
+
+export interface PetTask {
+  id: number;
+  name: string;
+  completed: boolean;
+  icon: string;
+}

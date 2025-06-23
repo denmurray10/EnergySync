@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData } from "@/lib/types";
-import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask } from "@/lib/types";
+import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
@@ -17,6 +17,7 @@ import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
 import { ProfileTab } from "@/components/profile-tab";
+import { PetTab } from "@/components/pet-tab";
 import { BottomNav } from "@/components/bottom-nav";
 import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
@@ -81,6 +82,12 @@ export default function HomePage() {
   const [isChatting, setIsChatting] = useState(false);
   const [energyForecast, setEnergyForecast] = useState<EnergyForecastData[] | null>(null);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
+
+  // New state for pet feature
+  const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
+  const [petInteractions, setPetInteractions] = useState<number>(0);
+  const [petHappiness, setPetHappiness] = useState<number>(70);
+
 
   const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
 
@@ -220,7 +227,7 @@ export default function HomePage() {
             showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
         }
     }
-}, [achievements, showToast]);
+}, [achievements]);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
@@ -518,6 +525,43 @@ export default function HomePage() {
     };
   }, [activities]);
 
+  const handleTaskComplete = (taskId: number) => {
+    let interactionChange = 0;
+    const updatedTasks = petTasks.map(task => {
+        if (task.id === taskId) {
+            if (!task.completed) {
+                interactionChange = 5; // Add 5 interactions for completing
+            } else {
+                interactionChange = -5; // Subtract 5 for un-completing
+            }
+            return { ...task, completed: !task.completed };
+        }
+        return task;
+    });
+
+    setPetTasks(updatedTasks);
+    setPetInteractions(prev => Math.max(0, prev + interactionChange));
+
+    if (interactionChange > 0) {
+        toast({
+            title: "Task Complete!",
+            description: "You've earned 5 interactions with your pet! 🎉",
+        });
+    }
+  };
+
+  const handleInteractWithPet = () => {
+    if (petInteractions > 0) {
+        setPetInteractions(prev => prev - 1);
+        setPetHappiness(prev => Math.min(100, prev + 10)); // Cap happiness at 100
+        toast({
+            title: "Interaction Used!",
+            description: "Your pet is happier! 😊",
+        });
+        unlockAchievement('Pet Pal');
+    }
+  };
+
   if (isOnboarding) {
     return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
@@ -559,6 +603,15 @@ export default function HomePage() {
               openModal={openModal}
               isProMember={isProMember}
               onDeleteActivity={handleDeleteActivity}
+            />
+          )}
+          {activeTab === "pet" && (
+            <PetTab
+              tasks={petTasks}
+              onTaskComplete={handleTaskComplete}
+              interactions={petInteractions}
+              onInteractWithPet={handleInteractWithPet}
+              petHappiness={petHappiness}
             />
           )}
           {activeTab === "insights" && (
