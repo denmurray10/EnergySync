@@ -7,10 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { PetCompanionCard } from "./pet-companion-card";
-import { ReadinessCard } from "./readiness-card";
-import { ProFeatureWrapper } from "./pro-feature-wrapper";
-import { EnergyForecastChart } from "./energy-forecast-chart";
+import { PetCompanionCard } from "@/components/pet-companion-card";
+import { ReadinessCard } from "@/components/readiness-card";
+import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
+import { EnergyForecastChart } from "@/components/energy-forecast-chart";
 import {
   Users,
   Share2,
@@ -25,7 +25,7 @@ import {
   TrendingUp,
   BrainCircuit
 } from "lucide-react";
-import { Skeleton } from "./ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -390,5 +390,3 @@ export function HomeTab({
     </div>
   );
 }
-
-    

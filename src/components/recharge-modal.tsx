@@ -29,7 +29,7 @@ import type { Activity } from "@/lib/types";
 import { LoaderCircle, Plus, Sparkles, Star, Zap, ChevronLeft, Volume2, Waves } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestRechargeDetails } from "@/ai/flows/suggest-recharge-details";
-import { ProFeatureWrapper } from "./pro-feature-wrapper";
+import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 
 
 const customRechargeSchema = z.object({

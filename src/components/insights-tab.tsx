@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, Sparkles, LoaderCircle, MapPin, TrendingUp, TrendingDown } from "lucide-react";
-import { WeeklyEnergyChart } from "./weekly-energy-chart";
-import { ProFeatureWrapper } from "./pro-feature-wrapper";
-import { Skeleton } from "./ui/skeleton";
+import { WeeklyEnergyChart } from "@/components/weekly-energy-chart";
+import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type InsightsTabProps = {
   isProMember: boolean;

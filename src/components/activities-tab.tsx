@@ -6,7 +6,7 @@ import type { Activity } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Camera, Trash2 } from "lucide-react";
-import { ProFeatureWrapper } from "./pro-feature-wrapper";
+import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 import {
   AlertDialog,
   AlertDialogAction,

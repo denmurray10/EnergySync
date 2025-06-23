@@ -9,7 +9,7 @@ import { Film, Star, BookOpen, Crown, PawPrint, Users } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { ProFeatureWrapper } from "./pro-feature-wrapper";
+import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 
 type ProfileTabProps = {
   user: User | null;
