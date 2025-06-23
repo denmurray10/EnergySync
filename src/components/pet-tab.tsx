@@ -131,42 +131,57 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     
     const scale = 1 + (level - 1) * 0.05;
 
+    const petDisplay = (
+         <div className={cn("relative w-48 h-48 transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
+            <svg viewBox="0 0 100 100" className="w-full h-full">
+                <g className="animate-breathe">
+                    <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
+                    {(petType === 'cat' || petType === 'dog') && (
+                      <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
+                          <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
+                          <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
+                      </g>
+                    )}
+                    <PetFace happiness={happiness} />
+                    {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
+                    {customization.accessory === 'bowtie' && (
+                         <path
+                            d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
+                            fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
+                    )}
+                </g>
+            </svg>
+        </div>
+    );
+
     return (
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
-            <div className={cn("relative w-48 h-48 mx-auto transition-transform pt-8", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
-                 {suggestion && (
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max max-w-[90%] z-10">
-                        <div className="bg-background rounded-full py-2 px-4 shadow-lg border-2 border-primary/20 relative">
-                            <p className="text-sm font-medium text-foreground">{suggestion}</p>
-                            {/* Caret with border effect */}
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-[-13px] w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[12px] border-t-primary/20" />
-                            <div className="absolute left-1/2 -translate-x-1/2 bottom-[-10px] w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-background" />
+            <div className="flex items-center justify-center min-h-[224px]">
+                {suggestion ? (
+                     <div className="flex items-center justify-center w-full gap-2">
+                         <div className="w-2/5 flex-shrink-0">
+                             <div className="bg-background rounded-2xl p-3 shadow-lg border-2 border-primary/20 relative">
+                                <p className="text-sm font-medium text-foreground text-center">{suggestion}</p>
+                                {/* Caret pointing right */}
+                                <div className="absolute top-1/2 -translate-y-1/2 right-[-13px] w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-l-[12px] border-l-primary/20" />
+                                <div className="absolute top-1/2 -translate-y-1/2 right-[-10px] w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-background" />
+                            </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                           {petDisplay}
                         </div>
                     </div>
+                ) : (
+                    <div className="pt-8">
+                       {petDisplay}
+                    </div>
                 )}
-                <svg viewBox="0 0 100 100" className="w-full h-full">
-                    <g className="animate-breathe">
-                        <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
-                        {(petType === 'cat' || petType === 'dog') && (
-                          <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
-                              <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
-                              <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
-                          </g>
-                        )}
-                        <PetFace happiness={happiness} />
-                        {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
-                        {customization.accessory === 'bowtie' && (
-                             <path
-                                d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
-                                fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
-                        )}
-                    </g>
-                </svg>
             </div>
             <p className="text-muted-foreground mt-2 font-semibold">{getHappinessText()}</p>
         </div>
     );
 };
+
 
 type PetTabProps = {
   tasks: PetTask[];
