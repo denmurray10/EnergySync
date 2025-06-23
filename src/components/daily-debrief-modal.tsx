@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,16 +11,47 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen } from "lucide-react";
+import { BookOpen, LoaderCircle, Volume2 } from "lucide-react";
+import { textToSpeech } from "@/ai/flows/text-to-speech-flow";
+import { useToast } from "@/hooks/use-toast";
 
 type DailyDebriefModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   story: string | null;
   loading: boolean;
+  isProMember: boolean;
 };
 
-export function DailyDebriefModal({ open, onOpenChange, story, loading }: DailyDebriefModalProps) {
+export function DailyDebriefModal({ open, onOpenChange, story, loading, isProMember }: DailyDebriefModalProps) {
+  const { toast } = useToast();
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const handleListen = async () => {
+    if (!story || !isProMember) return;
+    setIsSpeaking(true);
+    try {
+        const { media } = await textToSpeech(story);
+        if (audioRef.current) {
+            audioRef.current.src = media;
+            audioRef.current.play();
+        }
+    } catch (error) {
+        console.error("Failed to generate audio:", error);
+        toast({
+            title: "Audio Failed",
+            description: "Could not generate the audio debrief.",
+            variant: "destructive"
+        });
+        setIsSpeaking(false);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsSpeaking(false);
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
@@ -30,6 +62,7 @@ export function DailyDebriefModal({ open, onOpenChange, story, loading }: DailyD
           <DialogTitle>Your Daily Debrief</DialogTitle>
           <DialogDescription>Here's the AI-generated story of your energy from yesterday.</DialogDescription>
         </DialogHeader>
+        <audio ref={audioRef} onEnded={handleAudioEnded} className="hidden" />
         <div className="my-4 p-4 bg-muted/50 rounded-lg min-h-[120px]">
           {loading ? (
             <div className="space-y-2">
@@ -41,10 +74,18 @@ export function DailyDebriefModal({ open, onOpenChange, story, loading }: DailyD
             <p className="text-card-foreground leading-relaxed">{story}</p>
           )}
         </div>
-        <DialogFooter>
-          <Button onClick={() => onOpenChange(false)} className="w-full">
-            Close
-          </Button>
+        <DialogFooter className="gap-2 sm:flex-row">
+            <Button onClick={() => onOpenChange(false)} variant="secondary" className="w-full">
+                Close
+            </Button>
+            <Button onClick={handleListen} className="w-full" disabled={loading || isSpeaking || !isProMember || !story}>
+                {isSpeaking ? (
+                    <LoaderCircle className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                    <Volume2 className="w-4 h-4 mr-2" />
+                )}
+                Listen
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

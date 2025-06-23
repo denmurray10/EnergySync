@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { UpcomingEvent, User, ActionableSuggestion, ReadinessReport } from "@/lib/types";
+import type { UpcomingEvent, User, ActionableSuggestion, ReadinessReport, EnergyForecastData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { EnergyAssistantCard } from "./energy-assistant-card";
 import { ReadinessCard } from "./readiness-card";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
+import { EnergyForecastChart } from "./energy-forecast-chart";
 import {
   Users,
   Share2,
@@ -21,6 +22,7 @@ import {
   CalendarPlus,
   PlusCircle,
   Trash2,
+  TrendingUp,
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import {
@@ -55,6 +57,8 @@ type HomeTabProps = {
   isReadinessLoading: boolean;
   onSyncHealth: () => void;
   onDeleteEvent: (id: number) => void;
+  energyForecast: EnergyForecastData[] | null;
+  isForecastLoading: boolean;
 };
 
 const getEnergyColour = (energy: number) => {
@@ -94,6 +98,8 @@ export function HomeTab({
   isReadinessLoading,
   onSyncHealth,
   onDeleteEvent,
+  energyForecast,
+  isForecastLoading,
 }: HomeTabProps) {
   const [eventToDelete, setEventToDelete] = useState<UpcomingEvent | null>(null);
 
@@ -238,6 +244,32 @@ export function HomeTab({
 
         </CardContent>
       </Card>
+
+      <ProFeatureWrapper isPro={isProMember}>
+         <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <CardTitle className="flex items-center text-xl">
+                    <TrendingUp className="text-cyan-500 mr-3" />
+                    Energy Forecast
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {isForecastLoading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-48 w-full" />
+                        <div className="flex justify-between">
+                            <Skeleton className="h-4 w-10" />
+                            <Skeleton className="h-4 w-10" />
+                            <Skeleton className="h-4 w-10" />
+                            <Skeleton className="h-4 w-10" />
+                        </div>
+                    </div>
+                ) : (
+                    <EnergyForecastChart data={energyForecast || []} />
+                )}
+            </CardContent>
+        </Card>
+      </ProFeatureWrapper>
       
        <ProFeatureWrapper isPro={isProMember}>
         <Card className="bg-card/80 backdrop-blur-sm">
@@ -267,7 +299,6 @@ export function HomeTab({
           </CardContent>
         </Card>
        </ProFeatureWrapper>
-
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">

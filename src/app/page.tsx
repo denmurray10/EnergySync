@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion } from "@/lib/types";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
@@ -9,6 +9,7 @@ import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
 import { getEnergyStory } from "@/ai/flows/energy-story-flow";
 import { chatWithCoach } from "@/ai/flows/conversational-coach-flow";
 import { suggestGoals } from "@/ai/flows/suggest-goals-flow";
+import { getEnergyForecast } from "@/ai/flows/energy-forecast-flow";
 import { subDays, startOfDay, format } from 'date-fns';
 
 
@@ -78,6 +79,8 @@ export default function HomePage() {
   const [isStoryLoading, setIsStoryLoading] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = useState(false);
+  const [energyForecast, setEnergyForecast] = useState<EnergyForecastData[] | null>(null);
+  const [isForecastLoading, setIsForecastLoading] = useState(false);
 
   const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
 
@@ -118,13 +121,40 @@ export default function HomePage() {
       setIsSuggestionLoading(false);
     }
   }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember]);
+  
+  const fetchEnergyForecast = useCallback(async () => {
+    if (!isProMember || !readinessReport) return;
+    setIsForecastLoading(true);
+    try {
+      const result = await getEnergyForecast({
+        readinessReport,
+        currentEnergy,
+        upcomingEvents: upcomingEvents.filter(e => e.date === 'Today' || e.date === 'Tonight'),
+        recentActivities: activities.slice(0, 10),
+      });
+      setEnergyForecast(result);
+    } catch (error) {
+      console.error("Failed to get energy forecast:", error);
+      setEnergyForecast(null);
+       toast({
+        title: "Forecast Failed",
+        description: "Could not generate your energy forecast.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsForecastLoading(false);
+    }
+  }, [isProMember, readinessReport, currentEnergy, upcomingEvents, activities, toast]);
 
 
   useEffect(() => {
     if (activeTab === 'home') {
       fetchProactiveSuggestion();
+      if(readinessReport) {
+        fetchEnergyForecast();
+      }
     }
-  }, [activeTab, fetchProactiveSuggestion]);
+  }, [activeTab, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast]);
 
   const handleOnboardingComplete = (newUser: Omit<User, 'membershipTier'>) => {
     const userWithTier = { ...newUser, membershipTier: 'free' as const };
@@ -519,6 +549,8 @@ export default function HomePage() {
               isReadinessLoading={isReadinessLoading}
               onSyncHealth={simulateHealthSync}
               onDeleteEvent={handleDeleteEvent}
+              energyForecast={energyForecast}
+              isForecastLoading={isForecastLoading}
             />
           )}
           {activeTab === "activities" && (
@@ -577,6 +609,7 @@ export default function HomePage() {
             open={modals.weeklyReport}
             onOpenChange={() => closeModal('weeklyReport')}
             activities={activities}
+            isProMember={isProMember}
         />
         <AddActivityModal
             open={modals.addActivity}
@@ -594,6 +627,7 @@ export default function HomePage() {
           onOpenChange={() => closeModal('dailyDebrief')}
           story={energyStory}
           loading={isStoryLoading}
+          isProMember={isProMember}
         />
         <ChatCoachModal
             open={modals.chatCoach}

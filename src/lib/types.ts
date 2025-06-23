@@ -77,3 +77,8 @@ export interface ActionableSuggestion {
     impact: number;
     emoji: string;
 }
+
+export interface EnergyForecastData {
+    hour: string;
+    predictedEnergy: number;
+}
