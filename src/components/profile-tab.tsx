@@ -2,14 +2,16 @@
 "use client";
 
 import type { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint, Users } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users, LogOut } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
+import { auth } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 type ProfileTabProps = {
   user: User | null;
@@ -23,7 +25,19 @@ type ProfileTabProps = {
 };
 
 export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange }: ProfileTabProps) {
+  const { toast } = useToast();
+  
   if (!user) return null;
+
+  const handleSignOut = async () => {
+    try {
+        await auth.signOut();
+        toast({ title: "Signed Out", description: "You have been successfully signed out." });
+        // The AuthContext and page logic will handle the redirect.
+    } catch (error: any) {
+        toast({ title: "Sign Out Failed", description: error.message, variant: "destructive" });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -121,6 +135,12 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                 </Button>
             </ProFeatureWrapper>
         </CardContent>
+        <CardFooter>
+            <Button onClick={handleSignOut} variant="outline" className="w-full">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+            </Button>
+        </CardFooter>
       </Card>
     </div>
   );

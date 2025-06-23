@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { User } from "@/lib/types";
+import type { PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -20,12 +20,19 @@ const onboardingFormSchema = z.object({
 
 type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
 
-type OnboardingScreenProps = {
-  onComplete: (user: User) => void;
+const defaultPetCustomization: PetCustomization = {
+    color: '#a8a29e',
+    outlineColor: '#4c51bf',
+    accessory: 'none' as const,
+    background: 'default' as const,
+    unlockedColors: ['#a8a29e'],
+    unlockedOutlineColors: ['#4c51bf'],
+    unlockedAccessories: ['none'],
+    unlockedBackgrounds: ['default'],
 };
 
-export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
-  const { user: firebaseUser, setAppUser } = useAuth();
+export function OnboardingScreen() {
+  const { firebaseUser, setAppUser } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -45,29 +52,21 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
     try {
         await updateProfile(firebaseUser, { displayName: data.name });
         
-        // Manually update the appUser state to trigger re-render
-        // This is better than a full page reload.
-        const petCustomizationData = localStorage.getItem(`energysync_pet_customization_${firebaseUser.uid}`);
-        const membershipTierData = localStorage.getItem(`energysync_membership_${firebaseUser.uid}`);
-        
-        const defaultPetCustomization = {
-            color: '#a8a29e',
-            accessory: 'none' as const,
-            background: 'default' as const,
-            unlockedColors: ['#a8a29e'],
-            unlockedAccessories: ['none'],
-            unlockedBackgrounds: ['default'],
-        };
-
-        const newUser: User = {
+        // This creates the initial app user state and saves it to the context (and localStorage)
+        setAppUser({
             name: data.name,
-            membershipTier: membershipTierData ? JSON.parse(membershipTierData) : 'free',
-            petCustomization: petCustomizationData ? JSON.parse(petCustomizationData) : defaultPetCustomization,
-        };
-        setAppUser(newUser);
+            membershipTier: 'free',
+            petCustomization: defaultPetCustomization,
+            petLevel: 1,
+            petExp: 0,
+            petName: 'Buddy',
+            petType: 'cat',
+            petEnabled: true,
+        });
 
     } catch (error: any) {
         toast({ title: 'Profile Update Failed', description: error.message, variant: 'destructive'});
+    } finally {
         setLoading(false);
     }
   }

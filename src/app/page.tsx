@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +15,7 @@ import { getEnergyForecast } from "@/ai/flows/energy-forecast-flow";
 import { analyzeEnergyHotspots } from "@/ai/flows/energy-hotspot-flow";
 import { subDays, startOfDay } from 'date-fns';
 
+import { useAuth } from "@/context/AuthContext";
 import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
@@ -31,6 +33,7 @@ import { ImageCheckinModal } from "@/components/image-checkin-modal";
 import { AddEventModal } from "@/components/add-event-modal";
 import { PetCustomizationModal } from "@/components/pet-customization-modal";
 import { PetSettingsModal } from "@/components/pet-settings-modal";
+import { OnboardingScreen } from "@/components/onboarding-screen";
 import { LoaderCircle } from "lucide-react";
 import { AgeGateModal } from "@/components/age-gate-modal";
 
@@ -39,13 +42,13 @@ const locations = ['Home', 'Office', 'Park', 'Cafe'];
 
 export default function HomePage() {
   const { toast } = useToast();
+  const router = useRouter();
+  const { firebaseUser, appUser, setAppUser, loading: authLoading } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [ageGroup, setAgeGroup] = useState<'under14' | 'over14' | null>(null);
   
-  const [user, setUser] = useState<User | null>(null);
-
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
   const [activeTab, setActiveTab] = useState("home");
@@ -98,39 +101,28 @@ export default function HomePage() {
   const [petInteractions, setPetInteractions] = useState<number>(0);
   const [lastTaskCompletionTime, setLastTaskCompletionTime] = useState<number | null>(null);
   
-  const petHappiness = currentEnergy; // Pet's happiness is now directly linked to user's energy
+  const petHappiness = currentEnergy;
   
-  const saveUser = useCallback((updatedUser: User) => {
-    setUser(updatedUser);
-    localStorage.setItem(`energysync_membership_local`, JSON.stringify(updatedUser.membershipTier));
-    localStorage.setItem(`energysync_pet_customization_local`, JSON.stringify(updatedUser.petCustomization));
-    localStorage.setItem(`energysync_pet_level_local`, JSON.stringify(updatedUser.petLevel));
-    localStorage.setItem(`energysync_pet_exp_local`, JSON.stringify(updatedUser.petExp));
-    localStorage.setItem(`energysync_pet_name_local`, updatedUser.petName);
-    localStorage.setItem(`energysync_pet_type_local`, updatedUser.petType);
-    localStorage.setItem(`energysync_pet_enabled_local`, JSON.stringify(updatedUser.petEnabled));
-  }, []);
-
   const gainPetExp = useCallback((amount: number) => {
-    if (!user || !user.petEnabled) return;
+    if (!appUser || !appUser.petEnabled) return;
     
-    const newExp = user.petExp + amount;
-    const expToNextLevel = 100 * user.petLevel;
+    const newExp = appUser.petExp + amount;
+    const expToNextLevel = 100 * appUser.petLevel;
     
     if (newExp >= expToNextLevel) {
         // Level up!
-        const newLevel = user.petLevel + 1;
+        const newLevel = appUser.petLevel + 1;
         const remainingExp = newExp - expToNextLevel;
-        saveUser({ ...user, petLevel: newLevel, petExp: remainingExp });
+        setAppUser({ ...appUser, petLevel: newLevel, petExp: remainingExp });
         toast({
             title: '🎉 Pet Level Up! 🎉',
             description: `Your energy companion grew to Level ${newLevel}!`,
         });
         unlockAchievement('Pet Trainer');
     } else {
-        saveUser({ ...user, petExp: newExp });
+        setAppUser({ ...appUser, petExp: newExp });
     }
-  }, [user, saveUser, toast]);
+  }, [appUser, setAppUser, toast]);
 
 
   useEffect(() => {
@@ -146,40 +138,11 @@ export default function HomePage() {
       setShowAgeGate(true);
     }
     
-    const defaultPetCustomization: PetCustomization = {
-        color: '#a8a29e',
-        outlineColor: '#4c51bf', // Default primary-like color
-        accessory: 'none' as const,
-        background: 'default' as const,
-        unlockedColors: ['#a8a29e'],
-        unlockedOutlineColors: ['#4c51bf'],
-        unlockedAccessories: ['none'],
-        unlockedBackgrounds: ['default'],
-    };
-
-    const storedMembership = localStorage.getItem('energysync_membership_local');
-    const storedPet = localStorage.getItem('energysync_pet_customization_local');
-    const storedPetLevel = localStorage.getItem('energysync_pet_level_local');
-    const storedPetExp = localStorage.getItem('energysync_pet_exp_local');
-    const storedPetName = localStorage.getItem('energysync_pet_name_local');
-    const storedPetType = localStorage.getItem('energysync_pet_type_local');
     const storedLastCompletion = localStorage.getItem('energysync_last_task_completion');
-    const storedPetEnabled = localStorage.getItem('energysync_pet_enabled_local');
     
     if (storedLastCompletion) {
         setLastTaskCompletionTime(Number(storedLastCompletion));
     }
-
-    setUser({
-        name: 'Alex', // A default name
-        membershipTier: storedMembership ? JSON.parse(storedMembership) : 'free',
-        petCustomization: storedPet ? JSON.parse(storedPet) : defaultPetCustomization,
-        petLevel: storedPetLevel ? JSON.parse(storedPetLevel) : 1,
-        petExp: storedPetExp ? JSON.parse(storedPetExp) : 0,
-        petName: storedPetName || 'Buddy',
-        petType: storedPetType || 'cat',
-        petEnabled: storedPetEnabled ? JSON.parse(storedPetEnabled) : true,
-    });
   }, []);
 
   const handleAgeSelect = (group: 'under14' | 'over14') => {
@@ -192,11 +155,10 @@ export default function HomePage() {
     }
   };
 
-
-  const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
+  const isProMember = useMemo(() => appUser?.membershipTier === 'pro', [appUser]);
   
   const fetchProactiveSuggestion = useCallback(async () => {
-    if (!isProMember || (ageGroup === 'over14' && !user?.petEnabled)) {
+    if (!isProMember || (ageGroup === 'over14' && !appUser?.petEnabled)) {
         setAiSuggestion(null);
         setIsSuggestionLoading(false);
         return;
@@ -219,7 +181,7 @@ export default function HomePage() {
     } finally {
       setIsSuggestionLoading(false);
     }
-  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember, ageGroup, user?.petEnabled]);
+  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember, ageGroup, appUser?.petEnabled]);
   
   const fetchEnergyForecast = useCallback(async () => {
     if (!isProMember || !readinessReport) return;
@@ -265,21 +227,21 @@ export default function HomePage() {
 }, [isProMember, activities, toast]);
 
   useEffect(() => {
-    if (activeTab === 'home' && user) {
+    if (activeTab === 'home' && appUser) {
       fetchProactiveSuggestion();
       if(readinessReport) {
         fetchEnergyForecast();
       }
     }
-    if (activeTab === 'insights' && user) {
+    if (activeTab === 'insights' && appUser) {
         fetchEnergyHotspots();
     }
-  }, [activeTab, user, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast, fetchEnergyHotspots]);
+  }, [activeTab, appUser, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast, fetchEnergyHotspots]);
 
   const handleTierChange = (newTier: 'free' | 'pro') => {
-    if (user) {
-        const updatedUser = { ...user, membershipTier: newTier };
-        saveUser(updatedUser);
+    if (appUser) {
+        const updatedUser = { ...appUser, membershipTier: newTier };
+        setAppUser(updatedUser);
         toast({
             title: `Membership Updated!`,
             description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
@@ -291,9 +253,9 @@ export default function HomePage() {
   };
 
   const handleTogglePet = (enabled: boolean) => {
-    if (user) {
-      const updatedUser = { ...user, petEnabled: enabled };
-      saveUser(updatedUser);
+    if (appUser) {
+      const updatedUser = { ...appUser, petEnabled: enabled };
+      setAppUser(updatedUser);
       if (!enabled && activeTab === 'pet') {
         setActiveTab('home');
       }
@@ -308,7 +270,7 @@ export default function HomePage() {
         description: `Your app experience has been set for users ${newAgeGroup === 'under14' ? 'under 14' : '14 and over'}.`,
     });
     // If user switches to under 14, automatically enable pet
-    if (newAgeGroup === 'under14' && user && !user.petEnabled) {
+    if (newAgeGroup === 'under14' && appUser && !appUser.petEnabled) {
         handleTogglePet(true);
     }
   };
@@ -635,7 +597,7 @@ export default function HomePage() {
     item: string, 
     cost: number
   ) => {
-    if (!user) return;
+    if (!appUser) return;
 
     if (petInteractions < cost) {
       toast({ title: 'Not enough interactions!', description: `You need ${cost} interactions to buy this.`, variant: 'destructive' });
@@ -644,7 +606,7 @@ export default function HomePage() {
 
     setPetInteractions(prev => prev - cost);
 
-    const updatedCustomization = { ...user.petCustomization };
+    const updatedCustomization = { ...appUser.petCustomization };
     if (category === 'color') {
       updatedCustomization.unlockedColors.push(item);
       updatedCustomization.color = item;
@@ -659,7 +621,7 @@ export default function HomePage() {
       updatedCustomization.background = item as 'default' | 'park' | 'cozy';
     }
     
-    saveUser({ ...user, petCustomization: updatedCustomization });
+    setAppUser({ ...appUser, petCustomization: updatedCustomization });
     toast({ title: 'Item Purchased!', description: 'You can equip it from the customization menu.' });
     unlockAchievement('Pet Customizer');
   };
@@ -668,26 +630,46 @@ export default function HomePage() {
     category: 'color' | 'accessory' | 'background' | 'outline', 
     item: string
   ) => {
-    if (!user) return;
-    const updatedCustomization = { ...user.petCustomization };
+    if (!appUser) return;
+    const updatedCustomization = { ...appUser.petCustomization };
     if (category === 'color') updatedCustomization.color = item;
     if (category === 'outline') updatedCustomization.outlineColor = item;
     if (category === 'accessory') updatedCustomization.accessory = item as 'none' | 'bowtie';
     if (category === 'background') updatedCustomization.background = item as 'default' | 'park' | 'cozy';
-    saveUser({ ...user, petCustomization: updatedCustomization });
+    setAppUser({ ...appUser, petCustomization: updatedCustomization });
     toast({ title: 'Item Equipped!', description: 'Your pet has a new look!' });
   };
   
   const handleSavePetSettings = (newName: string, newType: 'cat' | 'dog' | 'horse' | 'chicken') => {
-    if (user) {
-        saveUser({ ...user, petName: newName, petType: newType });
+    if (appUser) {
+        setAppUser({ ...appUser, petName: newName, petType: newType });
         toast({ title: 'Pet Updated!', description: `Say hello to your ${newType}, ${newName}!` });
         closeModal('petSettings');
     }
   };
 
+  if (authLoading) {
+      return (
+        <div className="min-h-dvh bg-background flex items-center justify-center">
+            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+        </div>
+      );
+  }
 
-  if (!user || !ageGroup) {
+  if (!firebaseUser) {
+      router.push('/login');
+      return (
+        <div className="min-h-dvh bg-background flex items-center justify-center">
+            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+        </div>
+      );
+  }
+
+  if (!appUser) {
+      return <OnboardingScreen />;
+  }
+
+  if (!ageGroup) {
     return (
         <>
             <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />
@@ -705,7 +687,7 @@ export default function HomePage() {
 
           {activeTab === "home" && (
             <HomeTab
-              user={user}
+              user={appUser}
               isProMember={isProMember}
               ageGroup={ageGroup}
               currentEnergy={currentEnergy}
@@ -735,24 +717,24 @@ export default function HomePage() {
               activities={activities}
               openModal={openModal}
               isProMember={isProMember}
-              ageGroup={ageGroup}
               onDeleteActivity={handleDeleteActivity}
+              ageGroup={ageGroup}
             />
           )}
-          {activeTab === "pet" && user && user.petEnabled && (
+          {activeTab === "pet" && appUser && appUser.petEnabled && (
             <PetTab
               tasks={petTasks}
               onTaskComplete={handleTaskComplete}
               interactions={petInteractions}
               petHappiness={petHappiness}
               onPetInteraction={handlePetInteraction}
-              customization={user.petCustomization}
+              customization={appUser.petCustomization}
               openCustomization={() => openModal('petCustomization')}
               openSettings={() => openModal('petSettings')}
-              level={user.petLevel}
-              exp={user.petExp}
-              petName={user.petName}
-              petType={user.petType}
+              level={appUser.petLevel}
+              exp={appUser.petExp}
+              petName={appUser.petName}
+              petType={appUser.petType}
               lastTaskCompletionTime={lastTaskCompletionTime}
             />
           )}
@@ -777,7 +759,7 @@ export default function HomePage() {
           )}
           {activeTab === "profile" && (
             <ProfileTab
-              user={user}
+              user={appUser}
               onShowTutorial={handleShowTutorial}
               onShowDebrief={handleShowDebrief}
               isProMember={isProMember}
@@ -789,7 +771,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={user.petEnabled} />
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} />
         
         <RechargeModal
           open={modals.recharge}
@@ -858,22 +840,22 @@ export default function HomePage() {
             isProMember={isProMember}
             ageGroup={ageGroup}
         />
-        {user && (
+        {appUser && (
             <PetCustomizationModal
                 open={modals.petCustomization}
                 onOpenChange={() => closeModal('petCustomization')}
-                customization={user.petCustomization}
+                customization={appUser.petCustomization}
                 interactions={petInteractions}
                 onPurchase={handlePurchaseAndEquipItem}
                 onEquip={handleEquipItem}
             />
         )}
-        {user && (
+        {appUser && (
             <PetSettingsModal
                 open={modals.petSettings}
                 onOpenChange={() => closeModal('petSettings')}
-                currentName={user.petName}
-                currentType={user.petType}
+                currentName={appUser.petName}
+                currentType={appUser.petType}
                 onSave={handleSavePetSettings}
             />
         )}
