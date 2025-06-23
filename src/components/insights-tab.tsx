@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, HeartPulse } from "lucide-react";
+import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, Sparkles, LoaderCircle } from "lucide-react";
 import { WeeklyEnergyChart } from "./weekly-energy-chart";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
+import { Skeleton } from "./ui/skeleton";
 
 type InsightsTabProps = {
   isProMember: boolean;
@@ -21,6 +22,8 @@ type InsightsTabProps = {
   goals: Goal[];
   challenges: Challenge[];
   onGoalComplete: (goalId: number) => void;
+  onSuggestGoals: () => void;
+  isGoalsLoading: boolean;
 };
 
 export function InsightsTab({
@@ -33,7 +36,9 @@ export function InsightsTab({
   openModal,
   goals,
   challenges,
-  onGoalComplete
+  onGoalComplete,
+  onSuggestGoals,
+  isGoalsLoading
 }: InsightsTabProps) {
   return (
     <div className="space-y-6">
@@ -53,44 +58,72 @@ export function InsightsTab({
       </Card>
 
       <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <Target className="text-green-500 mr-3" /> Goals & Challenges
-          </CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="flex items-center text-xl">
+                <Target className="text-green-500 mr-3" /> Goals & Challenges
+            </CardTitle>
+             <ProFeatureWrapper isPro={isProMember}>
+                <Button onClick={onSuggestGoals} variant="ghost" size="sm" disabled={isGoalsLoading}>
+                    {isGoalsLoading ? (
+                        <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
+                    )}
+                    Suggest New
+                </Button>
+            </ProFeatureWrapper>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">YOUR GOALS</h3>
-              <div className="space-y-3">
-                {goals.map((goal) => (
-                  <div key={goal.id} className="flex items-center space-x-3 bg-muted/50 p-3 rounded-lg">
-                    <Checkbox id={`goal-${goal.id}`} checked={goal.completed} onCheckedChange={() => onGoalComplete(goal.id)} />
-                    <Label htmlFor={`goal-${goal.id}`} className={`flex-grow ${goal.completed ? 'line-through text-muted-foreground' : ''}`}>
-                      <span className="font-semibold text-card-foreground">{goal.icon} {goal.name}</span>
-                      <p className="text-xs">{goal.description}</p>
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-muted-foreground mb-2">COMMUNITY CHALLENGES</h3>
-              <div className="space-y-3">
-                {challenges.map((challenge) => (
-                  <div key={challenge.id} className="bg-primary/5 border border-primary/20 p-3 rounded-lg flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-primary">{challenge.icon} {challenge.name}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{challenge.description}</p>
-                        <div className="flex items-center gap-4 text-xs mt-2">
-                           <span className="flex items-center gap-1"><Users2 className="h-3 w-3" /> {challenge.participants} participants</span>
-                           <span className="flex items-center gap-1"><Star className="h-3 w-3" /> {challenge.daysLeft} days left</span>
+            {isGoalsLoading ? (
+                 <div className="space-y-4">
+                    <Skeleton className="h-16 w-full rounded-lg" />
+                    <Skeleton className="h-16 w-full rounded-lg" />
+                    <Skeleton className="h-20 w-full rounded-lg" />
+                </div>
+            ) : (
+            <>
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">YOUR GOALS</h3>
+                  {goals.length > 0 ? (
+                    <div className="space-y-3">
+                        {goals.map((goal) => (
+                        <div key={goal.id} className="flex items-center space-x-3 bg-muted/50 p-3 rounded-lg">
+                            <Checkbox id={`goal-${goal.id}`} checked={goal.completed} onCheckedChange={() => onGoalComplete(goal.id)} />
+                            <Label htmlFor={`goal-${goal.id}`} className={`flex-grow ${goal.completed ? 'line-through text-muted-foreground' : ''}`}>
+                            <span className="font-semibold text-card-foreground">{goal.icon} {goal.name}</span>
+                            <p className="text-xs">{goal.description}</p>
+                            </Label>
                         </div>
-                      </div>
-                      <Button size="sm">Join</Button>
-                  </div>
-                ))}
-              </div>
-            </div>
+                        ))}
+                    </div>
+                  ) : (
+                     <p className="text-sm text-muted-foreground text-center py-4">No goals yet. Ask the AI for suggestions!</p>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">COMMUNITY CHALLENGES</h3>
+                  {challenges.length > 0 ? (
+                    <div className="space-y-3">
+                        {challenges.map((challenge) => (
+                        <div key={challenge.id} className="bg-primary/5 border border-primary/20 p-3 rounded-lg flex items-center justify-between">
+                            <div>
+                                <p className="font-semibold text-primary">{challenge.icon} {challenge.name}</p>
+                                <p className="text-xs text-muted-foreground mt-1">{challenge.description}</p>
+                                <div className="flex items-center gap-4 text-xs mt-2">
+                                <span className="flex items-center gap-1"><Users2 className="h-3 w-3" /> {challenge.participants} participants</span>
+                                <span className="flex items-center gap-1"><Star className="h-3 w-3" /> {challenge.daysLeft} days left</span>
+                                </div>
+                            </div>
+                            <Button size="sm">Join</Button>
+                        </div>
+                        ))}
+                    </div>
+                  ) : (
+                     <p className="text-sm text-muted-foreground text-center py-4">No challenges available right now.</p>
+                  )}
+                </div>
+            </>
+            )}
         </CardContent>
       </Card>
 

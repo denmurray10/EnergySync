@@ -51,6 +51,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 9, name: 'Storyteller', unlocked: false, icon: '📖' },
     { id: 10, name: 'Chatterbox', unlocked: false, icon: '💬' },
     { id: 11, name: 'Pixel Perfect', unlocked: false, icon: '📸' },
+    { id: 12, name: 'Goal Setter', unlocked: false, icon: '💡' },
 ];
 
 export const INITIAL_GOALS: Goal[] = [

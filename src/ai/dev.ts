@@ -12,3 +12,4 @@ import '@/ai/flows/conversational-coach-flow.ts';
 import '@/ai/flows/image-checkin-flow.ts';
 import '@/ai/flows/text-to-speech-flow.ts';
 import '@/ai/flows/suggest-event-details.ts';
+import '@/ai/flows/suggest-goals-flow.ts';

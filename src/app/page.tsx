@@ -8,6 +8,7 @@ import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
 import { getEnergyStory } from "@/ai/flows/energy-story-flow";
 import { chatWithCoach } from "@/ai/flows/conversational-coach-flow";
+import { suggestGoals } from "@/ai/flows/suggest-goals-flow";
 import { subDays, startOfDay, format } from 'date-fns';
 
 
@@ -65,6 +66,7 @@ export default function HomePage() {
   
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
   const [challenges, setChallenges] = useState<Challenge[]>(INITIAL_CHALLENGES);
+  const [isGoalsLoading, setIsGoalsLoading] = useState(false);
   
   const [locationIndex, setLocationIndex] = useState(0);
   const currentUserLocation = locations[locationIndex];
@@ -180,12 +182,15 @@ export default function HomePage() {
   };
 
   const unlockAchievement = useCallback((name: string) => {
-    const alreadyUnlocked = achievements.find(a => a.name === name)?.unlocked;
-    if (!alreadyUnlocked) {
-      setAchievements(prev => prev.map(a => a.name === name ? { ...a, unlocked: true } : a));
-      showToast(`Achievement Unlocked!`, `You've earned: ${name}`, '🏆');
+    const isAlreadyUnlocked = achievements.some(a => a.name === name && a.unlocked);
+    if (!isAlreadyUnlocked) {
+        setAchievements(prev => prev.map(a => a.name === name ? { ...a, unlocked: true } : a));
+        const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
+        if (achievement) {
+            showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+        }
     }
-  }, [achievements, showToast]);
+}, [achievements, showToast]);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
@@ -428,6 +433,47 @@ export default function HomePage() {
     }
   };
 
+  const handleSuggestGoals = useCallback(async () => {
+    if (!isProMember) return;
+    setIsGoalsLoading(true);
+    try {
+        const recentActivities = activities.slice(0, 15);
+        const currentGoalNames = goals.map(g => ({ name: g.name }));
+
+        const result = await suggestGoals({ activities: recentActivities, currentGoals: currentGoalNames });
+
+        const newGoals = result.goals.map((g, i) => ({
+            ...g,
+            id: Date.now() + i,
+            completed: false,
+        }));
+
+        const newChallenges = result.challenges.map((c, i) => ({
+            ...c,
+            id: Date.now() + i,
+        }));
+        
+        setGoals(newGoals);
+        setChallenges(newChallenges);
+        
+        toast({
+            title: "Suggestions Loaded!",
+            description: "Your new AI-powered goals and challenges are ready.",
+        });
+        unlockAchievement('Goal Setter');
+
+    } catch (error) {
+        console.error("Failed to suggest goals:", error);
+        toast({
+            title: "Suggestion Failed",
+            description: "Could not get AI suggestions at this time.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsGoalsLoading(false);
+    }
+  }, [activities, goals, isProMember, toast, unlockAchievement]);
+
   const dynamicInsights = useMemo(() => {
     const drainers = activities.filter(a => a.impact < 0);
     if (drainers.length === 0) return { drainPattern: 'No draining activities logged yet.', rechargePattern: 'Log some activities to see patterns.' };
@@ -495,6 +541,8 @@ export default function HomePage() {
               goals={goals}
               challenges={challenges}
               onGoalComplete={handleGoalComplete}
+              onSuggestGoals={handleSuggestGoals}
+              isGoalsLoading={isGoalsLoading}
             />
           )}
           {activeTab === "profile" && (
@@ -513,7 +561,7 @@ export default function HomePage() {
         
         <RechargeModal
           open={modals.recharge}
-          onOpenChange={(isOpen) => closeModal('recharge')}
+          onOpenChange={() => closeModal('recharge')}
           handleRecharge={handleRecharge}
           activities={activities}
           currentEnergy={currentEnergy}
@@ -522,17 +570,17 @@ export default function HomePage() {
         />
         <VoiceCheckinModal
             open={modals.voiceCheckIn}
-            onOpenChange={(isOpen) => closeModal('voiceCheckIn')}
+            onOpenChange={() => closeModal('voiceCheckIn')}
             onCheckinComplete={handleVoiceCheckinComplete}
         />
         <WeeklyReportModal
             open={modals.weeklyReport}
-            onOpenChange={(isOpen) => closeModal('weeklyReport')}
+            onOpenChange={() => closeModal('weeklyReport')}
             activities={activities}
         />
         <AddActivityModal
             open={modals.addActivity}
-            onOpenChange={(isOpen) => closeModal('addActivity')}
+            onOpenChange={() => closeModal('addActivity')}
             onLogActivity={handleLogActivity}
             isProMember={isProMember}
         />
@@ -543,13 +591,13 @@ export default function HomePage() {
         />
         <DailyDebriefModal
           open={modals.dailyDebrief}
-          onOpenChange={(isOpen) => closeModal('dailyDebrief')}
+          onOpenChange={() => closeModal('dailyDebrief')}
           story={energyStory}
           loading={isStoryLoading}
         />
         <ChatCoachModal
             open={modals.chatCoach}
-            onOpenChange={(isOpen) => closeModal('chatCoach')}
+            onOpenChange={() => closeModal('chatCoach')}
             chatHistory={chatHistory}
             isThinking={isChatting}
             onSendMessage={handleChatSubmit}
@@ -557,12 +605,12 @@ export default function HomePage() {
         />
         <ImageCheckinModal
             open={modals.imageCheckin}
-            onOpenChange={(isOpen) => closeModal('imageCheckin')}
+            onOpenChange={() => closeModal('imageCheckin')}
             onLogActivity={handleLogActivity}
         />
         <AddEventModal
             open={modals.addEvent}
-            onOpenChange={(isOpen) => closeModal('addEvent')}
+            onOpenChange={() => closeModal('addEvent')}
             onLogEvent={handleLogEvent}
             isProMember={isProMember}
         />
