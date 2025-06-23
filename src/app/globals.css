@@ -67,3 +67,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+@keyframes jump {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-breathe {
+  animation: breathe 5s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.animate-jump {
+  animation: jump 0.5s ease-in-out;
+}
