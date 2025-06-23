@@ -23,6 +23,7 @@ const ProactiveSuggestionInputSchema = z.object({
         type: z.string(),
         impact: z.number(),
     })).describe("A list of the user's recent activities."),
+    currentUserLocation: z.string().optional().describe("The user's current physical location, like 'Home', 'Office', or 'Park'.")
 });
 export type ProactiveSuggestionInput = z.infer<typeof ProactiveSuggestionInputSchema>;
 
@@ -43,17 +44,21 @@ const prompt = ai.definePrompt({
     output: { schema: ProactiveSuggestionOutputSchema },
     prompt: `You are an AI Energy Coach. Your goal is to provide a single, short, friendly, and actionable piece of advice to help the user manage their energy.
 
-    Analyze the user's current energy level, their upcoming events, and their recent activities.
+    Analyze the user's current energy level, their upcoming events, their recent activities, and their current location.
     Based on this context, generate one proactive suggestion.
 
     - If their energy is low and they have a draining event coming up, suggest a quick recharge activity.
     - If they have a high-impact event soon, suggest a buffer or preparation.
     - If they've had many draining activities recently, recommend a break.
     - If their energy is high, give them an encouraging message.
+    - If their location is provided, try to make the suggestion relevant to it. For example, if they are at a 'Park', suggest a walk. If at 'Home', suggest a home-based activity.
     - Make the suggestion concise and start it with a relevant emoji.
 
     CONTEXT:
     - Current Energy: {{{currentEnergy}}}%
+    {{#if currentUserLocation}}
+    - Current Location: {{{currentUserLocation}}}
+    {{/if}}
     - Upcoming Events: {{#each upcomingEvents}}'{{name}}' (Impact: {{estimatedImpact}}), {{/each}}
     - Recent Activities: {{#each recentActivities}}'{{name}}' (Impact: {{impact}}), {{/each}}
     `

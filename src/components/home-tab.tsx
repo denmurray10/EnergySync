@@ -17,6 +17,7 @@ import {
   Mic,
   Calendar,
   BrainCircuit,
+  Globe,
 } from "lucide-react";
 
 type HomeTabProps = {
@@ -33,6 +34,8 @@ type HomeTabProps = {
   simulateCalendarSync: () => void;
   aiSuggestion: string | null;
   isSuggestionLoading: boolean;
+  currentUserLocation: string;
+  changeLocation: () => void;
 };
 
 const getEnergyColour = (energy: number) => {
@@ -65,6 +68,8 @@ export function HomeTab({
   simulateCalendarSync,
   aiSuggestion,
   isSuggestionLoading,
+  currentUserLocation,
+  changeLocation
 }: HomeTabProps) {
   return (
     <div className="space-y-6">
@@ -217,18 +222,29 @@ export function HomeTab({
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center text-xl">
-            <Calendar className="text-indigo-500 mr-3" />
-            Smart Schedule
-          </CardTitle>
-          <Button
-            onClick={simulateCalendarSync}
-            variant="ghost"
-            size="sm"
-            className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-3 py-1 rounded-full hover:bg-indigo-200"
-          >
-            Sync
-          </Button>
+            <CardTitle className="flex items-center text-xl">
+              <Calendar className="text-indigo-500 mr-3" />
+              Smart Schedule
+            </CardTitle>
+            <div className="flex items-center gap-2">
+                 <Button
+                    onClick={changeLocation}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-3 py-1 rounded-full hover:bg-indigo-200"
+                >
+                    <Globe className="mr-1.5 h-4 w-4" />
+                    {currentUserLocation}
+                </Button>
+                <Button
+                    onClick={simulateCalendarSync}
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-3 py-1 rounded-full hover:bg-indigo-200"
+                >
+                    Sync
+                </Button>
+            </div>
         </CardHeader>
         <CardContent className="space-y-4">
           {upcomingEvents.map((event) => (

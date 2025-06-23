@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User } from "@/lib/types";
-import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS } from "@/lib/data";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge } from "@/lib/types";
+import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 
@@ -44,6 +44,8 @@ const navItems = [
   { id: "profile", icon: UserIcon, label: "Profile" },
 ];
 
+const locations = ['Home', 'Office', 'Park', 'Cafe'];
+
 export default function HomePage() {
   const { toast } = useToast();
 
@@ -71,6 +73,12 @@ export default function HomePage() {
 
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [isSuggestionLoading, setIsSuggestionLoading] = useState(true);
+  
+  const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
+  const [challenges, setChallenges] = useState<Challenge[]>(INITIAL_CHALLENGES);
+  
+  const [locationIndex, setLocationIndex] = useState(0);
+  const currentUserLocation = locations[locationIndex];
 
   useEffect(() => {
     // In a real app, you'd check for user data in localStorage or from an API
@@ -91,7 +99,8 @@ export default function HomePage() {
         const result = await getProactiveSuggestion({ 
           currentEnergy, 
           upcomingEvents, 
-          recentActivities 
+          recentActivities,
+          currentUserLocation
         });
         setAiSuggestion(result.suggestion);
       } catch (error) {
@@ -103,7 +112,7 @@ export default function HomePage() {
     };
 
     fetchSuggestion();
-  }, [activities, upcomingEvents, currentEnergy, activeTab]);
+  }, [activities, upcomingEvents, currentEnergy, activeTab, currentUserLocation]);
 
   const handleOnboardingComplete = (newUser: User) => {
     setUser(newUser);
@@ -216,9 +225,10 @@ export default function HomePage() {
   const openModal = (modalName: keyof typeof modals) => setModals(prev => ({ ...prev, [modalName]: true }));
   const closeModal = (modalName: keyof typeof modals) => setModals(prev => ({ ...prev, [modalName]: false }));
 
-  const simulateVoiceCheckIn = (energyChange: number, message: string) => {
-    setCurrentEnergy(prev => Math.max(0, Math.min(100, prev + energyChange)));
-    showToast('Voice Check-in complete', message, '🎤');
+  const handleVoiceCheckinComplete = (result: { energyImpact: number; summary: string }) => {
+    setCurrentEnergy(prev => Math.max(0, Math.min(100, prev + result.energyImpact)));
+    const toastMessage = `${result.energyImpact > 0 ? '+' : ''}${result.energyImpact}% - ${result.summary}`;
+    showToast('Voice Check-in Complete', toastMessage, '🎤');
     closeModal('voiceCheckIn');
   };
 
@@ -256,6 +266,26 @@ export default function HomePage() {
       description: "Biometrics have been synced from your health provider.",
     });
     unlockAchievement('Bio-Scanner');
+  };
+
+  const changeLocation = () => {
+    setLocationIndex((prevIndex) => (prevIndex + 1) % locations.length);
+    toast({
+        title: 'Location Changed',
+        description: `Your location is now set to ${locations[(locationIndex + 1) % locations.length]}.`,
+    });
+  };
+  
+  const handleGoalComplete = (goalId: number) => {
+    const goal = goals.find(g => g.id === goalId);
+    if (goal) {
+      const wasCompleted = goal.completed;
+      setGoals(prev => prev.map(g => g.id === goalId ? { ...g, completed: !g.completed } : g));
+      if (!wasCompleted) {
+        unlockAchievement('Goal Getter');
+        showToast('Goal Complete!', `You've completed: ${goal.name}`, '🎯');
+      }
+    }
   };
 
   const dynamicInsights = useMemo(() => {
@@ -332,6 +362,8 @@ export default function HomePage() {
                     simulateCalendarSync={simulateCalendarSync}
                     aiSuggestion={aiSuggestion}
                     isSuggestionLoading={isSuggestionLoading}
+                    currentUserLocation={currentUserLocation}
+                    changeLocation={changeLocation}
                   />
                 )}
                 {activeTab === "activities" && (
@@ -346,6 +378,9 @@ export default function HomePage() {
                     activities={activities}
                     openModal={openModal}
                     simulateHealthSync={simulateHealthSync}
+                    goals={goals}
+                    challenges={challenges}
+                    onGoalComplete={handleGoalComplete}
                   />
                 )}
                 {activeTab === "profile" && (
@@ -370,7 +405,7 @@ export default function HomePage() {
               <VoiceCheckinModal
                   open={modals.voiceCheckIn}
                   onOpenChange={(isOpen) => closeModal('voiceCheckIn')}
-                  simulateVoiceCheckIn={simulateVoiceCheckIn}
+                  onCheckinComplete={handleVoiceCheckinComplete}
               />
               <WeeklyReportModal
                   open={modals.weeklyReport}

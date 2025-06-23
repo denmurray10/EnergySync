@@ -39,3 +39,20 @@ export interface BiometricData {
 export interface User {
   name: string;
 }
+
+export interface Goal {
+  id: number;
+  name: string;
+  description: string;
+  completed: boolean;
+  icon: string;
+}
+
+export interface Challenge {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  participants: number;
+  daysLeft: number;
+}

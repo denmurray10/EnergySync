@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,68 +10,103 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { LoaderCircle } from "lucide-react";
+import { analyzeCheckin, AnalyzeCheckinOutput } from "@/ai/flows/analyze-checkin-flow";
+import { useToast } from "@/hooks/use-toast";
+
 
 type VoiceCheckinModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  simulateVoiceCheckIn: (energyChange: number, message: string) => void;
+  onCheckinComplete: (result: AnalyzeCheckinOutput) => void;
 };
 
 export function VoiceCheckinModal({
   open,
   onOpenChange,
-  simulateVoiceCheckIn,
+  onCheckinComplete,
 }: VoiceCheckinModalProps) {
+  const { toast } = useToast();
+  const [text, setText] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAnalyze = async () => {
+    if (!text.trim()) {
+      toast({
+        title: "Please say something!",
+        description: "Type how you're feeling into the text box.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsAnalyzing(true);
+    try {
+      const result = await analyzeCheckin({ checkInText: text });
+      onCheckinComplete(result);
+      setText(""); // Clear text on success
+    } catch (e) {
+      console.error("Failed to analyze check-in:", e);
+      toast({
+        title: "Error Analyzing Check-in",
+        description: "Sorry, we couldn't analyze your message right now. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        setText('');
+        setIsAnalyzing(false);
+      }
+      onOpenChange(isOpen);
+    }}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Voice Check-in
+            AI Voice Check-in
           </DialogTitle>
           <DialogDescription>
-            Select the phrase that best matches how you feel.
+            Tell me how you're feeling, and I'll log your energy.
+            <br/>
+            e.g., "I'm feeling great!" or "I'm exhausted."
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3 py-4">
-          <Button
-            onClick={() =>
-              simulateVoiceCheckIn(20, "+20% - Glad you're feeling great!")
-            }
-            className="w-full text-left p-4 h-auto justify-start bg-green-100 text-green-800 hover:bg-green-200"
-            variant="secondary"
-          >
-            "I feel great today!"
-          </Button>
-          <Button
-            onClick={() =>
-              simulateVoiceCheckIn(-15, "-15% - Remember to take it easy.")
-            }
-            className="w-full text-left p-4 h-auto justify-start bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-            variant="secondary"
-          >
-            "I'm feeling a bit tired."
-          </Button>
-          <Button
-            onClick={() =>
-              simulateVoiceCheckIn(
-                -30,
-                "-30% - Consider a recharge activity."
-              )
-            }
-            className="w-full text-left p-4 h-auto justify-start bg-red-100 text-red-800 hover:bg-red-200"
-            variant="secondary"
-          >
-            "I'm totally drained and exhausted."
-          </Button>
+        <div className="py-4">
+            <Textarea
+                placeholder="Type or speak how you feel..."
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                rows={4}
+                disabled={isAnalyzing}
+            />
         </div>
-        <DialogFooter>
+        <DialogFooter className="gap-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             className="w-full"
+            disabled={isAnalyzing}
           >
             Cancel
+          </Button>
+           <Button
+            onClick={handleAnalyze}
+            className="w-full"
+            disabled={isAnalyzing}
+          >
+            {isAnalyzing ? (
+                <>
+                 <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                 Analyzing...
+                </>
+            ) : "Log My Energy"}
           </Button>
         </DialogFooter>
       </DialogContent>

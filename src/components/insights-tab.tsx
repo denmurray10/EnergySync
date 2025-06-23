@@ -1,10 +1,12 @@
 "use client";
 
-import type { Achievement, Activity } from "@/lib/types";
+import type { Achievement, Activity, Goal, Challenge } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, BrainCircuit, Users, Link as LinkIcon, LineChart } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Trophy, BrainCircuit, Users, Link as LinkIcon, LineChart, Target, Star, Users2 } from "lucide-react";
 import { WeeklyEnergyChart } from "./weekly-energy-chart";
 
 type InsightsTabProps = {
@@ -15,6 +17,9 @@ type InsightsTabProps = {
   activities: Activity[];
   openModal: (modalName: string) => void;
   simulateHealthSync: () => void;
+  goals: Goal[];
+  challenges: Challenge[];
+  onGoalComplete: (goalId: number) => void;
 };
 
 export function InsightsTab({
@@ -25,6 +30,9 @@ export function InsightsTab({
   activities,
   openModal,
   simulateHealthSync,
+  goals,
+  challenges,
+  onGoalComplete
 }: InsightsTabProps) {
   return (
     <div className="space-y-6">
@@ -42,6 +50,49 @@ export function InsightsTab({
           <WeeklyEnergyChart activities={activities} />
         </CardContent>
       </Card>
+
+      <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <Target className="text-green-500 mr-3" /> Goals & Challenges
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">YOUR GOALS</h3>
+              <div className="space-y-3">
+                {goals.map((goal) => (
+                  <div key={goal.id} className="flex items-center space-x-3 bg-muted/50 p-3 rounded-lg">
+                    <Checkbox id={`goal-${goal.id}`} checked={goal.completed} onCheckedChange={() => onGoalComplete(goal.id)} />
+                    <Label htmlFor={`goal-${goal.id}`} className={`flex-grow ${goal.completed ? 'line-through text-muted-foreground' : ''}`}>
+                      <span className="font-semibold text-card-foreground">{goal.icon} {goal.name}</span>
+                      <p className="text-xs">{goal.description}</p>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2">COMMUNITY CHALLENGES</h3>
+              <div className="space-y-3">
+                {challenges.map((challenge) => (
+                  <div key={challenge.id} className="bg-primary/5 border border-primary/20 p-3 rounded-lg flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-primary">{challenge.icon} {challenge.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{challenge.description}</p>
+                        <div className="flex items-center gap-4 text-xs mt-2">
+                           <span className="flex items-center gap-1"><Users2 className="h-3 w-3" /> {challenge.participants} participants</span>
+                           <span className="flex items-center gap-1"><Star className="h-3 w-3" /> {challenge.daysLeft} days left</span>
+                        </div>
+                      </div>
+                      <Button size="sm">Join</Button>
+                  </div>
+                ))}
+              </div>
+            </div>
+        </CardContent>
+      </Card>
+
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>

@@ -1,4 +1,4 @@
-import type { Activity, UpcomingEvent, Achievement } from './types';
+import type { Activity, UpcomingEvent, Achievement, Goal, Challenge } from './types';
 import { subDays, format } from 'date-fns';
 
 const today = new Date();
@@ -47,4 +47,16 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 5, name: 'Scheduler Supreme', unlocked: false, icon: '📅' },
     { id: 6, name: 'Bio-Scanner', unlocked: false, icon: '❤️' },
     { id: 7, name: 'Community Member', unlocked: false, icon: '🤝' },
+    { id: 8, name: 'Goal Getter', unlocked: false, icon: '🎯' },
+];
+
+export const INITIAL_GOALS: Goal[] = [
+    { id: 1, name: "Recharge Weekly", description: "Complete 3 recharge activities this week.", completed: false, icon: '🔋' },
+    { id: 2, name: "Energy Awareness", description: "Log your energy daily for 5 days straight.", completed: true, icon: '🧠' },
+    { id: 3, name: "Beat the Slump", description: "Stay above 40% energy for 3 consecutive days.", completed: false, icon: '🚀' },
+];
+
+export const INITIAL_CHALLENGES: Challenge[] = [
+    { id: 1, name: "7-Day Meditation Streak", description: "Meditate every day for one week.", icon: '🧘', participants: 142, daysLeft: 5 },
+    { id: 2, name: "Weekend Warrior", description: "Log one social and one recharge activity this weekend.", icon: '🎉', participants: 89, daysLeft: 2 },
 ];
