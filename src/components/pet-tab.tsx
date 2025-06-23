@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Lottie from "lottie-react";
+import dogAnimationData from '@/lib/lottie/dog.json';
 
 type PetType = 'cat' | 'dog' | 'horse' | 'chicken';
 
@@ -115,6 +117,19 @@ type VirtualPetProps = {
 }
 
 const VirtualPet = ({ petType, happiness, isInteracting, customization, level, suggestion }: VirtualPetProps) => {
+    const lottieRef = useRef<any>(null);
+    
+    useEffect(() => {
+        if (lottieRef.current) {
+            if (happiness >= 80) lottieRef.current.setSpeed(1.5);
+            else if (happiness >= 60) lottieRef.current.setSpeed(1.0);
+            else if (happiness >= 40) lottieRef.current.setSpeed(0.5);
+            else {
+                lottieRef.current.goToAndStop(1, true); // Stop animation
+            }
+        }
+    }, [happiness]);
+    
     const getHappinessText = () => {
         if (happiness >= 80) return "Feeling ecstatic because you are!";
         if (happiness >= 60) return "Feeling great, just like you!";
@@ -131,38 +146,52 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     
     const scale = 1 + (level - 1) * 0.05;
 
-    const petDisplay = (
-         <div className={cn("relative w-48 h-48 transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-                <g className="animate-breathe">
-                    <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
-                    {(petType === 'cat' || petType === 'dog') && (
-                      <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
-                          <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
-                          <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
-                      </g>
-                    )}
-                    <PetFace happiness={happiness} />
-                    {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
-                    {customization.accessory === 'bowtie' && (
-                         <path
-                            d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
-                            fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
-                    )}
-                </g>
-            </svg>
-        </div>
-    );
+    const petDisplay = useMemo(() => {
+        if (petType === 'dog') {
+            return (
+                 <div className="w-48 h-48">
+                    <Lottie
+                        lottieRef={lottieRef}
+                        animationData={dogAnimationData}
+                        loop={true}
+                        style={{ transform: `scale(${scale})` }}
+                        className={cn("transition-transform", isInteracting && "animate-jump")}
+                    />
+                </div>
+            )
+        }
+        return (
+            <div className={cn("relative w-48 h-48 transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                    <g className="animate-breathe">
+                        <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
+                        {(petType === 'cat' || petType === 'dog') && (
+                        <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
+                            <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
+                            <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
+                        </g>
+                        )}
+                        <PetFace happiness={happiness} />
+                        {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
+                        {customization.accessory === 'bowtie' && (
+                            <path
+                                d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
+                                fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
+                        )}
+                    </g>
+                </svg>
+            </div>
+        );
+    }, [petType, isInteracting, scale, customization, happiness]);
 
     return (
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
             <div className="flex items-center justify-center min-h-[224px]">
                 {suggestion ? (
                      <div className="flex items-center justify-center w-full">
-                         <div className="w-2/5 flex-shrink-0 mr-[-1.5rem] z-10">
+                         <div className="w-2/5 flex-shrink-0 -mr-4 z-10">
                              <div className="bg-background rounded-2xl p-3 shadow-lg border-2 border-primary/20 relative">
                                 <p className="text-sm font-medium text-foreground text-center">{suggestion}</p>
-                                {/* Caret pointing right */}
                                 <div className="absolute top-1/2 -translate-y-1/2 right-[-13px] w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-l-[12px] border-l-primary/20" />
                                 <div className="absolute top-1/2 -translate-y-1/2 right-[-10px] w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[10px] border-l-background" />
                             </div>
