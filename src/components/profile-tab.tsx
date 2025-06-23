@@ -6,7 +6,7 @@ import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera, QrCode } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -22,9 +22,10 @@ type ProfileTabProps = {
   onTogglePet: (enabled: boolean) => void;
   onAgeGroupChange: (group: 'under14' | 'over14') => void;
   onUpdateUser: (updatedData: Partial<User>) => void;
+  openModal: (modalName: string) => void;
 };
 
-export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser }: ProfileTabProps) {
+export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser, openModal }: ProfileTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -142,6 +143,10 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                     </div>
                 </RadioGroup>
             </div>
+             <Button onClick={() => openModal('qrCode')} variant="outline" className="w-full justify-start">
+                <QrCode className="mr-2 h-4 w-4" />
+                Show My Friend Code
+            </Button>
              <Button onClick={onShowTutorial} variant="outline" className="w-full justify-start">
                 <Film className="mr-2 h-4 w-4" />
                 Re-watch Tutorial

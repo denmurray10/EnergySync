@@ -33,6 +33,7 @@ import { PetCustomizationModal } from "@/components/pet-customization-modal";
 import { PetSettingsModal } from "@/components/pet-settings-modal";
 import { LoaderCircle } from "lucide-react";
 import { AgeGateModal } from "@/components/age-gate-modal";
+import { QRCodeModal } from "@/components/qr-code-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
@@ -49,6 +50,7 @@ const defaultPetCustomization: PetCustomization = {
 };
 
 const initialUser: User = {
+    userId: 'user-alex-123',
     name: 'Alex',
     avatar: 'https://placehold.co/100x100.png',
     membershipTier: 'free',
@@ -87,6 +89,7 @@ export default function HomePage() {
     addEvent: false,
     petCustomization: false,
     petSettings: false,
+    qrCode: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -308,7 +311,7 @@ export default function HomePage() {
   };
   
   const handleUpdateUser = (updatedData: Partial<User>) => {
-    setAppUser(prev => ({ ...prev, ...updatedData }));
+    setAppUser(prev => ({ ...prev, ...updatedData } as User));
   };
 
   const showToast = (title: string, description: string, icon: string = '✨') => {
@@ -778,6 +781,7 @@ export default function HomePage() {
               onTogglePet={handleTogglePet}
               onAgeGroupChange={handleAgeGroupChange}
               onUpdateUser={handleUpdateUser}
+              openModal={openModal}
             />
           )}
         </div>
@@ -868,6 +872,13 @@ export default function HomePage() {
                 currentName={appUser.petName}
                 currentType={appUser.petType}
                 onSave={handleSavePetSettings}
+            />
+        )}
+        {appUser && (
+            <QRCodeModal
+                open={modals.qrCode}
+                onOpenChange={() => closeModal('qrCode')}
+                user={appUser}
             />
         )}
       </div>
