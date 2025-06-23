@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
@@ -15,7 +14,6 @@ import { getEnergyForecast } from "@/ai/flows/energy-forecast-flow";
 import { analyzeEnergyHotspots } from "@/ai/flows/energy-hotspot-flow";
 import { subDays, startOfDay } from 'date-fns';
 
-import { useAuth } from "@/context/AuthContext";
 import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
@@ -33,21 +31,42 @@ import { ImageCheckinModal } from "@/components/image-checkin-modal";
 import { AddEventModal } from "@/components/add-event-modal";
 import { PetCustomizationModal } from "@/components/pet-customization-modal";
 import { PetSettingsModal } from "@/components/pet-settings-modal";
-import { OnboardingScreen } from "@/components/onboarding-screen";
 import { LoaderCircle } from "lucide-react";
 import { AgeGateModal } from "@/components/age-gate-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
 
+const defaultPetCustomization: PetCustomization = {
+    color: '#a8a29e',
+    outlineColor: '#4c51bf',
+    accessory: 'none' as const,
+    background: 'default' as const,
+    unlockedColors: ['#a8a29e'],
+    unlockedOutlineColors: ['#4c51bf'],
+    unlockedAccessories: ['none'],
+    unlockedBackgrounds: ['default'],
+};
+
+const initialUser: User = {
+    name: 'Alex',
+    membershipTier: 'free',
+    petCustomization: defaultPetCustomization,
+    petLevel: 1,
+    petExp: 0,
+    petName: 'Buddy',
+    petType: 'cat',
+    petEnabled: true,
+};
+
 export default function HomePage() {
   const { toast } = useToast();
-  const router = useRouter();
-  const { firebaseUser, appUser, setAppUser, loading: authLoading } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [ageGroup, setAgeGroup] = useState<'under14' | 'over14' | null>(null);
+  
+  const [appUser, setAppUser] = useState<User>(initialUser);
   
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
@@ -106,32 +125,27 @@ export default function HomePage() {
   const gainPetExp = useCallback((amount: number) => {
     if (!appUser || !appUser.petEnabled) return;
     
-    const newExp = appUser.petExp + amount;
-    const expToNextLevel = 100 * appUser.petLevel;
-    
-    if (newExp >= expToNextLevel) {
-        // Level up!
-        const newLevel = appUser.petLevel + 1;
-        const remainingExp = newExp - expToNextLevel;
-        setAppUser({ ...appUser, petLevel: newLevel, petExp: remainingExp });
-        toast({
-            title: '🎉 Pet Level Up! 🎉',
-            description: `Your energy companion grew to Level ${newLevel}!`,
-        });
-        unlockAchievement('Pet Trainer');
-    } else {
-        setAppUser({ ...appUser, petExp: newExp });
-    }
-  }, [appUser, setAppUser, toast]);
+    setAppUser(currentUser => {
+      if (!currentUser) return null;
+      const newExp = currentUser.petExp + amount;
+      const expToNextLevel = 100 * currentUser.petLevel;
+      
+      if (newExp >= expToNextLevel) {
+          const newLevel = currentUser.petLevel + 1;
+          const remainingExp = newExp - expToNextLevel;
+          toast({
+              title: '🎉 Pet Level Up! 🎉',
+              description: `Your energy companion grew to Level ${newLevel}!`,
+          });
+          unlockAchievement('Pet Trainer');
+          return { ...currentUser, petLevel: newLevel, petExp: remainingExp };
+      } else {
+          return { ...currentUser, petExp: newExp };
+      }
+    });
+  }, [appUser, toast]);
 
   useEffect(() => {
-    if (!authLoading && !firebaseUser) {
-      router.push('/login');
-    }
-  }, [authLoading, firebaseUser, router]);
-
-  useEffect(() => {
-    // This effect initializes the default user state.
     const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
     if (storedAgeGroup) {
       setAgeGroup(storedAgeGroup);
@@ -653,19 +667,7 @@ export default function HomePage() {
     }
   };
 
-  if (authLoading || !firebaseUser) {
-      return (
-        <div className="min-h-dvh bg-background flex items-center justify-center">
-            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </div>
-      );
-  }
-
-  if (!appUser) {
-      return <OnboardingScreen />;
-  }
-
-  if (!ageGroup) {
+  if (!appUser || !ageGroup) {
     return (
         <>
             <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />

@@ -10,8 +10,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
-import { auth } from "@/lib/firebase";
-import { useToast } from "@/hooks/use-toast";
 
 type ProfileTabProps = {
   user: User | null;
@@ -25,19 +23,8 @@ type ProfileTabProps = {
 };
 
 export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange }: ProfileTabProps) {
-  const { toast } = useToast();
   
   if (!user) return null;
-
-  const handleSignOut = async () => {
-    try {
-        await auth.signOut();
-        toast({ title: "Signed Out", description: "You have been successfully signed out." });
-        // The AuthContext and page logic will handle the redirect.
-    } catch (error: any) {
-        toast({ title: "Sign Out Failed", description: error.message, variant: "destructive" });
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -135,12 +122,6 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                 </Button>
             </ProFeatureWrapper>
         </CardContent>
-        <CardFooter>
-            <Button onClick={handleSignOut} variant="outline" className="w-full">
-                <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
-            </Button>
-        </CardFooter>
       </Card>
     </div>
   );
