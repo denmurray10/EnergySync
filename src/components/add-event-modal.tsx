@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import type { UpcomingEvent } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { suggestEventDetails } from "@/ai/flows/suggest-event-details";
 
 import {
   Dialog,
@@ -25,6 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, LoaderCircle, Star } from "lucide-react";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -41,9 +46,13 @@ type AddEventModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLogEvent: (data: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => void;
+  isProMember: boolean;
 };
 
-export function AddEventModal({ open, onOpenChange, onLogEvent }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember }: AddEventModalProps) {
+  const { toast } = useToast();
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
@@ -55,6 +64,42 @@ export function AddEventModal({ open, onOpenChange, onLogEvent }: AddEventModalP
       emoji: "🗓️",
     },
   });
+
+  const handleSuggestDetails = async () => {
+    const eventName = form.getValues("name");
+    if (!eventName || eventName.length < 3) {
+      toast({
+        title: "💡 Enter a Name First",
+        description: "Please type an event name before asking for suggestions.",
+        variant: "default",
+      });
+      return;
+    }
+
+    setIsSuggesting(true);
+    try {
+      const suggestions = await suggestEventDetails({ name: eventName });
+      if (suggestions) {
+        form.setValue("type", suggestions.type, { shouldValidate: true });
+        form.setValue("estimatedImpact", suggestions.estimatedImpact, { shouldValidate: true });
+        form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
+        toast({
+          title: "🤖 Details Auto-filled!",
+          description: "AI has suggested details for your event.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to get suggestions:", error);
+      toast({
+        title: "❌ Error",
+        description: "Could not fetch AI suggestions. Please fill in the details manually.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
 
   function onSubmit(data: EventFormValues) {
     onLogEvent(data);
@@ -80,7 +125,23 @@ export function AddEventModal({ open, onOpenChange, onLogEvent }: AddEventModalP
               name="name"
               render={({ field }) => (
                 <FormItem>
+                  <div className="flex justify-between items-center">
                     <FormLabel>Event Name</FormLabel>
+                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting || !isProMember}>
+                      {isSuggesting ? (
+                        <LoaderCircle className="animate-spin" />
+                      ) : (
+                        <Sparkles className="text-yellow-500" />
+                      )}
+                      <span className="ml-2">Auto-fill</span>
+                      {!isProMember && (
+                        <Badge variant="destructive" className="ml-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none">
+                            <Star className="w-3 h-3 mr-1 fill-white"/>
+                            PRO
+                        </Badge>
+                      )}
+                    </Button>
+                  </div>
                   <FormControl>
                     <Input placeholder="e.g., Team Lunch" {...field} />
                   </FormControl>

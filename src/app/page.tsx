@@ -564,6 +564,7 @@ export default function HomePage() {
             open={modals.addEvent}
             onOpenChange={(isOpen) => closeModal('addEvent')}
             onLogEvent={handleLogEvent}
+            isProMember={isProMember}
         />
       </div>
     </main>
