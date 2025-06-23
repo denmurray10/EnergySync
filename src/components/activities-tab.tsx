@@ -1,18 +1,39 @@
 "use client";
 
+import { useState } from "react";
 import type { Activity } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Camera } from "lucide-react";
+import { PlusCircle, Camera, Trash2 } from "lucide-react";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type ActivitiesTabProps = {
   activities: Activity[];
   openModal: (modalName: string) => void;
   isProMember: boolean;
+  onDeleteActivity: (id: number) => void;
 };
 
-export function ActivitiesTab({ activities, openModal, isProMember }: ActivitiesTabProps) {
+export function ActivitiesTab({ activities, openModal, isProMember, onDeleteActivity }: ActivitiesTabProps) {
+  const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
+
+  const confirmDelete = () => {
+    if (activityToDelete) {
+      onDeleteActivity(activityToDelete.id);
+      setActivityToDelete(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -38,7 +59,7 @@ export function ActivitiesTab({ activities, openModal, isProMember }: Activities
             key={activity.id}
             className="bg-card/80 backdrop-blur-sm shadow-lg"
           >
-            <CardContent className="p-5">
+            <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="text-3xl">{activity.emoji}</div>
@@ -51,19 +72,44 @@ export function ActivitiesTab({ activities, openModal, isProMember }: Activities
                     </p>
                   </div>
                 </div>
-                <div
-                  className={`text-lg font-bold ${
-                    activity.impact < 0 ? "text-red-500" : "text-green-500"
-                  }`}
-                >
-                  {activity.impact > 0 ? "+" : ""}
-                  {activity.impact}%
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`text-lg font-bold ${
+                      activity.impact < 0 ? "text-red-500" : "text-green-500"
+                    }`}
+                  >
+                    {activity.impact > 0 ? "+" : ""}
+                    {activity.impact}%
+                  </div>
+                   <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
+                      onClick={() => setActivityToDelete(activity)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete activity</span>
+                    </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
+       <AlertDialog open={!!activityToDelete} onOpenChange={(isOpen) => !isOpen && setActivityToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the activity "{activityToDelete?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

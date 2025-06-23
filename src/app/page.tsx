@@ -185,7 +185,7 @@ export default function HomePage() {
       setAchievements(prev => prev.map(a => a.name === name ? { ...a, unlocked: true } : a));
       showToast(`Achievement Unlocked!`, `You've earned: ${name}`, '🏆');
     }
-  }, [achievements, toast]);
+  }, [achievements, showToast]);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
@@ -202,6 +202,14 @@ export default function HomePage() {
     closeModal('imageCheckin'); // Close image modal if it was used
   };
 
+  const handleDeleteActivity = (activityId: number) => {
+    setActivities(prev => prev.filter(activity => activity.id !== activityId));
+    toast({
+      title: "Activity Deleted",
+      description: "The activity has been removed from your history.",
+    });
+  };
+
   const handleLogEvent = (newEventData: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => {
     const newEvent: UpcomingEvent = {
         ...newEventData,
@@ -215,6 +223,14 @@ export default function HomePage() {
         description: `"${newEvent.name}" is now on your schedule.`,
     });
     closeModal('addEvent');
+  };
+
+  const handleDeleteEvent = (eventId: number) => {
+    setUpcomingEvents(prev => prev.filter(event => event.id !== eventId));
+    toast({
+      title: "Event Deleted",
+      description: "The event has been removed from your schedule.",
+    });
   };
 
   const handleRecharge = (rechargeAmount: number, debtReduction: number) => {
@@ -456,10 +472,16 @@ export default function HomePage() {
               readinessReport={readinessReport}
               isReadinessLoading={isReadinessLoading}
               onSyncHealth={simulateHealthSync}
+              onDeleteEvent={handleDeleteEvent}
             />
           )}
           {activeTab === "activities" && (
-            <ActivitiesTab activities={activities} openModal={openModal} isProMember={isProMember} />
+            <ActivitiesTab
+              activities={activities}
+              openModal={openModal}
+              isProMember={isProMember}
+              onDeleteActivity={handleDeleteActivity}
+            />
           )}
           {activeTab === "insights" && (
             <InsightsTab

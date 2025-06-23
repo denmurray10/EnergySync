@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { UpcomingEvent, User, ActionableSuggestion, ReadinessReport } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,19 @@ import {
   Globe,
   CalendarPlus,
   PlusCircle,
+  Trash2,
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type HomeTabProps = {
   user: User | null;
@@ -42,6 +54,7 @@ type HomeTabProps = {
   readinessReport: ReadinessReport | null;
   isReadinessLoading: boolean;
   onSyncHealth: () => void;
+  onDeleteEvent: (id: number) => void;
 };
 
 const getEnergyColour = (energy: number) => {
@@ -80,7 +93,17 @@ export function HomeTab({
   readinessReport,
   isReadinessLoading,
   onSyncHealth,
+  onDeleteEvent,
 }: HomeTabProps) {
+  const [eventToDelete, setEventToDelete] = useState<UpcomingEvent | null>(null);
+
+  const confirmDelete = () => {
+    if (eventToDelete) {
+      onDeleteEvent(eventToDelete.id);
+      setEventToDelete(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
        <div className="mb-4">
@@ -290,21 +313,46 @@ export function HomeTab({
                     </p>
                   </div>
                 </div>
-                <div
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                    event.estimatedImpact < 0
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                  }`}
-                >
-                  {event.estimatedImpact > 0 ? "+" : ""}
-                  {event.estimatedImpact}%
+                <div className="flex items-center gap-1">
+                  <div
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                      event.estimatedImpact < 0
+                        ? "bg-red-100 text-red-700"
+                        : "bg-green-100 text-green-700"
+                    }`}
+                  >
+                    {event.estimatedImpact > 0 ? "+" : ""}
+                    {event.estimatedImpact}%
+                  </div>
+                   <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-gray-400 hover:bg-red-100 hover:text-red-500"
+                      onClick={() => setEventToDelete(event)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete event</span>
+                    </Button>
                 </div>
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
+       <AlertDialog open={!!eventToDelete} onOpenChange={(isOpen) => !isOpen && setEventToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the event "{eventToDelete?.name}". This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
