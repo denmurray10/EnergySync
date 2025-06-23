@@ -1,3 +1,4 @@
+
 // src/context/AuthContext.tsx
 'use client';
 
@@ -41,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const storedPetLevel = localStorage.getItem(`energysync_pet_level_${user.uid}`) || '1';
           const storedPetExp = localStorage.getItem(`energysync_pet_exp_${user.uid}`) || '0';
           const storedPetName = localStorage.getItem(`energysync_pet_name_${user.uid}`) || 'Buddy';
-          const storedPetType = localStorage.getItem(`energysync_pet_type_${user.uid}`) || 'cat';
+          const storedPetType = localStorage.getItem(`energysync_pet_type_${user.uid}`) || 'dog';
           const storedPetEnabled = localStorage.getItem(`energysync_pet_enabled_${user.uid}`) || 'true';
 
           setLocalAppUser({

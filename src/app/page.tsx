@@ -58,7 +58,7 @@ const initialUser: User = {
     petLevel: 1,
     petExp: 0,
     petName: 'Buddy',
-    petType: 'cat',
+    petType: 'dog',
     petEnabled: true,
 };
 
