@@ -279,15 +279,15 @@ export default function HomePage() {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader className="p-0">
-          <div className="flex flex-col items-center gap-4 py-8">
-              <Button variant="ghost" size="icon" className="h-14 w-14 text-primary shrink-0">
-                  <Zap className="h-10 w-10" />
-              </Button>
-              <h2 className="text-3xl font-bold group-data-[collapsible=icon]:hidden">
-                  EnergySync
-              </h2>
-          </div>
+        <SidebarHeader>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="shrink-0">
+                    <Zap className="h-6 w-6 text-primary" />
+                </Button>
+                <h2 className="text-lg font-semibold group-data-[collapsible=icon]:hidden">
+                    EnergySync
+                </h2>
+            </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
