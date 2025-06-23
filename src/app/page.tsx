@@ -29,6 +29,7 @@ import { ChatCoachModal } from "@/components/chat-coach-modal";
 import { ImageCheckinModal } from "@/components/image-checkin-modal";
 import { AddEventModal } from "@/components/add-event-modal";
 import { PetCustomizationModal } from "@/components/pet-customization-modal";
+import { PetSettingsModal } from "@/components/pet-settings-modal";
 import { LoaderCircle } from "lucide-react";
 
 
@@ -58,6 +59,7 @@ export default function HomePage() {
     imageCheckin: false,
     addEvent: false,
     petCustomization: false,
+    petSettings: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -99,6 +101,8 @@ export default function HomePage() {
     localStorage.setItem(`energysync_pet_customization_local`, JSON.stringify(updatedUser.petCustomization));
     localStorage.setItem(`energysync_pet_level_local`, JSON.stringify(updatedUser.petLevel));
     localStorage.setItem(`energysync_pet_exp_local`, JSON.stringify(updatedUser.petExp));
+    localStorage.setItem(`energysync_pet_name_local`, updatedUser.petName);
+    localStorage.setItem(`energysync_pet_type_local`, updatedUser.petType);
   }, []);
 
   const gainPetExp = useCallback((amount: number) => {
@@ -138,6 +142,8 @@ export default function HomePage() {
     const storedPet = localStorage.getItem('energysync_pet_customization_local');
     const storedPetLevel = localStorage.getItem('energysync_pet_level_local');
     const storedPetExp = localStorage.getItem('energysync_pet_exp_local');
+    const storedPetName = localStorage.getItem('energysync_pet_name_local');
+    const storedPetType = localStorage.getItem('energysync_pet_type_local');
 
 
     setUser({
@@ -146,6 +152,8 @@ export default function HomePage() {
         petCustomization: storedPet ? JSON.parse(storedPet) : defaultPetCustomization,
         petLevel: storedPetLevel ? JSON.parse(storedPetLevel) : 1,
         petExp: storedPetExp ? JSON.parse(storedPetExp) : 0,
+        petName: storedPetName || 'Buddy',
+        petType: storedPetType || 'cat',
     });
 
     const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
@@ -609,6 +617,14 @@ export default function HomePage() {
     saveUser({ ...user, petCustomization: updatedCustomization });
     toast({ title: 'Item Equipped!', description: 'Your pet has a new look!' });
   };
+  
+  const handleSavePetSettings = (newName: string, newType: 'cat' | 'dog' | 'horse' | 'chicken') => {
+    if (user) {
+        saveUser({ ...user, petName: newName, petType: newType });
+        toast({ title: 'Pet Updated!', description: `Say hello to your ${newType}, ${newName}!` });
+        closeModal('petSettings');
+    }
+  };
 
 
   if (!user) {
@@ -667,8 +683,11 @@ export default function HomePage() {
               onPetInteraction={handlePetInteraction}
               customization={user.petCustomization}
               openCustomization={() => openModal('petCustomization')}
+              openSettings={() => openModal('petSettings')}
               level={user.petLevel}
               exp={user.petExp}
+              petName={user.petName}
+              petType={user.petType}
             />
           )}
           {activeTab === "insights" && (
@@ -768,6 +787,15 @@ export default function HomePage() {
                 interactions={petInteractions}
                 onPurchase={handlePurchaseAndEquipItem}
                 onEquip={handleEquipItem}
+            />
+        )}
+        {user && (
+            <PetSettingsModal
+                open={modals.petSettings}
+                onOpenChange={() => closeModal('petSettings')}
+                currentName={user.petName}
+                currentType={user.petType}
+                onSave={handleSavePetSettings}
             />
         )}
       </div>

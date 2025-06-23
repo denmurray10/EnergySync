@@ -51,6 +51,8 @@ export interface User {
   petCustomization: PetCustomization;
   petLevel: number;
   petExp: number;
+  petName: string;
+  petType: 'cat' | 'dog' | 'horse' | 'chicken';
 }
 
 export interface Goal {
