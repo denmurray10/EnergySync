@@ -86,7 +86,23 @@ export default function HomePage() {
   // New state for pet feature
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
-  const [petHappiness, setPetHappiness] = useState<number>(70);
+  const [petHunger, setPetHunger] = useState(80);
+  const [petEnergy, setPetEnergy] = useState(70);
+  const [petHygiene, setPetHygiene] = useState(90);
+
+  const petHappiness = useMemo(() => {
+    return (petHunger + petEnergy + petHygiene) / 3;
+  }, [petHunger, petEnergy, petHygiene]);
+  
+  useEffect(() => {
+    const statDecayInterval = setInterval(() => {
+        setPetHunger(h => Math.max(0, h - 1));
+        setPetEnergy(e => Math.max(0, e - 0.75));
+        setPetHygiene(h => Math.max(0, h - 0.5));
+    }, 15000); // Decrease stats every 15 seconds
+
+    return () => clearInterval(statDecayInterval);
+  }, []);
 
 
   const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
@@ -550,14 +566,29 @@ export default function HomePage() {
     }
   };
 
-  const handleInteractWithPet = () => {
+  const handleFeedPet = () => {
     if (petInteractions > 0) {
         setPetInteractions(prev => prev - 1);
-        setPetHappiness(prev => Math.min(100, prev + 10)); // Cap happiness at 100
-        toast({
-            title: "Interaction Used!",
-            description: "Your pet is happier! 😊",
-        });
+        setPetHunger(prev => Math.min(100, prev + 30));
+        toast({ title: "Yum!", description: "Your pet enjoyed the meal!" });
+        unlockAchievement('Pet Pal');
+    }
+  };
+  
+  const handleSleepPet = () => {
+    if (petInteractions > 0) {
+        setPetInteractions(prev => prev - 1);
+        setPetEnergy(prev => Math.min(100, prev + 40));
+        toast({ title: "Zzzz...", description: "Your pet feels rested." });
+        unlockAchievement('Pet Pal');
+    }
+  };
+  
+  const handleToiletPet = () => {
+    if (petInteractions > 0) {
+        setPetInteractions(prev => prev - 1);
+        setPetHygiene(prev => Math.min(100, prev + 50));
+        toast({ title: "Phew!", description: "Your pet feels much better." });
         unlockAchievement('Pet Pal');
     }
   };
@@ -610,8 +641,13 @@ export default function HomePage() {
               tasks={petTasks}
               onTaskComplete={handleTaskComplete}
               interactions={petInteractions}
-              onInteractWithPet={handleInteractWithPet}
               petHappiness={petHappiness}
+              petHunger={petHunger}
+              petEnergy={petEnergy}
+              petHygiene={petHygiene}
+              onFeedPet={handleFeedPet}
+              onSleepPet={handleSleepPet}
+              onToiletPet={handleToiletPet}
             />
           )}
           {activeTab === "insights" && (

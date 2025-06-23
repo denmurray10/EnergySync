@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { PawPrint, Heart } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { PawPrint, Heart, Utensils, Bed, ShowerHead } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // A component to render the animated, interactive pet
@@ -101,21 +102,47 @@ const VirtualPet = ({ happiness, isInteracting }: { happiness: number, isInterac
     );
 };
 
+const StatBar = ({ label, value, icon, colorClass }: { label: string; value: number; icon: React.ReactNode; colorClass: string }) => (
+    <div className="space-y-1">
+        <div className="flex justify-between items-center text-sm font-medium">
+            <span className="flex items-center">{icon} <span className="ml-2">{label}</span></span>
+            <span>{Math.round(value)}%</span>
+        </div>
+        <Progress value={value} indicatorClassName={colorClass} />
+    </div>
+);
+
 
 type PetTabProps = {
   tasks: PetTask[];
   onTaskComplete: (taskId: number) => void;
   interactions: number;
-  onInteractWithPet: () => void;
   petHappiness: number;
+  petHunger: number;
+  petEnergy: number;
+  petHygiene: number;
+  onFeedPet: () => void;
+  onSleepPet: () => void;
+  onToiletPet: () => void;
 };
 
-export function PetTab({ tasks, onTaskComplete, interactions, onInteractWithPet, petHappiness }: PetTabProps) {
+export function PetTab({ 
+    tasks, 
+    onTaskComplete, 
+    interactions, 
+    petHappiness,
+    petHunger,
+    petEnergy,
+    petHygiene,
+    onFeedPet,
+    onSleepPet,
+    onToiletPet,
+}: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
 
-    const handleInteraction = () => {
+    const handleAction = (action: () => void) => {
         if (interactions > 0 && !isInteracting) {
-            onInteractWithPet();
+            action();
             setIsInteracting(true);
             setTimeout(() => {
                 setIsInteracting(false);
@@ -132,15 +159,38 @@ export function PetTab({ tasks, onTaskComplete, interactions, onInteractWithPet,
             <Card className="bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-6">
                     <VirtualPet happiness={petHappiness} isInteracting={isInteracting} />
-                    <div className="text-center mt-4">
-                        <Button onClick={handleInteraction} disabled={interactions === 0 || isInteracting} className="w-full sm:w-auto">
-                            <Heart className="mr-2 h-4 w-4" />
-                            Interact ({interactions} left)
-                        </Button>
-                        {interactions === 0 && <p className="text-xs text-muted-foreground mt-2">Complete tasks to earn more interactions!</p>}
-                    </div>
                 </CardContent>
             </Card>
+
+            <Card className="bg-card/80 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center text-xl">Pet's Needs</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <StatBar label="Hunger" value={petHunger} icon={<Utensils className="h-4 w-4 text-orange-500" />} colorClass="bg-orange-500" />
+                    <StatBar label="Energy" value={petEnergy} icon={<Bed className="h-4 w-4 text-blue-500" />} colorClass="bg-blue-500" />
+                    <StatBar label="Hygiene" value={petHygiene} icon={<ShowerHead className="h-4 w-4 text-cyan-500" />} colorClass="bg-cyan-500" />
+                </CardContent>
+            </Card>
+
+            <Card className="bg-card/80 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle>Actions</CardTitle>
+                    <CardDescription>Use your {interactions} interactions to care for your pet.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-3 gap-2">
+                    <Button onClick={() => handleAction(onFeedPet)} disabled={interactions <= 0 || isInteracting}>
+                        <Utensils className="mr-2 h-4 w-4" /> Feed
+                    </Button>
+                    <Button onClick={() => handleAction(onSleepPet)} disabled={interactions <= 0 || isInteracting}>
+                        <Bed className="mr-2 h-4 w-4" /> Sleep
+                    </Button>
+                    <Button onClick={() => handleAction(onToiletPet)} disabled={interactions <= 0 || isInteracting}>
+                        <ShowerHead className="mr-2 h-4 w-4" /> Toilet
+                    </Button>
+                </CardContent>
+            </Card>
+
 
             <Card className="bg-card/80 backdrop-blur-sm">
                 <CardHeader>
