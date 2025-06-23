@@ -158,8 +158,8 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
             <div className="flex items-center justify-center min-h-[224px]">
                 {suggestion ? (
-                     <div className="flex items-center justify-center w-full gap-2">
-                         <div className="w-2/5 flex-shrink-0">
+                     <div className="flex items-center justify-center w-full">
+                         <div className="w-2/5 flex-shrink-0 mr-[-1.5rem] z-10">
                              <div className="bg-background rounded-2xl p-3 shadow-lg border-2 border-primary/20 relative">
                                 <p className="text-sm font-medium text-foreground text-center">{suggestion}</p>
                                 {/* Caret pointing right */}
