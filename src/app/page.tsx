@@ -299,6 +299,19 @@ export default function HomePage() {
       }
     }
   };
+  
+  const handleAgeGroupChange = (newAgeGroup: 'under14' | 'over14') => {
+    setAgeGroup(newAgeGroup);
+    localStorage.setItem('energysync_age_group', newAgeGroup);
+    toast({
+        title: "Experience Updated",
+        description: `Your app experience has been set for users ${newAgeGroup === 'under14' ? 'under 14' : '14 and over'}.`,
+    });
+    // If user switches to under 14, automatically enable pet
+    if (newAgeGroup === 'under14' && user && !user.petEnabled) {
+        handleTogglePet(true);
+    }
+  };
 
   const handleTutorialComplete = () => {
     setShowTutorial(false);
@@ -771,6 +784,7 @@ export default function HomePage() {
               ageGroup={ageGroup}
               onTierChange={handleTierChange}
               onTogglePet={handleTogglePet}
+              onAgeGroupChange={handleAgeGroupChange}
             />
           )}
         </div>

@@ -5,7 +5,7 @@ import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -19,9 +19,10 @@ type ProfileTabProps = {
   onShowDebrief: () => void;
   onTierChange: (tier: 'free' | 'pro') => void;
   onTogglePet: (enabled: boolean) => void;
+  onAgeGroupChange: (group: 'under14' | 'over14') => void;
 };
 
-export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet }: ProfileTabProps) {
+export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange }: ProfileTabProps) {
   if (!user) return null;
 
   return (
@@ -87,6 +88,28 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                 />
               </div>
             )}
+             <div className="rounded-lg border p-3 shadow-sm">
+                <div className="space-y-1.5">
+                    <Label className="text-base flex items-center"><Users className="mr-2 h-4 w-4" /> Age Group</Label>
+                    <p className="text-sm text-muted-foreground pb-2">
+                        Select your age group for a tailored experience.
+                    </p>
+                </div>
+                <RadioGroup 
+                    value={ageGroup ?? 'over14'} 
+                    onValueChange={(value) => onAgeGroupChange(value as 'under14' | 'over14')}
+                    className="space-y-2 pt-2"
+                >
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="under14" id="under14" />
+                        <Label htmlFor="under14" className="font-normal">Under 14</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="over14" id="over14" />
+                        <Label htmlFor="over14" className="font-normal">14 or Over</Label>
+                    </div>
+                </RadioGroup>
+            </div>
              <Button onClick={onShowTutorial} variant="outline" className="w-full justify-start">
                 <Film className="mr-2 h-4 w-4" />
                 Re-watch Tutorial
