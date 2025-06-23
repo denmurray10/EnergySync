@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,7 +129,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
       <div className={cn("relative transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
           {petType === 'dog' ? (
                 <DotLottieReact
-                    src="https://lottie.host/3bbd91cc-ba48-495b-a4d3-7ca6a5320bbb/Da2Qpef4ix.lottie"
+                    src="https://lottie.host/09487b01-8ddf-44ee-9132-312a993d0950/OwLvmZQ781.lottie"
                     loop
                     autoplay
                     className="w-48 h-48"
@@ -163,7 +163,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
             <div className="flex items-center justify-center min-h-[224px]">
                 {suggestion ? (
                      <div className="flex items-center justify-center w-full">
-                         <div className="w-2/5 flex-shrink-0 -mr-4 z-10">
+                         <div className="w-2/5 flex-shrink-0 -mr-8 z-10">
                              <div className="bg-background rounded-2xl p-3 shadow-lg border-2 border-primary/20 relative">
                                 <p className="text-sm font-medium text-foreground text-center">{suggestion}</p>
                                 <div className="absolute top-1/2 -translate-y-1/2 right-[-13px] w-0 h-0 border-t-[12px] border-t-transparent border-b-[12px] border-b-transparent border-l-[12px] border-l-primary/20" />
