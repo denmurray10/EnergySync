@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import dynamic from 'next/dynamic';
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Lottie from "lottie-react";
 import dogAnimationData from '@/lib/lottie/dog.json';
+
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 type PetType = 'cat' | 'dog' | 'horse' | 'chicken';
 
@@ -112,7 +114,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     const lottieRef = useRef<any>(null);
     
     useEffect(() => {
-        if (lottieRef.current) {
+        if (petType === 'dog' && lottieRef.current) {
             if (happiness >= 80) lottieRef.current.setSpeed(1.5);
             else if (happiness >= 60) lottieRef.current.setSpeed(1.0);
             else if (happiness >= 40) lottieRef.current.setSpeed(0.5);
@@ -120,7 +122,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
                 lottieRef.current.goToAndStop(1, true); // Stop animation
             }
         }
-    }, [happiness]);
+    }, [happiness, petType]);
     
     const getHappinessText = () => {
         if (happiness >= 80) return "Feeling ecstatic because you are!";
@@ -138,38 +140,44 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     
     const scale = 1 + (level - 1) * 0.05;
 
-    const petDisplay = petType === 'dog' ? (
-        <div className="w-48 h-48">
-            <Lottie
-                lottieRef={lottieRef}
-                animationData={dogAnimationData}
-                loop={true}
-                style={{ transform: `scale(${scale})`, width: '100%', height: '100%' }}
-                className={cn("transition-transform", isInteracting && "animate-jump")}
-            />
-        </div>
-    ) : (
-        <div className={cn("relative w-48 h-48 transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
-            <svg viewBox="0 0 100 100" className="w-full h-full">
-                <g className="animate-breathe">
-                    <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
-                    {(petType === 'cat') && (
-                    <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
-                        <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
-                        <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
+    const PetRenderer = () => {
+        if (petType === 'dog') {
+            return (
+                <div className="w-48 h-48">
+                    <Lottie
+                        lottieRef={lottieRef}
+                        animationData={dogAnimationData}
+                        loop={true}
+                        style={{ transform: `scale(${scale})`, width: '100%', height: '100%' }}
+                        className={cn("transition-transform", isInteracting && "animate-jump")}
+                    />
+                </div>
+            );
+        }
+
+        return (
+            <div className={cn("relative w-48 h-48 transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                    <g className="animate-breathe">
+                        <PetBody type={petType} color={customization.color} outlineColor={customization.outlineColor} />
+                        {(petType === 'cat') && (
+                        <g stroke="hsl(var(--foreground))" strokeWidth="1" opacity="0.7">
+                            <path d="M 28 58 L 15 55" /><path d="M 29 63 L 15 63" /><path d="M 28 68 L 15 71" />
+                            <path d="M 72 58 L 85 55" /><path d="M 71 63 L 85 63" /><path d="M 72 68 L 85 71" />
+                        </g>
+                        )}
+                        <PetFace happiness={happiness} />
+                        {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
+                        {customization.accessory === 'bowtie' && (
+                            <path
+                                d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
+                                fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
+                        )}
                     </g>
-                    )}
-                    <PetFace happiness={happiness} />
-                    {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
-                    {customization.accessory === 'bowtie' && (
-                        <path
-                            d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
-                            fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
-                    )}
-                </g>
-            </svg>
-        </div>
-    );
+                </svg>
+            </div>
+        );
+    };
 
     return (
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
@@ -184,12 +192,12 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
                             </div>
                         </div>
                         <div className="flex-shrink-0">
-                           {petDisplay}
+                           <PetRenderer />
                         </div>
                     </div>
                 ) : (
                     <div className="pt-8">
-                       {petDisplay}
+                       <PetRenderer />
                     </div>
                 )}
             </div>
@@ -359,3 +367,5 @@ export function PetTab({
         </div>
     );
 }
+
+    
