@@ -18,6 +18,7 @@ import {
   BrainCircuit,
   Globe,
   CalendarPlus,
+  PlusCircle,
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 
@@ -260,6 +261,10 @@ export function HomeTab({
                 >
                     <Globe className="mr-1.5 h-4 w-4" />
                     {currentUserLocation}
+                </Button>
+                <Button onClick={() => openModal('addEvent')} size="icon" variant="ghost" className="text-primary -mr-2">
+                    <PlusCircle className="h-6 w-6"/>
+                    <span className="sr-only">Add Event</span>
                 </Button>
             </div>
         </CardHeader>

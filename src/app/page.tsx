@@ -25,6 +25,7 @@ import { TutorialModal } from "@/components/tutorial-modal";
 import { DailyDebriefModal } from "@/components/daily-debrief-modal";
 import { ChatCoachModal } from "@/components/chat-coach-modal";
 import { ImageCheckinModal } from "@/components/image-checkin-modal";
+import { AddEventModal } from "@/components/add-event-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
@@ -51,6 +52,7 @@ export default function HomePage() {
     dailyDebrief: false,
     chatCoach: false,
     imageCheckin: false,
+    addEvent: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -198,6 +200,21 @@ export default function HomePage() {
     unlockAchievement('Mindful Logger');
     closeModal('addActivity');
     closeModal('imageCheckin'); // Close image modal if it was used
+  };
+
+  const handleLogEvent = (newEventData: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => {
+    const newEvent: UpcomingEvent = {
+        ...newEventData,
+        id: Date.now(),
+        conflictRisk: 'low', // Default value
+        bufferSuggested: 0 // Default value
+    };
+    setUpcomingEvents(prev => [...prev, newEvent]);
+    toast({
+        title: "Event Added!",
+        description: `"${newEvent.name}" is now on your schedule.`,
+    });
+    closeModal('addEvent');
   };
 
   const handleRecharge = (rechargeAmount: number, debtReduction: number) => {
@@ -520,6 +537,11 @@ export default function HomePage() {
             open={modals.imageCheckin}
             onOpenChange={(isOpen) => closeModal('imageCheckin')}
             onLogActivity={handleLogActivity}
+        />
+        <AddEventModal
+            open={modals.addEvent}
+            onOpenChange={(isOpen) => closeModal('addEvent')}
+            onLogEvent={handleLogEvent}
         />
       </div>
     </main>
