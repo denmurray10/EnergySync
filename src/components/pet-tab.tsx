@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,8 +105,16 @@ const PetBody = ({ type, color }: { type: PetType, color: string }) => {
     }
 }
 
+type VirtualPetProps = {
+    petType: PetType;
+    happiness: number;
+    isInteracting: boolean;
+    customization: PetCustomization;
+    level: number;
+    suggestion: string | null;
+}
 
-const VirtualPet = ({ petType, happiness, isInteracting, customization, level }: { petType: PetType, happiness: number; isInteracting: boolean, customization: PetCustomization, level: number }) => {
+const VirtualPet = ({ petType, happiness, isInteracting, customization, level, suggestion }: VirtualPetProps) => {
     const getHappinessText = () => {
         if (happiness >= 80) return "Feeling ecstatic because you are!";
         if (happiness >= 60) return "Feeling great, just like you!";
@@ -124,7 +133,17 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level }:
 
     return (
         <div className={cn("text-center rounded-2xl p-4 transition-colors", backgroundClass)}>
-             <div className={cn("relative w-48 h-48 mx-auto transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
+            <div className={cn("relative w-48 h-48 mx-auto transition-transform pt-8", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
+                 {suggestion && (
+                    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-max max-w-[90%] z-10">
+                        <div className="bg-background rounded-full py-2 px-4 shadow-lg border-2 border-primary/20 relative">
+                            <p className="text-sm font-medium text-foreground">{suggestion}</p>
+                            {/* Caret with border effect */}
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-[-13px] w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[12px] border-t-primary/20" />
+                            <div className="absolute left-1/2 -translate-x-1/2 bottom-[-10px] w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[10px] border-t-background" />
+                        </div>
+                    </div>
+                )}
                 <svg viewBox="0 0 100 100" className="w-full h-full">
                     <g className="animate-breathe">
                         <PetBody type={petType} color={customization.color} />
@@ -182,6 +201,25 @@ export function PetTab({
     const expToNextLevel = 100 * level;
     const expPercentage = (exp / expToNextLevel) * 100;
 
+    const uncompletedTask = tasks.find(task => !task.completed);
+    const shouldShowSuggestion = petHappiness < 80 && uncompletedTask;
+
+    const petSuggestion = useMemo(() => {
+        if (!shouldShowSuggestion || !uncompletedTask) {
+        return null;
+        }
+        // Use the task ID to create a semi-stable random-like suggestion
+        const suggestionType = uncompletedTask.id % 3;
+        if (suggestionType === 0) {
+        return `I think doing "${uncompletedTask.name}" would be great!`;
+        } else if (suggestionType === 1) {
+        return `What do you say we do "${uncompletedTask.name}"?`;
+        } else {
+        return `Hey, let's tackle "${uncompletedTask.name}"!`;
+        }
+    }, [shouldShowSuggestion, uncompletedTask]);
+
+
     const handleAction = (toast: {title: string, description: string}) => {
         if (interactions > 0 && !isInteracting) {
             onPetInteraction(toast);
@@ -212,7 +250,14 @@ export function PetTab({
 
             <Card className="bg-card/80 backdrop-blur-sm overflow-hidden">
                 <CardContent className="p-0">
-                    <VirtualPet petType={petType} happiness={petHappiness} isInteracting={isInteracting} customization={customization} level={level} />
+                    <VirtualPet
+                        petType={petType}
+                        happiness={petHappiness}
+                        isInteracting={isInteracting}
+                        customization={customization}
+                        level={level}
+                        suggestion={petSuggestion}
+                    />
                 </CardContent>
             </Card>
 
