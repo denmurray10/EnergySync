@@ -52,9 +52,16 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error(`${activeTab} error:`, error);
+      let description = "An unexpected error occurred. Please try again.";
+      // Check for specific Firebase configuration errors
+      if (error.code === 'auth/invalid-api-key' || (error.message && (error.message.includes('auth/invalid-api-key') || error.message.includes('auth/api-key-not-valid')))) {
+        description = "The Firebase configuration is invalid. Please make sure you have set the correct NEXT_PUBLIC_FIREBASE variables in your .env file.";
+      } else {
+        description = error.message || description;
+      }
       toast({
         title: 'Authentication Failed',
-        description: error.message || `An error occurred. Please try again.`,
+        description: description,
         variant: 'destructive',
       });
     } finally {
