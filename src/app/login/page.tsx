@@ -51,14 +51,14 @@ export default function LoginPage() {
         router.push('/'); // Will be redirected to setup if display name is missing
       }
     } catch (error: any) {
-      console.error(`${activeTab} error:`, error);
       let description = "An unexpected error occurred. Please try again.";
-      
-      // Check for specific Firebase configuration errors with a more robust check
-      const fullErrorString = `${error.code} ${error.message}`;
-      if (fullErrorString.includes('api-key') || fullErrorString.includes('invalid-credential')) {
+      const isApiKeyError = (error.code && String(error.code).includes('api-key')) || (error.message && String(error.message).includes('api-key'));
+
+      if (isApiKeyError) {
         description = "The Firebase configuration is invalid. Please make sure you have set the correct NEXT_PUBLIC_FIREBASE variables in your .env file.";
       } else {
+        // Only log unexpected errors to the console
+        console.error(`${activeTab} error:`, error);
         description = error.message || description;
       }
 
