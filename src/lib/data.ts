@@ -80,8 +80,8 @@ export const INITIAL_PET_TASKS: PetTask[] = [
 ];
 
 export const INITIAL_FRIENDS: Friend[] = [
-    { id: 1, name: 'Sarah', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Feeling great 🌟', currentEnergy: 85 },
-    { id: 2, name: 'Mike', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Doing okay 😊', currentEnergy: 62 },
-    { id: 3, name: 'Jessica', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Running on low 😴', currentEnergy: 28 },
-    { id: 4, name: 'David', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Need to recharge 🔋', currentEnergy: 15 },
+    { id: 1, name: 'Sarah', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman face', energyStatus: 'Feeling great 🌟', currentEnergy: 85 },
+    { id: 2, name: 'Mike', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man face', energyStatus: 'Doing okay 😊', currentEnergy: 62 },
+    { id: 3, name: 'Jessica', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman smiling', energyStatus: 'Running on low 😴', currentEnergy: 28 },
+    { id: 4, name: 'David', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man portrait', energyStatus: 'Need to recharge 🔋', currentEnergy: 15 },
 ];

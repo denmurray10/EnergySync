@@ -123,6 +123,7 @@ export interface Friend {
   id: number;
   name: string;
   avatar: string;
+  avatarHint: string;
   energyStatus: string;
   currentEnergy: number;
 }

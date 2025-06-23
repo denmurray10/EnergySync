@@ -85,7 +85,7 @@ export function InsightsTab({
           {friends.map((friend) => (
             <div key={friend.id} className="flex items-center gap-4 p-3 rounded-2xl bg-muted/50">
               <Avatar className="h-12 w-12 border-2 border-primary/20">
-                <AvatarImage src={friend.avatar} data-ai-hint="profile picture" />
+                <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
                 <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex-grow">
