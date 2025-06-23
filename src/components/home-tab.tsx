@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { EnergyAssistantCard } from "./energy-assistant-card";
 import { ReadinessCard } from "./readiness-card";
+import { ProFeatureWrapper } from "./pro-feature-wrapper";
 import {
   Users,
   Share2,
@@ -22,6 +23,7 @@ import { Skeleton } from "./ui/skeleton";
 
 type HomeTabProps = {
   user: User | null;
+  isProMember: boolean;
   currentEnergy: number;
   energyDebt: number;
   upcomingEvents: UpcomingEvent[];
@@ -59,6 +61,7 @@ const getEnergyEmoji = (energy: number) => {
 
 export function HomeTab({
   user,
+  isProMember,
   currentEnergy,
   energyDebt,
   upcomingEvents,
@@ -153,15 +156,20 @@ export function HomeTab({
           </CardTitle>
         </CardHeader>
         <CardContent className="!pt-0 !p-4">
+          <ProFeatureWrapper isPro={isProMember}>
             <EnergyAssistantCard onClick={() => openModal('chatCoach')} />
+          </ProFeatureWrapper>
         </CardContent>
       </Card>
       
-      <ReadinessCard
-        report={readinessReport}
-        loading={isReadinessLoading}
-        onSync={onSyncHealth}
-      />
+      <ProFeatureWrapper isPro={isProMember}>
+        <ReadinessCard
+          report={readinessReport}
+          loading={isReadinessLoading}
+          onSync={onSyncHealth}
+          isProMember={isProMember}
+        />
+      </ProFeatureWrapper>
 
       <Card className="bg-card/80 backdrop-blur-sm text-center">
         <CardContent className="p-6">
@@ -193,44 +201,48 @@ export function HomeTab({
                 <Zap className="w-5 h-5 mr-2" />
                 <span className="font-semibold">Start Recharge</span>
             </Button>
-            <Button
-                onClick={() => openModal("voiceCheckIn")}
-                className="group h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
-            >
-                <Mic className="w-5 h-5 mr-2" />
-                <span className="font-semibold">Voice Check-in</span>
-            </Button>
+             <ProFeatureWrapper isPro={isProMember} className="w-full">
+                <Button
+                    onClick={() => openModal("voiceCheckIn")}
+                    className="group w-full h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
+                >
+                    <Mic className="w-5 h-5 mr-2" />
+                    <span className="font-semibold">Voice Check-in</span>
+                </Button>
+             </ProFeatureWrapper>
             </div>
 
         </CardContent>
       </Card>
       
-       <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <Zap className="text-yellow-500 mr-3" />
-            Proactive Suggestion
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-            {isSuggestionLoading ? (
-                 <div className="space-y-2">
-                    <Skeleton className="h-4 w-4/5" />
-                    <Skeleton className="h-4 w-2/3" />
-                </div>
-            ) : (
-                <p className="text-sm text-muted-foreground mb-4">
-                    {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
-                </p>
-            )}
-            {actionableSuggestion && (
-                <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
-                    <CalendarPlus className="mr-2 h-4 w-4" />
-                    Add "{actionableSuggestion.activityName}" to Schedule
-                </Button>
-            )}
-        </CardContent>
-      </Card>
+       <ProFeatureWrapper isPro={isProMember}>
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <Zap className="text-yellow-500 mr-3" />
+              Proactive Suggestion
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+              {isSuggestionLoading ? (
+                  <div className="space-y-2">
+                      <Skeleton className="h-4 w-4/5" />
+                      <Skeleton className="h-4 w-2/3" />
+                  </div>
+              ) : (
+                  <p className="text-sm text-muted-foreground mb-4">
+                      {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
+                  </p>
+              )}
+              {actionableSuggestion && (
+                  <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
+                      <CalendarPlus className="mr-2 h-4 w-4" />
+                      Add "{actionableSuggestion.activityName}" to Schedule
+                  </Button>
+              )}
+          </CardContent>
+        </Card>
+       </ProFeatureWrapper>
 
 
       <Card className="bg-card/80 backdrop-blur-sm">

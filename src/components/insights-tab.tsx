@@ -8,8 +8,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, HeartPulse } from "lucide-react";
 import { WeeklyEnergyChart } from "./weekly-energy-chart";
+import { ProFeatureWrapper } from "./pro-feature-wrapper";
 
 type InsightsTabProps = {
+  isProMember: boolean;
   dynamicInsights: { drainPattern: string; rechargePattern: string };
   selfCareStreak: number;
   achievements: Achievement[];
@@ -22,6 +24,7 @@ type InsightsTabProps = {
 };
 
 export function InsightsTab({
+  isProMember,
   dynamicInsights,
   selfCareStreak,
   achievements,
@@ -133,28 +136,30 @@ export function InsightsTab({
         </CardContent>
       </Card>
 
-      <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <BrainCircuit className="text-purple-500 mr-3" /> AI Pattern
-            Recognition
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center space-x-3">
-            <span className="text-2xl">⚡️</span>
-            <p className="text-sm text-gray-700">
-              {dynamicInsights.drainPattern}
-            </p>
-          </div>
-          <div className="bg-green-50 border border-green-100 rounded-2xl p-4 flex items-center space-x-3">
-            <span className="text-2xl">🎯</span>
-            <p className="text-sm text-gray-700">
-              {dynamicInsights.rechargePattern}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <ProFeatureWrapper isPro={isProMember}>
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <BrainCircuit className="text-purple-500 mr-3" /> AI Pattern
+              Recognition
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center space-x-3">
+              <span className="text-2xl">⚡️</span>
+              <p className="text-sm text-gray-700">
+                {dynamicInsights.drainPattern}
+              </p>
+            </div>
+            <div className="bg-green-50 border border-green-100 rounded-2xl p-4 flex items-center space-x-3">
+              <span className="text-2xl">🎯</span>
+              <p className="text-sm text-gray-700">
+                {dynamicInsights.rechargePattern}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </ProFeatureWrapper>
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>

@@ -75,17 +75,26 @@ export default function HomePage() {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = useState(false);
 
+  const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
 
   useEffect(() => {
-    // In a real app, you'd check for user data in localStorage or from an API
     const storedUser = localStorage.getItem('energysync_user');
     if (storedUser) {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        if (!parsedUser.membershipTier) {
+            parsedUser.membershipTier = 'free';
+        }
+        setUser(parsedUser);
         setIsOnboarding(false);
     }
   }, []);
 
   const fetchProactiveSuggestion = useCallback(async () => {
+    if (!isProMember) {
+        setAiSuggestion("Upgrade to Pro to get proactive suggestions from your AI coach.");
+        setIsSuggestionLoading(false);
+        return;
+    }
     setIsSuggestionLoading(true);
     try {
       const recentActivities = activities.slice(0, 5);
@@ -104,7 +113,7 @@ export default function HomePage() {
     } finally {
       setIsSuggestionLoading(false);
     }
-  }, [activities, upcomingEvents, currentEnergy, currentUserLocation]);
+  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember]);
 
 
   useEffect(() => {
@@ -113,14 +122,30 @@ export default function HomePage() {
     }
   }, [activeTab, fetchProactiveSuggestion]);
 
-  const handleOnboardingComplete = (newUser: User) => {
-    setUser(newUser);
+  const handleOnboardingComplete = (newUser: Omit<User, 'membershipTier'>) => {
+    const userWithTier = { ...newUser, membershipTier: 'free' as const };
+    setUser(userWithTier);
     setIsOnboarding(false);
-    localStorage.setItem('energysync_user', JSON.stringify(newUser));
+    localStorage.setItem('energysync_user', JSON.stringify(userWithTier));
 
     const hasSeenTutorial = localStorage.getItem('energysync_tutorial_seen');
     if (!hasSeenTutorial) {
       setShowTutorial(true);
+    }
+  };
+
+  const handleTierChange = (newTier: 'free' | 'pro') => {
+    if (user) {
+        const updatedUser = { ...user, membershipTier: newTier };
+        setUser(updatedUser);
+        localStorage.setItem('energysync_user', JSON.stringify(updatedUser));
+        toast({
+            title: `Membership Updated!`,
+            description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
+        });
+        if (newTier === 'pro') {
+            unlockAchievement('Upgraded to Pro!');
+        }
     }
   };
 
@@ -265,6 +290,7 @@ export default function HomePage() {
   };
 
   const simulateHealthSync = useCallback(async () => {
+    if (!isProMember) return;
     setIsReadinessLoading(true);
     setReadinessReport(null);
     try {
@@ -294,9 +320,10 @@ export default function HomePage() {
     } finally {
         setIsReadinessLoading(false);
     }
-  }, [activities, unlockAchievement, toast]);
+  }, [activities, unlockAchievement, toast, isProMember]);
 
   const handleShowDebrief = useCallback(async () => {
+    if (!isProMember) return;
     openModal('dailyDebrief');
     setIsStoryLoading(true);
     try {
@@ -317,9 +344,10 @@ export default function HomePage() {
     } finally {
         setIsStoryLoading(false);
     }
-  }, [activities, unlockAchievement]);
+  }, [activities, unlockAchievement, isProMember]);
   
   const handleChatSubmit = useCallback(async (query: string) => {
+      if (!isProMember) return;
       const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: query }];
       setChatHistory(newHistory);
       setIsChatting(true);
@@ -341,7 +369,7 @@ export default function HomePage() {
       } finally {
           setIsChatting(false);
       }
-  }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, toast]);
+  }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
 
 
   const changeLocation = () => {
@@ -393,6 +421,7 @@ export default function HomePage() {
           {activeTab === "home" && (
             <HomeTab
               user={user}
+              isProMember={isProMember}
               currentEnergy={currentEnergy}
               energyDebt={energyDebt}
               upcomingEvents={upcomingEvents}
@@ -413,10 +442,11 @@ export default function HomePage() {
             />
           )}
           {activeTab === "activities" && (
-            <ActivitiesTab activities={activities} openModal={openModal} />
+            <ActivitiesTab activities={activities} openModal={openModal} isProMember={isProMember} />
           )}
           {activeTab === "insights" && (
             <InsightsTab
+              isProMember={isProMember}
               dynamicInsights={dynamicInsights}
               selfCareStreak={selfCareStreak}
               achievements={achievements}
@@ -434,6 +464,8 @@ export default function HomePage() {
               onLogout={handleLogout}
               onShowTutorial={handleShowTutorial}
               onShowDebrief={handleShowDebrief}
+              isProMember={isProMember}
+              onTierChange={handleTierChange}
             />
           )}
         </div>
@@ -447,6 +479,7 @@ export default function HomePage() {
           activities={activities}
           currentEnergy={currentEnergy}
           onCustomRecharge={handleCustomRecharge}
+          isProMember={isProMember}
         />
         <VoiceCheckinModal
             open={modals.voiceCheckIn}
@@ -462,6 +495,7 @@ export default function HomePage() {
             open={modals.addActivity}
             onOpenChange={(isOpen) => closeModal('addActivity')}
             onLogActivity={handleLogActivity}
+            isProMember={isProMember}
         />
         <TutorialModal
             open={showTutorial}
@@ -480,6 +514,7 @@ export default function HomePage() {
             chatHistory={chatHistory}
             isThinking={isChatting}
             onSendMessage={handleChatSubmit}
+            isProMember={isProMember}
         />
         <ImageCheckinModal
             open={modals.imageCheckin}

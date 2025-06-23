@@ -13,7 +13,7 @@ export interface Activity {
 
 export interface UpcomingEvent {
   id: number;
-  name: string;
+  name:string;
   type: 'social' | 'work' | 'personal';
   estimatedImpact: number;
   date: string;
@@ -38,6 +38,7 @@ export interface BiometricData {
 
 export interface User {
   name: string;
+  membershipTier: 'free' | 'pro';
 }
 
 export interface Goal {

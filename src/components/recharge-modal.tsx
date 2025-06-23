@@ -22,7 +22,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import type { Activity } from "@/lib/types";
-import { LoaderCircle, Plus, Sparkles } from "lucide-react";
+import { LoaderCircle, Plus, Sparkles, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { suggestRechargeDetails } from "@/ai/flows/suggest-recharge-details";
 
@@ -43,6 +43,7 @@ type RechargeModalProps = {
   activities: RechargeRecommendationsInput['activities'];
   currentEnergy: number;
   onCustomRecharge: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
+  isProMember: boolean;
 };
 
 export function RechargeModal({
@@ -52,6 +53,7 @@ export function RechargeModal({
   activities,
   currentEnergy,
   onCustomRecharge,
+  isProMember,
 }: RechargeModalProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -75,23 +77,28 @@ export function RechargeModal({
       form.reset();
       setIsSuggesting(false);
 
-      setLoading(true);
-      const fetchRecommendations = async () => {
-        try {
-          const input = { activities, currentEnergy };
-          const result = await getRechargeRecommendations(input);
-          const sortedResult = result.sort((a, b) => b.expectedImpact - a.expectedImpact);
-          setRecommendations(sortedResult);
-        } catch (error) {
-          console.error("Failed to get recommendations:", error);
+      if (isProMember) {
+        setLoading(true);
+        const fetchRecommendations = async () => {
+          try {
+            const input = { activities, currentEnergy };
+            const result = await getRechargeRecommendations(input);
+            const sortedResult = result.sort((a, b) => b.expectedImpact - a.expectedImpact);
+            setRecommendations(sortedResult);
+          } catch (error) {
+            console.error("Failed to get recommendations:", error);
+            setRecommendations([]);
+          } finally {
+            setLoading(false);
+          }
+        };
+        fetchRecommendations();
+      } else {
           setRecommendations([]);
-        } finally {
           setLoading(false);
-        }
-      };
-      fetchRecommendations();
+      }
     }
-  }, [open, activities, currentEnergy, form]);
+  }, [open, activities, currentEnergy, form, isProMember]);
 
   const onRechargeSelect = (activity: RechargeRecommendationsOutput[0]) => {
     handleRecharge(activity.expectedImpact, activity.expectedImpact);
@@ -163,7 +170,8 @@ export function RechargeModal({
                         </div>
                     </div>
                     ))
-                ) : recommendations.length > 0 ? (
+                ) : isProMember ? (
+                  recommendations.length > 0 ? (
                     recommendations.map((activity, index) => (
                     <button
                         key={index}
@@ -185,8 +193,15 @@ export function RechargeModal({
                         </div>
                     </button>
                     ))
+                  ) : (
+                    <p className="text-center text-muted-foreground py-8">Could not find any recommendations right now.</p>
+                  )
                 ) : (
-                    <p className="text-center text-muted-foreground py-8">No recommendations available at this moment.</p>
+                   <div className="text-center p-8 bg-muted/50 rounded-lg">
+                     <Star className="mx-auto h-8 w-8 text-yellow-500 mb-2 fill-yellow-500" />
+                     <h3 className="font-semibold text-card-foreground">Unlock Personalized Recommendations</h3>
+                     <p className="text-sm text-muted-foreground mt-1">Upgrade to Pro to get AI-powered recharge suggestions.</p>
+                   </div>
                 )}
                 </div>
             ) : (
@@ -199,7 +214,7 @@ export function RechargeModal({
                                 <FormItem>
                                   <div className="flex justify-between items-center">
                                     <FormLabel>Activity Name</FormLabel>
-                                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting}>
+                                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting || !isProMember}>
                                       {isSuggesting ? (
                                         <LoaderCircle className="animate-spin" />
                                       ) : (

@@ -4,13 +4,15 @@ import type { Activity } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Camera } from "lucide-react";
+import { ProFeatureWrapper } from "./pro-feature-wrapper";
 
 type ActivitiesTabProps = {
   activities: Activity[];
   openModal: (modalName: string) => void;
+  isProMember: boolean;
 };
 
-export function ActivitiesTab({ activities, openModal }: ActivitiesTabProps) {
+export function ActivitiesTab({ activities, openModal, isProMember }: ActivitiesTabProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -18,10 +20,12 @@ export function ActivitiesTab({ activities, openModal }: ActivitiesTabProps) {
           Activity History
         </h2>
         <div className="flex items-center gap-2">
-            <Button onClick={() => openModal('imageCheckin')} size="icon" variant="ghost" className="text-primary">
-                <Camera className="h-7 w-7"/>
-                <span className="sr-only">Visual Check-in</span>
-            </Button>
+            <ProFeatureWrapper isPro={isProMember}>
+              <Button onClick={() => openModal('imageCheckin')} size="icon" variant="ghost" className="text-primary">
+                  <Camera className="h-7 w-7"/>
+                  <span className="sr-only">Visual Check-in</span>
+              </Button>
+            </ProFeatureWrapper>
             <Button onClick={() => openModal('addActivity')} size="icon" variant="ghost" className="text-primary">
                 <PlusCircle className="h-8 w-8"/>
                 <span className="sr-only">Log Activity</span>

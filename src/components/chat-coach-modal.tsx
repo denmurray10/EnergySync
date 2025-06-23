@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, BrainCircuit, User as UserIcon, LoaderCircle } from "lucide-react";
+import { Send, BrainCircuit, User as UserIcon, LoaderCircle, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ChatCoachModalProps = {
@@ -22,9 +22,10 @@ type ChatCoachModalProps = {
   chatHistory: ChatMessage[];
   isThinking: boolean;
   onSendMessage: (message: string) => void;
+  isProMember: boolean;
 };
 
-export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, onSendMessage }: ChatCoachModalProps) {
+export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, onSendMessage, isProMember }: ChatCoachModalProps) {
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -85,19 +86,27 @@ export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, on
         </ScrollArea>
 
         <div className="p-4 border-t bg-background">
-          <div className="flex items-center gap-2">
-            <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="e.g., Why was I so tired yesterday?"
-              disabled={isThinking}
-              className="flex-1"
-            />
-            <Button onClick={handleSend} disabled={isThinking || !input.trim()} size="icon">
-              <Send />
-            </Button>
-          </div>
+          {!isProMember ? (
+            <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <Star className="mx-auto h-8 w-8 text-yellow-500 mb-2 fill-yellow-500" />
+                <h3 className="font-semibold text-card-foreground">Upgrade to Pro to Chat</h3>
+                <p className="text-sm text-muted-foreground mt-1">Unlock the AI Energy Coach to get personalized insights.</p>
+            </div>
+          ) : (
+             <div className="flex items-center gap-2">
+                <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                placeholder="e.g., Why was I so tired yesterday?"
+                disabled={isThinking}
+                className="flex-1"
+                />
+                <Button onClick={handleSend} disabled={isThinking || !input.trim()} size="icon">
+                <Send />
+                </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

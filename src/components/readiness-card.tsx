@@ -10,6 +10,7 @@ type ReadinessCardProps = {
   report: ReadinessReport | null;
   loading: boolean;
   onSync: () => void;
+  isProMember: boolean;
 };
 
 const getScoreColor = (score: number) => {
@@ -18,7 +19,7 @@ const getScoreColor = (score: number) => {
     return "text-red-500";
 };
 
-export function ReadinessCard({ report, loading, onSync }: ReadinessCardProps) {
+export function ReadinessCard({ report, loading, onSync, isProMember }: ReadinessCardProps) {
   return (
     <Card className="bg-card/80 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -26,7 +27,7 @@ export function ReadinessCard({ report, loading, onSync }: ReadinessCardProps) {
           <HeartPulse className="text-red-500 mr-3" />
           Health Readiness
         </CardTitle>
-        <Button onClick={onSync} variant="ghost" size="icon" disabled={loading}>
+        <Button onClick={onSync} variant="ghost" size="icon" disabled={loading || !isProMember}>
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
       </CardHeader>

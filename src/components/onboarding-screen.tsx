@@ -17,7 +17,7 @@ const onboardingFormSchema = z.object({
 type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
 
 type OnboardingScreenProps = {
-  onComplete: (user: User) => void;
+  onComplete: (user: Omit<User, 'membershipTier'>) => void;
 };
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {

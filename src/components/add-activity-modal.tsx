@@ -28,7 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Sparkles, LoaderCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, LoaderCircle, Star } from "lucide-react";
 
 
 const activityFormSchema = z.object({
@@ -46,9 +47,10 @@ type AddActivityModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
+  isProMember: boolean;
 };
 
-export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActivityModalProps) {
+export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMember }: AddActivityModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
 
@@ -126,13 +128,19 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity }: AddActiv
                 <FormItem>
                   <div className="flex justify-between items-center">
                     <FormLabel>Activity Name</FormLabel>
-                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting}>
+                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting || !isProMember}>
                       {isSuggesting ? (
                         <LoaderCircle className="animate-spin" />
                       ) : (
                         <Sparkles className="text-yellow-500" />
                       )}
                       <span className="ml-2">Auto-fill</span>
+                      {!isProMember && (
+                        <Badge variant="destructive" className="ml-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none">
+                            <Star className="w-3 h-3 mr-1 fill-white"/>
+                            PRO
+                        </Badge>
+                      )}
                     </Button>
                   </div>
                   <FormControl>
