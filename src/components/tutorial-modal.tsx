@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -17,35 +18,39 @@ type TutorialModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: () => void;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-const tutorialSteps = [
-    {
-        icon: <Zap className="h-10 w-10 text-yellow-500" />,
-        title: "Track Your Energy",
-        description: "The main screen shows your current energy level. Keep an eye on this gauge to understand your daily capacity and avoid burnout.",
-    },
-    {
-        icon: <ListChecks className="h-10 w-10 text-blue-500" />,
-        title: "Log Your Activities",
-        description: "Go to the 'Activities' tab to log what drains or recharges you. Use the '+' button to add new entries, and try the AI 'Auto-fill' to save time!",
-    },
-    {
-        icon: <Zap className="h-10 w-10 text-green-500" />,
-        title: "Recharge Intelligently",
-        description: "Feeling low? Hit 'Start Recharge' on the home screen. Our AI will give you personalized suggestions to get your energy back up.",
-    },
-    {
-        icon: <BrainCircuit className="h-10 w-10 text-purple-500" />,
-        title: "Discover Insights",
-        description: "The 'Insights' tab reveals your energy patterns, like what drains you most and what recharges you best. Unlock achievements as you build healthy habits!",
-    },
-    {
-        icon: <CalendarCheck className="h-10 w-10 text-indigo-500" />,
-        title: "Plan Your Schedule",
-        description: "Sync your calendar to see upcoming events and their estimated energy impact. EnergySync helps you prepare for demanding days.",
-    },
-];
+const getTutorialSteps = (ageGroup: 'under14' | 'over14' | null) => {
+    const isPetCentric = ageGroup === 'under14';
+    return [
+        {
+            icon: <Zap className="h-10 w-10 text-yellow-500" />,
+            title: "Track Your Energy",
+            description: "The main screen shows your current energy level. Keep an eye on this gauge to understand your daily capacity and avoid burnout.",
+        },
+        {
+            icon: <ListChecks className="h-10 w-10 text-blue-500" />,
+            title: "Log Your Activities",
+            description: `Go to the 'Activities' tab to log what drains or recharges you. Use the '+' button to add new entries, and try the '${isPetCentric ? 'Ask Pet' : 'Auto-fill'}' feature to save time!`,
+        },
+        {
+            icon: <Zap className="h-10 w-10 text-green-500" />,
+            title: "Recharge Intelligently",
+            description: `Feeling low? Hit 'Start Recharge' on the home screen. ${isPetCentric ? 'Your pet' : 'Our AI'} will give you personalized suggestions to get your energy back up.`,
+        },
+        {
+            icon: <BrainCircuit className="h-10 w-10 text-purple-500" />,
+            title: "Discover Insights",
+            description: `The 'Insights' tab reveals your energy patterns, like what drains you most and what recharges you best. Unlock achievements as you build healthy habits!`,
+        },
+        {
+            icon: <CalendarCheck className="h-10 w-10 text-indigo-500" />,
+            title: "Plan Your Schedule",
+            description: "Add events to your schedule to see their estimated energy impact. This helps you prepare for demanding days.",
+        },
+    ];
+};
 
 const placeholderImages = [
     "https://placehold.co/400x225.png",
@@ -64,8 +69,9 @@ const dataAiHints = [
 ];
 
 
-export function TutorialModal({ open, onOpenChange, onComplete }: TutorialModalProps) {
+export function TutorialModal({ open, onOpenChange, onComplete, ageGroup }: TutorialModalProps) {
     const [step, setStep] = useState(0);
+    const tutorialSteps = getTutorialSteps(ageGroup);
 
     const handleNext = () => {
         if (step < tutorialSteps.length - 1) {

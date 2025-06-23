@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -47,9 +48,10 @@ type AddEventModalProps = {
   onOpenChange: (open: boolean) => void;
   onLogEvent: (data: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => void;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup }: AddEventModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
   
@@ -64,6 +66,8 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember }: A
       emoji: "🗓️",
     },
   });
+
+  const autoFillText = ageGroup === 'under14' ? 'Ask Pet' : 'Auto-fill';
 
   const handleSuggestDetails = async () => {
     const eventName = form.getValues("name");
@@ -85,14 +89,14 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember }: A
         form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
         toast({
           title: "🤖 Details Auto-filled!",
-          description: "AI has suggested details for your event.",
+          description: ageGroup === 'under14' ? "Your pet has suggested details for your event." : "AI has suggested details for your event.",
         });
       }
     } catch (error) {
       console.error("Failed to get suggestions:", error);
       toast({
         title: "❌ Error",
-        description: "Could not fetch AI suggestions. Please fill in the details manually.",
+        description: "Could not fetch suggestions. Please fill in the details manually.",
         variant: "destructive",
       });
     } finally {
@@ -133,7 +137,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember }: A
                       ) : (
                         <Sparkles className="text-yellow-500" />
                       )}
-                      <span className="ml-2">Auto-fill</span>
+                      <span className="ml-2">{autoFillText}</span>
                       {!isProMember && (
                         <Badge variant="destructive" className="ml-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none">
                             <Star className="w-3 h-3 mr-1 fill-white"/>

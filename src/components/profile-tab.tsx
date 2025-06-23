@@ -1,34 +1,40 @@
+
 "use client";
 
 import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { ProFeatureWrapper } from "./pro-feature-wrapper";
 
 type ProfileTabProps = {
   user: User | null;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
   onShowTutorial: () => void;
   onShowDebrief: () => void;
   onTierChange: (tier: 'free' | 'pro') => void;
+  onTogglePet: (enabled: boolean) => void;
 };
 
-export function ProfileTab({ user, isProMember, onShowTutorial, onShowDebrief, onTierChange }: ProfileTabProps) {
+export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet }: ProfileTabProps) {
+  if (!user) return null;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center space-y-4 pt-4">
         <Avatar className="h-24 w-24 border-4 border-primary">
-          <AvatarImage src={user ? `https://placehold.co/100x100.png?text=${user.name.charAt(0)}` : ''} data-ai-hint="profile picture" />
+          <AvatarImage src={`https://placehold.co/100x100.png?text=${user.name.charAt(0)}`} data-ai-hint="profile picture" />
           <AvatarFallback className="text-4xl bg-muted">
-            {user?.name?.charAt(0).toUpperCase()}
+            {user.name.charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
-        <h2 className="text-3xl font-bold">{user?.name}</h2>
-        {user && (
+        <h2 className="text-3xl font-bold">{user.name}</h2>
+        {user.petEnabled && (
             <p className="font-semibold text-muted-foreground -mt-2">Pet Level: {user.petLevel}</p>
         )}
       </div>
@@ -42,7 +48,7 @@ export function ProfileTab({ user, isProMember, onShowTutorial, onShowDebrief, o
         </CardHeader>
         <CardContent>
           <RadioGroup 
-            value={user?.membershipTier} 
+            value={user.membershipTier} 
             onValueChange={(value: 'free' | 'pro') => onTierChange(value)}
             className="space-y-2"
           >
@@ -56,16 +62,31 @@ export function ProfileTab({ user, isProMember, onShowTutorial, onShowDebrief, o
             </div>
           </RadioGroup>
           <p className="text-sm text-muted-foreground mt-4">
-            {isProMember ? "You have access to all AI features!" : "Upgrade to Pro to unlock all AI features."}
+            {isProMember ? "You have access to all AI features!" : "Upgrade to Pro to unlock all smart features."}
           </p>
         </CardContent>
       </Card>
-      
+
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
-            <CardTitle>Settings & Reports</CardTitle>
+            <CardTitle>Settings & Features</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+            {ageGroup === 'over14' && (
+              <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                <div className="space-y-0.5">
+                  <Label htmlFor="pet-toggle" className="text-base flex items-center"><PawPrint className="mr-2 h-4 w-4" /> Pet Companion</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enable or disable the virtual pet companion.
+                  </p>
+                </div>
+                <Switch
+                  id="pet-toggle"
+                  checked={user.petEnabled}
+                  onCheckedChange={onTogglePet}
+                />
+              </div>
+            )}
              <Button onClick={onShowTutorial} variant="outline" className="w-full justify-start">
                 <Film className="mr-2 h-4 w-4" />
                 Re-watch Tutorial

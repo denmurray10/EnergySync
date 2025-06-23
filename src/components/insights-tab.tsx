@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Achievement, Activity, Goal, Challenge, EnergyHotspotAnalysis } from "@/lib/types";
@@ -13,6 +14,7 @@ import { Skeleton } from "./ui/skeleton";
 
 type InsightsTabProps = {
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
   dynamicInsights: { drainPattern: string; rechargePattern: string };
   selfCareStreak: number;
   achievements: Achievement[];
@@ -30,6 +32,7 @@ type InsightsTabProps = {
 
 export function InsightsTab({
   isProMember,
+  ageGroup,
   dynamicInsights,
   selfCareStreak,
   achievements,
@@ -44,6 +47,9 @@ export function InsightsTab({
   energyHotspots,
   isHotspotsLoading,
 }: InsightsTabProps) {
+  
+  const suggestButtonText = ageGroup === 'under14' ? 'Ask Pet' : 'Suggest New';
+  
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
@@ -68,7 +74,9 @@ export function InsightsTab({
                     <MapPin className="text-orange-500 mr-3" />
                     Energy Hotspots
                 </CardTitle>
-                 <CardDescription>AI-powered analysis of where your energy changes most.</CardDescription>
+                 <CardDescription>
+                  {ageGroup === 'under14' ? "Your pet's analysis of where your energy changes most." : "AI-powered analysis of where your energy changes most."}
+                 </CardDescription>
             </CardHeader>
             <CardContent>
                 {isHotspotsLoading ? (
@@ -122,7 +130,7 @@ export function InsightsTab({
                     ) : (
                         <Sparkles className="mr-2 h-4 w-4 text-yellow-500" />
                     )}
-                    Suggest New
+                    {suggestButtonText}
                 </Button>
             </ProFeatureWrapper>
         </CardHeader>
@@ -150,7 +158,7 @@ export function InsightsTab({
                         ))}
                     </div>
                   ) : (
-                     <p className="text-sm text-muted-foreground text-center py-4">No goals yet. Ask the AI for suggestions!</p>
+                     <p className="text-sm text-muted-foreground text-center py-4">No goals yet. Ask your helper for suggestions!</p>
                   )}
                 </div>
                 <div>
@@ -226,8 +234,8 @@ export function InsightsTab({
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center text-xl">
-              <BrainCircuit className="text-purple-500 mr-3" /> AI Pattern
-              Recognition
+              <BrainCircuit className="text-purple-500 mr-3" /> 
+              {ageGroup === 'under14' ? "Your Pet's Insights" : "AI Pattern Recognition"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

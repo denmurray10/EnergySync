@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -48,9 +49,10 @@ type AddActivityModalProps = {
   onOpenChange: (open: boolean) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMember }: AddActivityModalProps) {
+export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMember, ageGroup }: AddActivityModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
 
@@ -87,14 +89,14 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
         form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
         toast({
           title: "🤖 Details Auto-filled!",
-          description: "AI has suggested details for your activity.",
+          description: ageGroup === 'under14' ? "Your pet has suggested details for your activity." : "AI has suggested details for your activity.",
         });
       }
     } catch (error) {
       console.error("Failed to get suggestions:", error);
       toast({
         title: "❌ Error",
-        description: "Could not fetch AI suggestions. Please fill in the details manually.",
+        description: "Could not fetch suggestions. Please fill in the details manually.",
         variant: "destructive",
       });
     } finally {
@@ -107,6 +109,8 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
     form.reset();
   }
 
+  const autoFillText = ageGroup === 'under14' ? 'Ask Pet' : 'Auto-fill';
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) form.reset();
@@ -116,7 +120,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
         <DialogHeader>
           <DialogTitle>Log a New Activity</DialogTitle>
           <DialogDescription>
-            Track what drains and recharges you. Or, let AI fill in the details for you!
+            Track what drains and recharges you. Or, let your helper fill in the details for you!
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -134,7 +138,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
                       ) : (
                         <Sparkles className="text-yellow-500" />
                       )}
-                      <span className="ml-2">Auto-fill</span>
+                      <span className="ml-2">{autoFillText}</span>
                       {!isProMember && (
                         <Badge variant="destructive" className="ml-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none">
                             <Star className="w-3 h-3 mr-1 fill-white"/>

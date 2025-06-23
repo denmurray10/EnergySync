@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -20,12 +21,14 @@ type VoiceCheckinModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCheckinComplete: (result: AnalyzeCheckinOutput) => void;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
 export function VoiceCheckinModal({
   open,
   onOpenChange,
   onCheckinComplete,
+  ageGroup,
 }: VoiceCheckinModalProps) {
   const { toast } = useToast();
   const [text, setText] = useState("");
@@ -88,6 +91,10 @@ export function VoiceCheckinModal({
     resetState();
   };
 
+  const title = ageGroup === 'under14' ? "Check-in with your Pet" : "AI Voice Check-in";
+  const description = ageGroup === 'under14' ? "Tell me how you're feeling, and I'll log our energy and respond." : "Tell me how you're feeling, and I'll log your energy and respond.";
+
+
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
@@ -101,10 +108,10 @@ export function VoiceCheckinModal({
                 <Mic className="w-8 h-8 text-primary"/>
             </div>
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            AI Voice Check-in
+            {title}
           </DialogTitle>
           <DialogDescription>
-            Tell me how you're feeling, and I'll log your energy and respond.
+            {description}
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">

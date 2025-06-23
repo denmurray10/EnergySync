@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -49,6 +50,7 @@ type RechargeModalProps = {
   onCustomRecharge: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
 const guidedSessions = [
@@ -66,6 +68,7 @@ export function RechargeModal({
   onCustomRecharge,
   onLogActivity,
   isProMember,
+  ageGroup,
 }: RechargeModalProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -159,11 +162,11 @@ export function RechargeModal({
         form.setValue("impact", suggestions.impact, { shouldValidate: true });
         form.setValue("duration", suggestions.duration, { shouldValidate: true });
         form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
-        toast({ title: "🤖 Details Auto-filled!", description: "AI has suggested details." });
+        toast({ title: "🤖 Details Auto-filled!", description: "Your helper has suggested details." });
       }
     } catch (error) {
       console.error("Failed to get suggestions:", error);
-      toast({ title: "❌ Error", description: "Could not fetch AI suggestions.", variant: "destructive" });
+      toast({ title: "❌ Error", description: "Could not fetch suggestions.", variant: "destructive" });
     } finally {
       setIsSuggesting(false);
     }
@@ -206,6 +209,8 @@ export function RechargeModal({
     onOpenChange(false);
   };
 
+  const recommendationsTitle = ageGroup === 'under14' ? "YOUR PET'S SUGGESTIONS" : "AI RECOMMENDATIONS";
+  const autoFillText = ageGroup === 'under14' ? "Ask Pet" : "Auto-fill";
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
@@ -259,7 +264,7 @@ export function RechargeModal({
                         </div>
                     </ProFeatureWrapper>
                     
-                    <h3 className="font-semibold text-muted-foreground text-sm pt-2">AI RECOMMENDATIONS</h3>
+                    <h3 className="font-semibold text-muted-foreground text-sm pt-2">{recommendationsTitle}</h3>
                      <ProFeatureWrapper isPro={isProMember}>
                         {loading ? (
                             Array.from({ length: 2 }).map((_, index) => (
@@ -296,7 +301,7 @@ export function RechargeModal({
                                  <ProFeatureWrapper isPro={isProMember}>
                                     <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting || !isProMember}>
                                         {isSuggesting ? <LoaderCircle className="animate-spin" /> : <Sparkles className="text-yellow-500" />}
-                                        <span className="ml-2">Auto-fill</span>
+                                        <span className="ml-2">{autoFillText}</span>
                                     </Button>
                                  </ProFeatureWrapper>
                                 </div>

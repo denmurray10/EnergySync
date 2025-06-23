@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -23,9 +24,10 @@ type ChatCoachModalProps = {
   isThinking: boolean;
   onSendMessage: (message: string) => void;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, onSendMessage, isProMember }: ChatCoachModalProps) {
+export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, onSendMessage, isProMember, ageGroup }: ChatCoachModalProps) {
   const [input, setInput] = useState("");
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +43,14 @@ export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, on
       setInput("");
     }
   };
+  
+  const titleText = ageGroup === 'under14' ? 'Chat with your Pet' : 'AI Energy Coach';
+  const descriptionText = ageGroup === 'under14' 
+    ? 'Ask me anything about our energy, activities, or schedule.' 
+    : 'Ask me anything about your energy, activities, or schedule.';
+  const proUpgradeText = ageGroup === 'under14' 
+    ? "Upgrade to Pro to get smart replies from your pet." 
+    : "Upgrade to Pro to unlock the AI Energy Coach to get personalized insights.";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,9 +58,9 @@ export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, on
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <BrainCircuit className="text-primary"/>
-            AI Energy Coach
+            {titleText}
           </DialogTitle>
-          <DialogDescription>Ask me anything about your energy, activities, or schedule.</DialogDescription>
+          <DialogDescription>{descriptionText}</DialogDescription>
         </DialogHeader>
         
         <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
@@ -90,7 +100,7 @@ export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, on
             <div className="text-center p-4 bg-muted/50 rounded-lg">
                 <Star className="mx-auto h-8 w-8 text-yellow-500 mb-2 fill-yellow-500" />
                 <h3 className="font-semibold text-card-foreground">Upgrade to Pro to Chat</h3>
-                <p className="text-sm text-muted-foreground mt-1">Unlock the AI Energy Coach to get personalized insights.</p>
+                <p className="text-sm text-muted-foreground mt-1">{proUpgradeText}</p>
             </div>
           ) : (
              <div className="flex items-center gap-2">

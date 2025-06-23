@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import {
   PlusCircle,
   Trash2,
   TrendingUp,
+  BrainCircuit
 } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import {
@@ -38,6 +40,7 @@ import {
 type HomeTabProps = {
   user: User | null;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
   currentEnergy: number;
   energyDebt: number;
   upcomingEvents: UpcomingEvent[];
@@ -79,6 +82,7 @@ const getEnergyEmoji = (energy: number) => {
 export function HomeTab({
   user,
   isProMember,
+  ageGroup,
   currentEnergy,
   energyDebt,
   upcomingEvents,
@@ -108,6 +112,8 @@ export function HomeTab({
       setEventToDelete(null);
     }
   };
+  
+  const showPetFeatures = user?.petEnabled;
 
   return (
     <div className="space-y-6">
@@ -177,9 +183,11 @@ export function HomeTab({
         </Card>
       )}
 
-       <ProFeatureWrapper isPro={isProMember}>
-          <PetCompanionCard onClick={() => openModal('chatCoach')} />
-       </ProFeatureWrapper>
+       {showPetFeatures && (
+        <ProFeatureWrapper isPro={isProMember}>
+            <PetCompanionCard onClick={() => openModal('chatCoach')} ageGroup={ageGroup} />
+        </ProFeatureWrapper>
+       )}
       
       <ProFeatureWrapper isPro={isProMember}>
         <ReadinessCard
@@ -260,34 +268,36 @@ export function HomeTab({
         </Card>
       </ProFeatureWrapper>
       
-       <ProFeatureWrapper isPro={isProMember}>
-        <Card className="bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center text-xl">
-              <Zap className="text-yellow-500 mr-3" />
-              Your Pet's Thoughts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-              {isSuggestionLoading ? (
-                  <div className="space-y-2">
-                      <Skeleton className="h-4 w-4/5" />
-                      <Skeleton className="h-4 w-2/3" />
-                  </div>
-              ) : (
-                  <p className="text-sm text-muted-foreground mb-4">
-                      {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
-                  </p>
-              )}
-              {actionableSuggestion && (
-                  <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
-                      <CalendarPlus className="mr-2 h-4 w-4" />
-                      Add "{actionableSuggestion.activityName}" to Schedule
-                  </Button>
-              )}
-          </CardContent>
-        </Card>
-       </ProFeatureWrapper>
+       {showPetFeatures && (
+        <ProFeatureWrapper isPro={isProMember}>
+            <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+                <CardTitle className="flex items-center text-xl">
+                {ageGroup === 'under14' ? <Zap className="text-yellow-500 mr-3" /> : <BrainCircuit className="text-yellow-500 mr-3" />}
+                {ageGroup === 'under14' ? "Your Pet's Thoughts" : "Proactive Suggestions"}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {isSuggestionLoading ? (
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-4/5" />
+                        <Skeleton className="h-4 w-2/3" />
+                    </div>
+                ) : (
+                    <p className="text-sm text-muted-foreground mb-4">
+                        {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
+                    </p>
+                )}
+                {actionableSuggestion && (
+                    <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
+                        <CalendarPlus className="mr-2 h-4 w-4" />
+                        Add "{actionableSuggestion.activityName}" to Schedule
+                    </Button>
+                )}
+            </CardContent>
+            </Card>
+        </ProFeatureWrapper>
+       )}
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef } from "react";
@@ -21,9 +22,10 @@ type DailyDebriefModalProps = {
   story: string | null;
   loading: boolean;
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-export function DailyDebriefModal({ open, onOpenChange, story, loading, isProMember }: DailyDebriefModalProps) {
+export function DailyDebriefModal({ open, onOpenChange, story, loading, isProMember, ageGroup }: DailyDebriefModalProps) {
   const { toast } = useToast();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -52,6 +54,10 @@ export function DailyDebriefModal({ open, onOpenChange, story, loading, isProMem
     setIsSpeaking(false);
   };
 
+  const description = ageGroup === 'under14'
+    ? "Here's the story of your energy from yesterday, told by your pet."
+    : "Here's the AI-generated story of your energy from yesterday.";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
@@ -60,7 +66,7 @@ export function DailyDebriefModal({ open, onOpenChange, story, loading, isProMem
             <BookOpen className="w-8 h-8 text-primary" />
           </div>
           <DialogTitle>Your Daily Debrief</DialogTitle>
-          <DialogDescription>Here's the AI-generated story of your energy from yesterday.</DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <audio ref={audioRef} onEnded={handleAudioEnded} className="hidden" />
         <div className="my-4 p-4 bg-muted/50 rounded-lg min-h-[120px]">

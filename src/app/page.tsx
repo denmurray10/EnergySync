@@ -32,6 +32,7 @@ import { AddEventModal } from "@/components/add-event-modal";
 import { PetCustomizationModal } from "@/components/pet-customization-modal";
 import { PetSettingsModal } from "@/components/pet-settings-modal";
 import { LoaderCircle } from "lucide-react";
+import { AgeGateModal } from "@/components/age-gate-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
@@ -40,6 +41,8 @@ export default function HomePage() {
   const { toast } = useToast();
   
   const [showTutorial, setShowTutorial] = useState(false);
+  const [showAgeGate, setShowAgeGate] = useState(false);
+  const [ageGroup, setAgeGroup] = useState<'under14' | 'over14' | null>(null);
   
   const [user, setUser] = useState<User | null>(null);
 
@@ -105,10 +108,11 @@ export default function HomePage() {
     localStorage.setItem(`energysync_pet_exp_local`, JSON.stringify(updatedUser.petExp));
     localStorage.setItem(`energysync_pet_name_local`, updatedUser.petName);
     localStorage.setItem(`energysync_pet_type_local`, updatedUser.petType);
+    localStorage.setItem(`energysync_pet_enabled_local`, JSON.stringify(updatedUser.petEnabled));
   }, []);
 
   const gainPetExp = useCallback((amount: number) => {
-    if (!user) return;
+    if (!user || !user.petEnabled) return;
     
     const newExp = user.petExp + amount;
     const expToNextLevel = 100 * user.petLevel;
@@ -131,6 +135,17 @@ export default function HomePage() {
 
   useEffect(() => {
     // This effect initializes the default user state.
+    const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
+    if (storedAgeGroup) {
+      setAgeGroup(storedAgeGroup);
+      const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
+      if (!tutorialSeen) {
+        setShowTutorial(true);
+      }
+    } else {
+      setShowAgeGate(true);
+    }
+    
     const defaultPetCustomization: PetCustomization = {
         color: '#a8a29e',
         outlineColor: '#4c51bf', // Default primary-like color
@@ -149,6 +164,7 @@ export default function HomePage() {
     const storedPetName = localStorage.getItem('energysync_pet_name_local');
     const storedPetType = localStorage.getItem('energysync_pet_type_local');
     const storedLastCompletion = localStorage.getItem('energysync_last_task_completion');
+    const storedPetEnabled = localStorage.getItem('energysync_pet_enabled_local');
     
     if (storedLastCompletion) {
         setLastTaskCompletionTime(Number(storedLastCompletion));
@@ -162,20 +178,26 @@ export default function HomePage() {
         petExp: storedPetExp ? JSON.parse(storedPetExp) : 0,
         petName: storedPetName || 'Buddy',
         petType: storedPetType || 'cat',
+        petEnabled: storedPetEnabled ? JSON.parse(storedPetEnabled) : true,
     });
+  }, []);
 
+  const handleAgeSelect = (group: 'under14' | 'over14') => {
+    setAgeGroup(group);
+    localStorage.setItem('energysync_age_group', group);
+    setShowAgeGate(false);
     const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
     if (!tutorialSeen) {
-        setShowTutorial(true);
+      setShowTutorial(true);
     }
-  }, []);
+  };
 
 
   const isProMember = useMemo(() => user?.membershipTier === 'pro', [user]);
   
   const fetchProactiveSuggestion = useCallback(async () => {
-    if (!isProMember) {
-        setAiSuggestion("Upgrade to Pro to get proactive suggestions from your AI coach.");
+    if (!isProMember || (ageGroup === 'over14' && !user?.petEnabled)) {
+        setAiSuggestion(null);
         setIsSuggestionLoading(false);
         return;
     }
@@ -197,7 +219,7 @@ export default function HomePage() {
     } finally {
       setIsSuggestionLoading(false);
     }
-  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember]);
+  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember, ageGroup, user?.petEnabled]);
   
   const fetchEnergyForecast = useCallback(async () => {
     if (!isProMember || !readinessReport) return;
@@ -265,6 +287,16 @@ export default function HomePage() {
         if (newTier === 'pro') {
             unlockAchievement('Upgraded to Pro!');
         }
+    }
+  };
+
+  const handleTogglePet = (enabled: boolean) => {
+    if (user) {
+      const updatedUser = { ...user, petEnabled: enabled };
+      saveUser(updatedUser);
+      if (!enabled && activeTab === 'pet') {
+        setActiveTab('home');
+      }
     }
   };
 
@@ -642,11 +674,14 @@ export default function HomePage() {
   };
 
 
-  if (!user) {
+  if (!user || !ageGroup) {
     return (
-        <div className="min-h-dvh bg-background flex items-center justify-center">
-            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </div>
+        <>
+            <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />
+            <div className="min-h-dvh bg-background flex items-center justify-center">
+                {!showAgeGate && <LoaderCircle className="w-12 h-12 animate-spin text-primary" />}
+            </div>
+        </>
     );
   }
 
@@ -659,6 +694,7 @@ export default function HomePage() {
             <HomeTab
               user={user}
               isProMember={isProMember}
+              ageGroup={ageGroup}
               currentEnergy={currentEnergy}
               energyDebt={energyDebt}
               upcomingEvents={upcomingEvents}
@@ -686,10 +722,11 @@ export default function HomePage() {
               activities={activities}
               openModal={openModal}
               isProMember={isProMember}
+              ageGroup={ageGroup}
               onDeleteActivity={handleDeleteActivity}
             />
           )}
-          {activeTab === "pet" && user && (
+          {activeTab === "pet" && user && user.petEnabled && (
             <PetTab
               tasks={petTasks}
               onTaskComplete={handleTaskComplete}
@@ -709,6 +746,7 @@ export default function HomePage() {
           {activeTab === "insights" && (
             <InsightsTab
               isProMember={isProMember}
+              ageGroup={ageGroup}
               dynamicInsights={dynamicInsights}
               selfCareStreak={selfCareStreak}
               achievements={achievements}
@@ -730,12 +768,14 @@ export default function HomePage() {
               onShowTutorial={handleShowTutorial}
               onShowDebrief={handleShowDebrief}
               isProMember={isProMember}
+              ageGroup={ageGroup}
               onTierChange={handleTierChange}
+              onTogglePet={handleTogglePet}
             />
           )}
         </div>
 
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={user.petEnabled} />
         
         <RechargeModal
           open={modals.recharge}
@@ -746,28 +786,33 @@ export default function HomePage() {
           onCustomRecharge={handleCustomRecharge}
           onLogActivity={handleLogActivity}
           isProMember={isProMember}
+          ageGroup={ageGroup}
         />
         <VoiceCheckinModal
             open={modals.voiceCheckIn}
             onOpenChange={() => closeModal('voiceCheckIn')}
             onCheckinComplete={handleVoiceCheckinComplete}
+            ageGroup={ageGroup}
         />
         <WeeklyReportModal
             open={modals.weeklyReport}
             onOpenChange={() => closeModal('weeklyReport')}
             activities={activities}
             isProMember={isProMember}
+            ageGroup={ageGroup}
         />
         <AddActivityModal
             open={modals.addActivity}
             onOpenChange={() => closeModal('addActivity')}
             onLogActivity={handleLogActivity}
             isProMember={isProMember}
+            ageGroup={ageGroup}
         />
         <TutorialModal
             open={showTutorial}
             onOpenChange={setShowTutorial}
             onComplete={handleTutorialComplete}
+            ageGroup={ageGroup}
         />
         <DailyDebriefModal
           open={modals.dailyDebrief}
@@ -775,6 +820,7 @@ export default function HomePage() {
           story={energyStory}
           loading={isStoryLoading}
           isProMember={isProMember}
+          ageGroup={ageGroup}
         />
         <ChatCoachModal
             open={modals.chatCoach}
@@ -783,17 +829,20 @@ export default function HomePage() {
             isThinking={isChatting}
             onSendMessage={handleChatSubmit}
             isProMember={isProMember}
+            ageGroup={ageGroup}
         />
         <ImageCheckinModal
             open={modals.imageCheckin}
             onOpenChange={() => closeModal('imageCheckin')}
             onLogActivity={handleLogActivity}
+            ageGroup={ageGroup}
         />
         <AddEventModal
             open={modals.addEvent}
             onOpenChange={() => closeModal('addEvent')}
             onLogEvent={handleLogEvent}
             isProMember={isProMember}
+            ageGroup={ageGroup}
         />
         {user && (
             <PetCustomizationModal

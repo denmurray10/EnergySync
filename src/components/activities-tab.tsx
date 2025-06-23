@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,9 +23,10 @@ type ActivitiesTabProps = {
   openModal: (modalName: string) => void;
   isProMember: boolean;
   onDeleteActivity: (id: number) => void;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-export function ActivitiesTab({ activities, openModal, isProMember, onDeleteActivity }: ActivitiesTabProps) {
+export function ActivitiesTab({ activities, openModal, isProMember, onDeleteActivity, ageGroup }: ActivitiesTabProps) {
   const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
 
   const confirmDelete = () => {

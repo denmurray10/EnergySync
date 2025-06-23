@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useRef } from 'react';
@@ -19,6 +20,7 @@ type WeeklyReportModalProps = {
   onOpenChange: (open: boolean) => void;
   activities: Activity[];
   isProMember: boolean;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
 export function WeeklyReportModal({
@@ -26,6 +28,7 @@ export function WeeklyReportModal({
   onOpenChange,
   activities,
   isProMember,
+  ageGroup,
 }: WeeklyReportModalProps) {
   const { toast } = useToast();
   const [isSpeaking, setIsSpeaking] = useState(false);

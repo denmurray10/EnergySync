@@ -1,4 +1,5 @@
 
+
 export interface Activity {
   id: number;
   name: string;
@@ -56,6 +57,7 @@ export interface User {
   petExp: number;
   petName: string;
   petType: 'cat' | 'dog' | 'horse' | 'chicken';
+  petEnabled: boolean;
 }
 
 export interface Goal {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, ChangeEvent } from "react";
@@ -47,9 +48,10 @@ type ImageCheckinModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
+  ageGroup: 'under14' | 'over14' | null;
 };
 
-export function ImageCheckinModal({ open, onOpenChange, onLogActivity }: ImageCheckinModalProps) {
+export function ImageCheckinModal({ open, onOpenChange, onLogActivity, ageGroup }: ImageCheckinModalProps) {
   const { toast } = useToast();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [imageDataUri, setImageDataUri] = useState<string | null>(null);
@@ -97,7 +99,7 @@ export function ImageCheckinModal({ open, onOpenChange, onLogActivity }: ImageCh
         form.setValue("location", suggestions.location, { shouldValidate: true });
         toast({
           title: "🤖 Analysis Complete!",
-          description: "AI has filled in the details from your image.",
+          description: ageGroup === 'under14' ? "Your pet filled in the details from your image." : "AI has filled in the details from your image.",
         });
       }
     } catch (error) {
@@ -130,13 +132,17 @@ export function ImageCheckinModal({ open, onOpenChange, onLogActivity }: ImageCh
       onOpenChange(isOpen);
   }
 
+  const description = ageGroup === 'under14' 
+    ? "Upload a photo of your current activity and let your pet figure out the details."
+    : "Upload a photo of your current activity and let AI figure out the details.";
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
         <DialogHeader>
           <DialogTitle>Visual Check-in</DialogTitle>
           <DialogDescription>
-            Upload a photo of your current activity and let AI figure out the details.
+            {description}
           </DialogDescription>
         </DialogHeader>
 

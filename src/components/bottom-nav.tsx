@@ -1,14 +1,17 @@
+
 "use client";
 
 import { Home, ListChecks, LineChart, User, PawPrint } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
 
 type BottomNavProps = {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  petEnabled: boolean;
 };
 
-const navItems = [
+const allNavItems = [
   { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
   { id: "pet", icon: PawPrint, label: "Pet" },
@@ -16,7 +19,14 @@ const navItems = [
   { id: "profile", icon: User, label: "Profile" },
 ];
 
-export function BottomNav({ activeTab, setActiveTab }: BottomNavProps) {
+export function BottomNav({ activeTab, setActiveTab, petEnabled }: BottomNavProps) {
+  const navItems = useMemo(() => {
+    if (petEnabled) {
+      return allNavItems;
+    }
+    return allNavItems.filter(item => item.id !== 'pet');
+  }, [petEnabled]);
+
   return (
     <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40">
       <div className="bg-white/90 backdrop-blur-lg border-t m-4 rounded-3xl shadow-2xl">
