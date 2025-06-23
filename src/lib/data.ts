@@ -16,24 +16,24 @@ export const INITIAL_ACTIVITIES: Activity[] = [
     // 2 days ago
     { id: 6, name: 'Gym Workout', type: 'recharge', impact: 20, duration: 60, date: format(subDays(today, 2), 'yyyy-MM-dd'), emoji: '💪', location: 'Gym', autoDetected: false, recoveryTime: 0 },
     { id: 7, name: 'Dinner with Family', type: 'social', impact: 10, duration: 90, date: format(subDays(today, 2), 'yyyy-MM-dd'), emoji: '👨‍👩‍👧', location: 'Restaurant', autoDetected: false, recoveryTime: 0 },
-    { id: 7, name: 'Walk in the Park', type: 'recharge', impact: 15, duration: 30, date: format(subDays(today, 2), 'yyyy-MM-dd'), emoji: '🌳', location: 'City Park', autoDetected: false, recoveryTime: 0 },
+    { id: 8, name: 'Walk in the Park', type: 'recharge', impact: 15, duration: 30, date: format(subDays(today, 2), 'yyyy-MM-dd'), emoji: '🌳', location: 'City Park', autoDetected: false, recoveryTime: 0 },
 
     // 3 days ago
-    { id: 8, name: 'Read a book', type: 'recharge', impact: 25, duration: 75, date: format(subDays(today, 3), 'yyyy-MM-dd'), emoji: '📖', location: 'Home', autoDetected: false, recoveryTime: 0 },
-    { id: 9, name: 'Client Presentation', type: 'work', impact: -30, duration: 120, date: format(subDays(today, 3), 'yyyy-MM-dd'), emoji: '📊', location: 'Downtown Office', autoDetected: false, recoveryTime: 60 },
+    { id: 9, name: 'Read a book', type: 'recharge', impact: 25, duration: 75, date: format(subDays(today, 3), 'yyyy-MM-dd'), emoji: '📖', location: 'Home', autoDetected: false, recoveryTime: 0 },
+    { id: 10, name: 'Client Presentation', type: 'work', impact: -30, duration: 120, date: format(subDays(today, 3), 'yyyy-MM-dd'), emoji: '📊', location: 'Downtown Office', autoDetected: false, recoveryTime: 60 },
 
     // 4 days ago
-    { id: 10, name: 'Coffee with Colleague', type: 'social', impact: -5, duration: 30, date: format(subDays(today, 4), 'yyyy-MM-dd'), emoji: '☕', location: 'Cafe', autoDetected: false, recoveryTime: 15 },
-    { id: 10, name: 'Work from Downtown Office', type: 'work', impact: -15, duration: 480, date: format(subDays(today, 4), 'yyyy-MM-dd'), emoji: '🏢', location: 'Downtown Office', autoDetected: false, recoveryTime: 15 },
+    { id: 11, name: 'Coffee with Colleague', type: 'social', impact: -5, duration: 30, date: format(subDays(today, 4), 'yyyy-MM-dd'), emoji: '☕', location: 'Cafe', autoDetected: false, recoveryTime: 15 },
+    { id: 12, name: 'Work from Downtown Office', type: 'work', impact: -15, duration: 480, date: format(subDays(today, 4), 'yyyy-MM-dd'), emoji: '🏢', location: 'Downtown Office', autoDetected: false, recoveryTime: 15 },
     
     // 5 days ago
-    { id: 11, name: 'Meditation', type: 'recharge', impact: 15, duration: 20, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🧘', location: 'Home', autoDetected: true, recoveryTime: 0 },
-    { id: 12, name: 'Networking Event', type: 'social', impact: -20, duration: 180, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🤝', location: 'Conference Hall', autoDetected: false, recoveryTime: 90 },
-    { id: 12, name: 'Morning Stroll', type: 'recharge', impact: 10, duration: 20, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🚶‍♀️', location: 'City Park', autoDetected: false, recoveryTime: 0 },
+    { id: 13, name: 'Meditation', type: 'recharge', impact: 15, duration: 20, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🧘', location: 'Home', autoDetected: true, recoveryTime: 0 },
+    { id: 14, name: 'Networking Event', type: 'social', impact: -20, duration: 180, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🤝', location: 'Conference Hall', autoDetected: false, recoveryTime: 90 },
+    { id: 15, name: 'Morning Stroll', type: 'recharge', impact: 10, duration: 20, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🚶‍♀️', location: 'City Park', autoDetected: false, recoveryTime: 0 },
 
     // 6 days ago
-    { id: 13, name: 'Long Commute', type: 'work', impact: -10, duration: 60, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🚗', location: 'City', autoDetected: true, recoveryTime: 20 },
-    { id: 14, name: 'Movie Marathon', type: 'recharge', impact: 10, duration: 240, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🎬', location: 'Home', autoDetected: false, recoveryTime: 0 },
+    { id: 16, name: 'Long Commute', type: 'work', impact: -10, duration: 60, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🚗', location: 'City', autoDetected: true, recoveryTime: 20 },
+    { id: 17, name: 'Movie Marathon', type: 'recharge', impact: 10, duration: 240, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🎬', location: 'Home', autoDetected: false, recoveryTime: 0 },
 
 ];
 
