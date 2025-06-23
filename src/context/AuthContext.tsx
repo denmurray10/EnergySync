@@ -10,8 +10,9 @@ import type { User, PetCustomization } from '@/lib/types';
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   appUser: User | null;
-  setAppUser: (user: User | null) => void;
+  setAppUser: (user: Partial<User>) => void;
   loading: boolean;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,31 +33,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [appUser, setLocalAppUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user data from localStorage
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setFirebaseUser(user);
-      if (user && user.displayName) {
-          // User is logged in and has completed onboarding
-          const storedMembership = localStorage.getItem(`energysync_membership_${user.uid}`) || '"free"';
-          const storedPetCustomization = localStorage.getItem(`energysync_pet_customization_${user.uid}`);
-          const storedPetLevel = localStorage.getItem(`energysync_pet_level_${user.uid}`) || '1';
-          const storedPetExp = localStorage.getItem(`energysync_pet_exp_${user.uid}`) || '0';
-          const storedPetName = localStorage.getItem(`energysync_pet_name_${user.uid}`) || 'Buddy';
-          const storedPetType = localStorage.getItem(`energysync_pet_type_${user.uid}`) || 'dog';
-          const storedPetEnabled = localStorage.getItem(`energysync_pet_enabled_${user.uid}`) || 'true';
-
-          setLocalAppUser({
-              name: user.displayName,
-              membershipTier: JSON.parse(storedMembership),
-              petCustomization: storedPetCustomization ? JSON.parse(storedPetCustomization) : defaultPetCustomization,
-              petLevel: JSON.parse(storedPetLevel),
-              petExp: JSON.parse(storedPetExp),
-              petName: storedPetName,
-              petType: storedPetType as 'cat' | 'dog' | 'horse' | 'chicken',
-              petEnabled: JSON.parse(storedPetEnabled),
-          });
+      if (user) {
+        // User is logged in, try to load app user data from localStorage
+        const storedUser = localStorage.getItem(`energysync_user_${user.uid}`);
+        if (storedUser) {
+          setLocalAppUser(JSON.parse(storedUser));
+        } else if (user.displayName) {
+          // Fallback: If user has a display name but no stored data (e.g., first login after onboarding)
+          const newUser: User = {
+            userId: user.uid,
+            name: user.displayName,
+            avatar: user.photoURL || `https://placehold.co/100x100.png`,
+            membershipTier: 'free',
+            petCustomization: defaultPetCustomization,
+            petLevel: 1,
+            petExp: 0,
+            petName: 'Buddy',
+            petType: 'dog',
+            petEnabled: true,
+          };
+          setLocalAppUser(newUser);
+          localStorage.setItem(`energysync_user_${user.uid}`, JSON.stringify(newUser));
+        }
       } else {
-        // User is not logged in or has not completed onboarding
+        // User is logged out
         setLocalAppUser(null);
       }
       setLoading(false);
@@ -65,20 +69,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const setAppUser = useCallback((user: User | null) => {
-    setLocalAppUser(user);
-    if (user && firebaseUser) {
-        localStorage.setItem(`energysync_membership_${firebaseUser.uid}`, JSON.stringify(user.membershipTier));
-        localStorage.setItem(`energysync_pet_customization_${firebaseUser.uid}`, JSON.stringify(user.petCustomization));
-        localStorage.setItem(`energysync_pet_level_${firebaseUser.uid}`, JSON.stringify(user.petLevel));
-        localStorage.setItem(`energysync_pet_exp_${firebaseUser.uid}`, JSON.stringify(user.petExp));
-        localStorage.setItem(`energysync_pet_name_${firebaseUser.uid}`, user.petName);
-        localStorage.setItem(`energysync_pet_type_${firebaseUser.uid}`, user.petType);
-        localStorage.setItem(`energysync_pet_enabled_${firebaseUser.uid}`, JSON.stringify(user.petEnabled));
+  const setAppUser = useCallback((updatedData: Partial<User>) => {
+    if (firebaseUser) {
+      setLocalAppUser(prevUser => {
+        // If prevUser is null (e.g., during onboarding), updatedData is the full new user object
+        const newUser = prevUser ? { ...prevUser, ...updatedData } : updatedData as User;
+        localStorage.setItem(`energysync_user_${firebaseUser.uid}`, JSON.stringify(newUser));
+        return newUser;
+      });
     }
   }, [firebaseUser]);
+  
+  const signOut = async () => {
+    await auth.signOut();
+    if(firebaseUser) {
+        localStorage.removeItem(`energysync_user_${firebaseUser.uid}`);
+    }
+    setLocalAppUser(null);
+  };
 
-  const value = { firebaseUser, appUser, setAppUser, loading };
+  const value = { firebaseUser, appUser, setAppUser, loading, signOut };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

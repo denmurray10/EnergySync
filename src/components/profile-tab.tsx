@@ -6,11 +6,12 @@ import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera, QrCode } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera, QrCode, LogOut } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
+import { useAuth } from "@/context/AuthContext";
 
 type ProfileTabProps = {
   user: User | null;
@@ -27,6 +28,7 @@ type ProfileTabProps = {
 
 export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser, openModal }: ProfileTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { signOut } = useAuth();
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -157,6 +159,10 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                     Yesterday's Debrief
                 </Button>
             </ProFeatureWrapper>
+            <Button onClick={signOut} variant="destructive" className="w-full justify-start">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sign Out
+            </Button>
         </CardContent>
       </Card>
     </div>

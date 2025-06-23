@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
+import { useRouter } from 'next/navigation';
+import type { Activity, UpcomingEvent, Achievement, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
 import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS, INITIAL_FRIENDS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
@@ -14,6 +15,7 @@ import { getEnergyForecast } from "@/ai/flows/energy-forecast-flow";
 import { analyzeEnergyHotspots } from "@/ai/flows/energy-hotspot-flow";
 import { subDays, startOfDay } from 'date-fns';
 
+import { useAuth } from "@/context/AuthContext";
 import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
@@ -34,47 +36,24 @@ import { PetSettingsModal } from "@/components/pet-settings-modal";
 import { LoaderCircle } from "lucide-react";
 import { AgeGateModal } from "@/components/age-gate-modal";
 import { QRCodeModal } from "@/components/qr-code-modal";
+import { OnboardingScreen } from "@/components/onboarding-screen";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
 
-const defaultPetCustomization: PetCustomization = {
-    color: '#a8a29e',
-    outlineColor: '#4c51bf',
-    accessory: 'none' as const,
-    background: 'default' as const,
-    unlockedColors: ['#a8a29e'],
-    unlockedOutlineColors: ['#4c51bf'],
-    unlockedAccessories: ['none'],
-    unlockedBackgrounds: ['default'],
-};
-
-const initialUser: User = {
-    userId: 'user-alex-123',
-    name: 'Alex',
-    avatar: 'https://placehold.co/100x100.png',
-    membershipTier: 'free',
-    petCustomization: defaultPetCustomization,
-    petLevel: 1,
-    petExp: 0,
-    petName: 'Buddy',
-    petType: 'dog',
-    petEnabled: true,
-};
-
 export default function HomePage() {
+  const router = useRouter();
   const { toast } = useToast();
+  const { firebaseUser, appUser, setAppUser, loading: authLoading } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [ageGroup, setAgeGroup] = useState<'under14' | 'over14' | null>(null);
   
-  const [appUser, setAppUser] = useState<User>(initialUser);
-  
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
   const [activeTab, setActiveTab] = useState("home");
-  const [biometricData, setBiometricData] = useState<BiometricData>({ heartRate: 72, sleepQuality: 85, stressLevel: 30 });
+  const [biometricData, setBiometricData] = useState({ heartRate: 72, sleepQuality: 85, stressLevel: 30 });
   const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>(INITIAL_UPCOMING_EVENTS);
 
@@ -128,29 +107,35 @@ export default function HomePage() {
   const [friends, setFriends] = useState<Friend[]>(INITIAL_FRIENDS);
   
   const petHappiness = currentEnergy;
+
+  // REDIRECT AND ONBOARDING LOGIC
+  useEffect(() => {
+    if (!authLoading) {
+      if (!firebaseUser) {
+        router.push('/login');
+      }
+    }
+  }, [firebaseUser, authLoading, router]);
   
   const gainPetExp = useCallback((amount: number) => {
     if (!appUser || !appUser.petEnabled) return;
     
-    setAppUser(currentUser => {
-      if (!currentUser) return currentUser;
-      const newExp = currentUser.petExp + amount;
-      const expToNextLevel = 100 * currentUser.petLevel;
-      
-      if (newExp >= expToNextLevel) {
-          const newLevel = currentUser.petLevel + 1;
-          const remainingExp = newExp - expToNextLevel;
-          toast({
-              title: '🎉 Pet Level Up! 🎉',
-              description: `Your energy companion grew to Level ${newLevel}!`,
-          });
-          unlockAchievement('Pet Trainer');
-          return { ...currentUser, petLevel: newLevel, petExp: remainingExp };
-      } else {
-          return { ...currentUser, petExp: newExp };
-      }
-    });
-  }, [appUser, toast]);
+    const newExp = appUser.petExp + amount;
+    const expToNextLevel = 100 * appUser.petLevel;
+    
+    if (newExp >= expToNextLevel) {
+        const newLevel = appUser.petLevel + 1;
+        const remainingExp = newExp - expToNextLevel;
+        toast({
+            title: '🎉 Pet Level Up! 🎉',
+            description: `Your energy companion grew to Level ${newLevel}!`,
+        });
+        unlockAchievement('Pet Trainer');
+        setAppUser({ petLevel: newLevel, petExp: remainingExp });
+    } else {
+        setAppUser({ petExp: newExp });
+    }
+  }, [appUser, setAppUser, toast]);
 
   useEffect(() => {
     const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
@@ -266,8 +251,7 @@ export default function HomePage() {
 
   const handleTierChange = (newTier: 'free' | 'pro') => {
     if (appUser) {
-        const updatedUser = { ...appUser, membershipTier: newTier };
-        setAppUser(updatedUser);
+        setAppUser({ membershipTier: newTier });
         toast({
             title: `Membership Updated!`,
             description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
@@ -280,8 +264,7 @@ export default function HomePage() {
 
   const handleTogglePet = (enabled: boolean) => {
     if (appUser) {
-      const updatedUser = { ...appUser, petEnabled: enabled };
-      setAppUser(updatedUser);
+      setAppUser({ petEnabled: enabled });
       if (!enabled && activeTab === 'pet') {
         setActiveTab('home');
       }
@@ -311,7 +294,9 @@ export default function HomePage() {
   };
   
   const handleUpdateUser = (updatedData: Partial<User>) => {
-    setAppUser(prev => ({ ...prev, ...updatedData } as User));
+    if(appUser) {
+      setAppUser(updatedData);
+    }
   };
 
   const showToast = (title: string, description: string, icon: string = '✨') => {
@@ -333,7 +318,7 @@ export default function HomePage() {
         }
         return prev;
     });
-  }, [showToast]);
+  }, []);
   
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
@@ -639,7 +624,7 @@ export default function HomePage() {
 
     setPetInteractions(prev => prev - cost);
 
-    const updatedCustomization = { ...appUser.petCustomization };
+    const updatedCustomization: PetCustomization = JSON.parse(JSON.stringify(appUser.petCustomization));
     if (category === 'color') {
       updatedCustomization.unlockedColors.push(item);
       updatedCustomization.color = item;
@@ -654,7 +639,7 @@ export default function HomePage() {
       updatedCustomization.background = item as 'default' | 'park' | 'cozy';
     }
     
-    setAppUser({ ...appUser, petCustomization: updatedCustomization });
+    setAppUser({ petCustomization: updatedCustomization });
     toast({ title: 'Item Purchased!', description: 'You can equip it from the customization menu.' });
     unlockAchievement('Pet Customizer');
   };
@@ -669,27 +654,39 @@ export default function HomePage() {
     if (category === 'outline') updatedCustomization.outlineColor = item;
     if (category === 'accessory') updatedCustomization.accessory = item as 'none' | 'bowtie';
     if (category === 'background') updatedCustomization.background = item as 'default' | 'park' | 'cozy';
-    setAppUser({ ...appUser, petCustomization: updatedCustomization });
+    setAppUser({ petCustomization: updatedCustomization });
     toast({ title: 'Item Equipped!', description: 'Your pet has a new look!' });
   };
   
   const handleSavePetSettings = (newName: string, newType: 'cat' | 'dog' | 'horse' | 'chicken') => {
     if (appUser) {
-        setAppUser({ ...appUser, petName: newName, petType: newType });
+        setAppUser({ petName: newName, petType: newType });
         toast({ title: 'Pet Updated!', description: `Say hello to your ${newType}, ${newName}!` });
         closeModal('petSettings');
     }
   };
 
-  if (!appUser || !ageGroup) {
+  if (authLoading) {
     return (
-        <>
-            <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />
-            <div className="min-h-dvh bg-background flex items-center justify-center">
-                {!showAgeGate && <LoaderCircle className="w-12 h-12 animate-spin text-primary" />}
-            </div>
-        </>
+        <main className="min-h-dvh bg-background flex items-center justify-center">
+            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+        </main>
     );
+  }
+  
+  if (!firebaseUser) {
+    // This case is handled by the redirect in the useEffect hook.
+    // This UI will be briefly shown while the redirect happens.
+    return (
+        <main className="min-h-dvh bg-background flex items-center justify-center">
+            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+        </main>
+    );
+  }
+
+  if (!appUser) {
+    // User is logged in but hasn't completed onboarding.
+    return <OnboardingScreen />;
   }
 
   return (
@@ -881,6 +878,7 @@ export default function HomePage() {
                 user={appUser}
             />
         )}
+         <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />
       </div>
     </main>
   );

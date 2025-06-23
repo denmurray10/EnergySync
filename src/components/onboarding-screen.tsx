@@ -4,7 +4,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -14,23 +13,13 @@ import { useAuth } from "@/context/AuthContext";
 import { updateProfile } from "firebase/auth";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import type { User } from "@/lib/types";
 
 const onboardingFormSchema = z.object({
   name: z.string().min(2, "Please enter a name with at least 2 characters.").max(50),
 });
 
 type OnboardingFormValues = z.infer<typeof onboardingFormSchema>;
-
-const defaultPetCustomization: PetCustomization = {
-    color: '#a8a29e',
-    outlineColor: '#4c51bf',
-    accessory: 'none' as const,
-    background: 'default' as const,
-    unlockedColors: ['#a8a29e'],
-    unlockedOutlineColors: ['#4c51bf'],
-    unlockedAccessories: ['none'],
-    unlockedBackgrounds: ['default'],
-};
 
 export function OnboardingScreen() {
   const { firebaseUser, setAppUser } = useAuth();
@@ -51,19 +40,31 @@ export function OnboardingScreen() {
     }
     setLoading(true);
     try {
-        await updateProfile(firebaseUser, { displayName: data.name });
+        await updateProfile(firebaseUser, { displayName: data.name, photoURL: `https://placehold.co/100x100.png` });
         
-        // This creates the initial app user state and saves it to the context (and localStorage)
-        setAppUser({
+        const initialUser: User = {
+            userId: firebaseUser.uid,
             name: data.name,
+            avatar: `https://placehold.co/100x100.png`,
             membershipTier: 'free',
-            petCustomization: defaultPetCustomization,
+            petCustomization: {
+                color: '#a8a29e',
+                outlineColor: '#4c51bf',
+                accessory: 'none',
+                background: 'default',
+                unlockedColors: ['#a8a29e'],
+                unlockedOutlineColors: ['#4c51bf'],
+                unlockedAccessories: ['none'],
+                unlockedBackgrounds: ['default'],
+            },
             petLevel: 1,
             petExp: 0,
             petName: 'Buddy',
             petType: 'dog',
             petEnabled: true,
-        });
+        };
+        // The setAppUser function in context will handle creating/saving this to localStorage
+        setAppUser(initialUser);
 
     } catch (error: any) {
         toast({ title: 'Profile Update Failed', description: error.message, variant: 'destructive'});
