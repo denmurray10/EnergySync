@@ -1,4 +1,4 @@
-import type { Activity, UpcomingEvent, Achievement, Goal, Challenge, PetTask } from './types';
+import type { Activity, UpcomingEvent, Achievement, Goal, Challenge, PetTask, Friend } from './types';
 import { subDays, format } from 'date-fns';
 
 const today = new Date();
@@ -77,4 +77,11 @@ export const INITIAL_PET_TASKS: PetTask[] = [
     { id: 3, name: "Stretch for 5 Minutes", completed: false, icon: '🧘' },
     { id: 4, name: "Tidy Up Your Workspace", completed: false, icon: '🧹' },
     { id: 5, name: "Step Outside for Fresh Air", completed: false, icon: '🌳' },
+];
+
+export const INITIAL_FRIENDS: Friend[] = [
+    { id: 1, name: 'Sarah', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Feeling great 🌟', currentEnergy: 85 },
+    { id: 2, name: 'Mike', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Doing okay 😊', currentEnergy: 62 },
+    { id: 3, name: 'Jessica', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Running on low 😴', currentEnergy: 28 },
+    { id: 4, name: 'David', avatar: 'https://placehold.co/100x100.png', energyStatus: 'Need to recharge 🔋', currentEnergy: 15 },
 ];

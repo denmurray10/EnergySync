@@ -118,3 +118,11 @@ export interface EnergyHotspotAnalysis {
   drainingHotspots: EnergyHotspot[];
   rechargingHotspots: EnergyHotspot[];
 }
+
+export interface Friend {
+  id: number;
+  name: string;
+  avatar: string;
+  energyStatus: string;
+  currentEnergy: number;
+}

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis } from "@/lib/types";
-import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
+import type { Activity, UpcomingEvent, Achievement, BiometricData, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
+import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS, INITIAL_FRIENDS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
@@ -119,6 +119,9 @@ export default function HomePage() {
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
   const [lastTaskCompletionTime, setLastTaskCompletionTime] = useState<number | null>(null);
+  
+  // Friend feature state
+  const [friends, setFriends] = useState<Friend[]>(INITIAL_FRIENDS);
   
   const petHappiness = currentEnergy;
   
@@ -756,6 +759,7 @@ export default function HomePage() {
               isGoalsLoading={isGoalsLoading}
               energyHotspots={energyHotspots}
               isHotspotsLoading={isHotspotsLoading}
+              friends={friends}
             />
           )}
           {activeTab === "profile" && (
