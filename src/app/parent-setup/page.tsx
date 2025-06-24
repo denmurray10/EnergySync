@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -19,7 +18,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { LoaderCircle, Shield, User as UserIcon, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper } from 'lucide-react';
+import { LoaderCircle, Shield, User as UserIcon, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const setupSchema = z.object({
@@ -255,6 +254,10 @@ export default function ParentSetupPage() {
                             <ArrowLeft/>
                         </Button>
                      )}
+                     <Button variant="ghost" size="icon" onClick={() => router.push('/welcome')} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
+                        <X className="h-5 w-5" />
+                        <span className="sr-only">Close</span>
+                    </Button>
                     <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
                         <Shield className="h-8 w-8 text-primary" />
                     </div>
