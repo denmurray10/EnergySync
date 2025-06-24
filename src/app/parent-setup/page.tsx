@@ -89,7 +89,9 @@ export default function ParentSetupPage() {
     };
     
     const handleBack = () => {
-        if (step === 3 && ageGroup === 'over18') {
+        if (step === 0) {
+            router.push('/welcome');
+        } else if (step === 3 && ageGroup === 'over18') {
              setStep(1); // Skip back over feature visibility
         } else {
              setStep(s => s - 1)
@@ -267,10 +269,6 @@ export default function ParentSetupPage() {
         <main className="min-h-dvh bg-background flex items-center justify-center p-4">
             <Card className="w-full max-w-md shadow-2xl">
                 <CardHeader className="text-center items-center">
-                    <Button variant="ghost" size="icon" onClick={() => router.push('/welcome')} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Close</span>
-                    </Button>
                     <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
                         <Shield className="h-8 w-8 text-primary" />
                     </div>
@@ -294,7 +292,7 @@ export default function ParentSetupPage() {
                                     Create Account & Finish
                                 </Button>
                             )}
-                            {step > 0 && step < totalSteps && (
+                            {step < totalSteps && (
                                 <Button type="button" variant="outline" onClick={handleBack} className="w-full">
                                     <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                 </Button>
