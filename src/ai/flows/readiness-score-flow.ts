@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -16,6 +17,9 @@ const ReadinessScoreInputSchema = z.object({
         sleepQuality: z.number().min(1).max(5).describe("A self-rated sleep quality score from 1 (poor) to 5 (excellent)."),
         stressLevel: z.number().min(1).max(5).describe("A self-rated stress level from 1 (very low) to 5 (very high)."),
         physicalFeeling: z.enum(["energetic", "normal", "tired", "sore"]).describe("How the user's body feels physically."),
+        mood: z.enum(["happy", "calm", "anxious", "sad"]).describe("The user's current emotional state."),
+        nutrition: z.enum(["balanced", "indulgent", "poor"]).describe("A self-rating of recent nutrition."),
+        hydration: z.enum(["good", "okay", "poor"]).describe("A self-rating of recent hydration."),
     }).describe("The user's answers to the daily readiness survey."),
     recentActivities: z.array(z.object({
         name: z.string(),
@@ -45,9 +49,9 @@ const prompt = ai.definePrompt({
 
     Analyze the provided data to generate a score from 0 (very poor readiness) to 100 (peak readiness).
 
-    - **High Readiness (75-100)**: Indicated by excellent sleep (5/5), low stress (1-2), feeling 'energetic', and a balance of recent activities.
-    - **Moderate Readiness (40-74)**: Indicated by average sleep (3-4), moderate stress (3), feeling 'normal' or 'tired', or a high number of recent draining activities.
-    - **Low Readiness (<40)**: Indicated by poor sleep (1-2), high stress (4-5), feeling 'sore' or 'tired', or very draining recent activities.
+    - **High Readiness (75-100)**: Excellent sleep, low stress, feeling 'energetic', 'happy' mood, 'balanced' nutrition, and 'good' hydration.
+    - **Moderate Readiness (40-74)**: Average sleep, moderate stress, 'normal'/'tired' feeling, 'calm'/'anxious' mood, 'indulgent' nutrition, or 'okay' hydration.
+    - **Low Readiness (<40)**: Poor sleep, high stress, 'sore'/'tired' feeling, 'sad'/'anxious' mood, 'poor' nutrition, or 'poor' hydration.
 
     After calculating the score, provide a short title and a one-sentence summary that explains the score and offers simple advice.
 
@@ -56,6 +60,9 @@ const prompt = ai.definePrompt({
         - Sleep Quality (1-5): {{{surveyData.sleepQuality}}}
         - Stress Level (1-5): {{{surveyData.stressLevel}}}
         - How Body Feels: "{{{surveyData.physicalFeeling}}}"
+        - Current Mood: "{{{surveyData.mood}}}"
+        - Recent Nutrition: "{{{surveyData.nutrition}}}"
+        - Hydration Level: "{{{surveyData.hydration}}}"
     - Recent Activities:
     {{#each recentActivities}}
         - {{name}} (Impact: {{impact}})

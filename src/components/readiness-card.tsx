@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -26,9 +27,11 @@ export function ReadinessCard({ report, loading, onSync }: ReadinessCardProps) {
           <HeartPulse className="text-red-500 mr-3" />
           Health Readiness
         </CardTitle>
-        <Button onClick={onSync} variant="ghost" size="icon" disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-        </Button>
+        {report && (
+            <Button onClick={onSync} variant="ghost" size="icon" disabled={loading}>
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+        )}
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -70,8 +73,10 @@ export function ReadinessCard({ report, loading, onSync }: ReadinessCardProps) {
             </div>
           </div>
         ) : (
-          <div className="text-center py-6">
-            <p className="text-muted-foreground">Sync your health data to get your daily readiness score.</p>
+          <div className="text-center py-6 flex flex-col items-center gap-4">
+            <HeartPulse className="w-12 h-12 text-primary/30" />
+            <p className="text-muted-foreground max-w-xs">Take a quick survey to calculate your readiness for the day.</p>
+            <Button onClick={onSync}>Start Survey</Button>
           </div>
         )}
       </CardContent>

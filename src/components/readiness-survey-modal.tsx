@@ -33,6 +33,9 @@ const surveySchema = z.object({
   sleepQuality: z.number().min(1).max(5),
   stressLevel: z.number().min(1).max(5),
   physicalFeeling: z.enum(["energetic", "normal", "tired", "sore"]),
+  mood: z.enum(["happy", "calm", "anxious", "sad"]),
+  nutrition: z.enum(["balanced", "indulgent", "poor"]),
+  hydration: z.enum(["good", "okay", "poor"]),
 });
 
 type SurveyFormValues = z.infer<typeof surveySchema>;
@@ -46,12 +49,32 @@ type ReadinessSurveyModalProps = {
 
 const sleepLabels = ["Poor", "Fair", "Good", "Very Good", "Excellent"];
 const stressLabels = ["Very Low", "Low", "Moderate", "High", "Very High"];
+
 const physicalOptions = [
     { value: "energetic", label: "Energetic & Rested", icon: '🤸' },
     { value: "normal", label: "Pretty Normal", icon: '🙂' },
     { value: "tired", label: "Tired & Sluggish", icon: '😴' },
     { value: "sore", label: "Sore & Achy", icon: '😩' },
-]
+];
+
+const moodOptions = [
+    { value: "happy", label: "Happy & Positive", icon: '😊' },
+    { value: "calm", label: "Calm & Centered", icon: '😌' },
+    { value: "anxious", label: "Anxious or Stressed", icon: '😟' },
+    { value: "sad", label: "Sad or Down", icon: '😢' },
+];
+
+const nutritionOptions = [
+    { value: "balanced", label: "Balanced & Healthy", icon: '🥗' },
+    { value: "indulgent", label: "A Bit Indulgent", icon: '🍕' },
+    { value: "poor", label: "Not Great", icon: '🍩' },
+];
+
+const hydrationOptions = [
+    { value: "good", label: "Well Hydrated", icon: '💧' },
+    { value: "okay", label: "Could Be Better", icon: '🥤' },
+    { value: "poor", label: "Dehydrated", icon: '🏜️' },
+];
 
 export function ReadinessSurveyModal({ open, onOpenChange, onComplete, isProMember }: ReadinessSurveyModalProps) {
   const [step, setStep] = useState(0);
@@ -62,6 +85,9 @@ export function ReadinessSurveyModal({ open, onOpenChange, onComplete, isProMemb
       sleepQuality: 3,
       stressLevel: 3,
       physicalFeeling: "normal",
+      mood: "calm",
+      nutrition: "balanced",
+      hydration: "okay",
     },
   });
   
@@ -82,8 +108,39 @@ export function ReadinessSurveyModal({ open, onOpenChange, onComplete, isProMemb
     resetForm();
   }
   
-  const totalSteps = 3;
+  const totalSteps = 6;
   const progress = ((step + 1) / totalSteps) * 100;
+
+  const renderRadioGroup = (fieldName: keyof SurveyFormValues, options: {value: string, label: string, icon: string}[]) => (
+     <FormField
+        control={form.control}
+        name={fieldName as any}
+        render={({ field }) => (
+            <FormItem>
+                <FormControl>
+                     <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="grid grid-cols-2 gap-4 pt-4"
+                    >
+                        {options.map(opt => (
+                            <FormItem key={opt.value}>
+                                <FormControl>
+                                    <RadioGroupItem value={opt.value} id={`${fieldName}-${opt.value}`} className="sr-only peer" />
+                                </FormControl>
+                                <Label htmlFor={`${fieldName}-${opt.value}`} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer h-full">
+                                   <span className="text-3xl mb-2">{opt.icon}</span>
+                                   <span className="text-center">{opt.label}</span>
+                                </Label>
+                            </FormItem>
+                        ))}
+                    </RadioGroup>
+                </FormControl>
+            </FormItem>
+        )}
+    />
+  );
+
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -106,19 +163,20 @@ export function ReadinessSurveyModal({ open, onOpenChange, onComplete, isProMemb
             </div>
         ) : (
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 min-h-[150px]">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 min-h-[220px]">
                 {step === 0 && (
                      <FormField
                         control={form.control}
                         name="sleepQuality"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-lg">How would you rate last night's sleep?</FormLabel>
+                                <FormLabel className="text-lg text-center block">How would you rate last night's sleep?</FormLabel>
                                 <FormControl>
                                     <Slider
                                         min={1} max={5} step={1}
                                         value={[field.value]}
                                         onValueChange={(value) => field.onChange(value[0])}
+                                        className="pt-6"
                                     />
                                 </FormControl>
                                 <div className="text-center font-bold text-primary text-lg pt-2">{sleepLabels[field.value-1]}</div>
@@ -132,12 +190,13 @@ export function ReadinessSurveyModal({ open, onOpenChange, onComplete, isProMemb
                         name="stressLevel"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-lg">How stressed do you feel right now?</FormLabel>
+                                <FormLabel className="text-lg text-center block">How stressed do you feel right now?</FormLabel>
                                 <FormControl>
                                     <Slider
                                         min={1} max={5} step={1}
                                         value={[field.value]}
                                         onValueChange={(value) => field.onChange(value[0])}
+                                        className="pt-6"
                                     />
                                 </FormControl>
                                 <div className="text-center font-bold text-primary text-lg pt-2">{stressLabels[field.value-1]}</div>
@@ -146,34 +205,28 @@ export function ReadinessSurveyModal({ open, onOpenChange, onComplete, isProMemb
                         />
                 )}
                 {step === 2 && (
-                    <FormField
-                        control={form.control}
-                        name="physicalFeeling"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel className="text-lg">How does your body feel?</FormLabel>
-                                <FormControl>
-                                     <RadioGroup
-                                        onValueChange={field.onChange}
-                                        defaultValue={field.value}
-                                        className="grid grid-cols-2 gap-4 pt-4"
-                                    >
-                                        {physicalOptions.map(opt => (
-                                            <FormItem key={opt.value}>
-                                                <FormControl>
-                                                    <RadioGroupItem value={opt.value} id={opt.value} className="sr-only peer" />
-                                                </FormControl>
-                                                <Label htmlFor={opt.value} className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                                   <span className="text-3xl mb-2">{opt.icon}</span>
-                                                   {opt.label}
-                                                </Label>
-                                            </FormItem>
-                                        ))}
-                                    </RadioGroup>
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
+                    <div className="space-y-4">
+                        <FormLabel className="text-lg text-center block">How does your body feel physically?</FormLabel>
+                        {renderRadioGroup("physicalFeeling", physicalOptions)}
+                    </div>
+                )}
+                {step === 3 && (
+                     <div className="space-y-4">
+                        <FormLabel className="text-lg text-center block">What's your current mood?</FormLabel>
+                        {renderRadioGroup("mood", moodOptions)}
+                    </div>
+                )}
+                {step === 4 && (
+                     <div className="space-y-4">
+                        <FormLabel className="text-lg text-center block">How has your nutrition been recently?</FormLabel>
+                        {renderRadioGroup("nutrition", nutritionOptions)}
+                    </div>
+                )}
+                 {step === 5 && (
+                     <div className="space-y-4">
+                        <FormLabel className="text-lg text-center block">How's your hydration level?</FormLabel>
+                        {renderRadioGroup("hydration", hydrationOptions)}
+                    </div>
                 )}
 
                 <DialogFooter className="pt-4 gap-2 sm:justify-between">
