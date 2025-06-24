@@ -110,31 +110,31 @@ export function ParentalControlModal({
           <Input
             type="password"
             maxLength={4}
-            placeholder="****"
+            placeholder="Enter a 4 digit Pin"
             value={pin}
             onChange={(e) => {
               setError(null);
               setPin(e.target.value.replace(/\D/g, ''));
             }}
-            className="text-center text-2xl tracking-[1em]"
+            className="text-center"
           />
           {mode === 'set' && (
             <Input
               type="password"
               maxLength={4}
-              placeholder="Confirm ****"
+              placeholder="Confirm 4 Digit Pin"
               value={confirmPin}
               onChange={(e) => {
                 setError(null);
                 setConfirmPin(e.target.value.replace(/\D/g, ''));
               }}
-              className="text-center text-2xl tracking-[1em]"
+              className="text-center"
             />
           )}
           {error && <p className="text-sm font-medium text-destructive text-center">{error}</p>}
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="sm:justify-center">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={mode === 'set' ? handleSetPin : handleVerifyPin}>
             {mode === 'set' ? "Set PIN & Email" : "Unlock"}
