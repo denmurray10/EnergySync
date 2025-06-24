@@ -9,17 +9,18 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { MembershipModal } from '@/components/membership-modal';
 
 export default function ParentDashboardPage() {
     const { appUser, setAppUser, chatHistory, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
+    const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
 
     useEffect(() => {
         if (!authLoading && !appUser?.parentalPin) {
@@ -108,23 +109,19 @@ export default function ParentDashboardPage() {
                                 <Crown className="text-yellow-500 mr-3" />
                                 Membership
                             </CardTitle>
-                            <CardDescription>Upgrade or downgrade your child's membership plan.</CardDescription>
+                            <CardDescription>Your child is on the <span className="font-semibold">{appUser.membershipTier}</span> plan.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <RadioGroup 
-                                value={appUser.membershipTier} 
-                                onValueChange={(value: 'free' | 'pro') => handleTierChange(value)}
-                                className="space-y-2"
-                            >
-                                <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="free" id="free" />
-                                <Label htmlFor="free">Free</Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="pro" id="pro" />
-                                <Label htmlFor="pro">Pro</Label>
-                                </div>
-                            </RadioGroup>
+                             {appUser.membershipTier === 'free' ? (
+                                <Button onClick={() => setIsMembershipModalOpen(true)} className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none shadow-lg hover:shadow-xl">
+                                    <Star className="mr-2 h-4 w-4 fill-white"/>
+                                    Upgrade to Pro
+                                </Button>
+                            ) : (
+                                <Button onClick={() => handleTierChange('free')} className="w-full" variant="outline">
+                                    Downgrade to Free
+                                </Button>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -170,6 +167,12 @@ export default function ParentDashboardPage() {
                     </Button>
                 </div>
             </div>
+             <MembershipModal
+                open={isMembershipModalOpen}
+                onOpenChange={setIsMembershipModalOpen}
+                onUpgrade={() => handleTierChange('pro')}
+                currentTier={appUser.membershipTier}
+            />
         </main>
     );
 }

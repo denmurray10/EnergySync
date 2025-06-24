@@ -115,30 +115,18 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                 <Crown className="text-yellow-500 mr-3" />
                 Membership
             </CardTitle>
-            {areSettingsLocked && <CardDescription>Enter Parent PIN to change membership.</CardDescription>}
+            <CardDescription>
+                You are currently on the <span className="font-semibold">{user.membershipTier}</span> plan.
+            </CardDescription>
             </CardHeader>
-            <CardContent>
-                {areSettingsLocked ? (
-                    <div className="flex items-center justify-center p-4 bg-muted rounded-lg text-muted-foreground">
-                        <LockKeyhole className="mr-2 h-4 w-4"/> Locked
-                    </div>
-                ) : (
-                    <RadioGroup 
-                        value={user.membershipTier} 
-                        onValueChange={(value: 'free' | 'pro') => onTierChange(value)}
-                        className="space-y-2"
-                    >
-                        <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="free" id="free" />
-                        <Label htmlFor="free">Free</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="pro" id="pro" />
-                        <Label htmlFor="pro">Pro</Label>
-                        </div>
-                    </RadioGroup>
-                )}
-            </CardContent>
+            {user.membershipTier === 'free' && (
+                <CardContent>
+                    <Button onClick={() => openModal('membership')} className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none shadow-lg hover:shadow-xl">
+                        <Star className="mr-2 h-4 w-4 fill-white"/>
+                        Upgrade to Pro
+                    </Button>
+                </CardContent>
+            )}
         </Card>
       )}
 

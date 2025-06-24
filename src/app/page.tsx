@@ -39,6 +39,7 @@ import { QRCodeModal } from "@/components/qr-code-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
 import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
 import { ParentalControlModal } from "@/components/parental-control-modal";
+import { MembershipModal } from "@/components/membership-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
@@ -72,6 +73,7 @@ export default function HomePage() {
     qrCode: false,
     readinessSurvey: false,
     parentalControls: false,
+    membership: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -967,6 +969,14 @@ export default function HomePage() {
                 correctPin={appUser.parentalPin}
                 onPinSet={handlePinSet}
                 onPinVerified={handlePinVerified}
+            />
+         )}
+         {appUser && (
+            <MembershipModal
+                open={modals.membership}
+                onOpenChange={() => closeModal('membership')}
+                onUpgrade={() => handleTierChange('pro')}
+                currentTier={appUser.membershipTier}
             />
          )}
       </div>
