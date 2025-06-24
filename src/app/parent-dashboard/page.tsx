@@ -9,22 +9,28 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown, Star } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown, Star, Users2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MembershipModal } from '@/components/membership-modal';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function ParentDashboardPage() {
     const { appUser, setAppUser, chatHistory, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+    const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
 
     useEffect(() => {
         if (!authLoading && !appUser?.parentalPin) {
              router.push('/');
+        }
+        const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | '14to17' | 'over18' | null;
+        if (storedAgeGroup) {
+            setAgeGroup(storedAgeGroup);
         }
     }, [appUser, authLoading, router]);
 
@@ -36,6 +42,26 @@ export default function ParentDashboardPage() {
                 [feature]: isVisible,
             };
             setAppUser({ featureVisibility: newVisibility });
+        }
+    };
+    
+    const handleAgeGroupChange = (newAgeGroup: 'under14' | '14to17' | 'over18') => {
+        setAgeGroup(newAgeGroup);
+        localStorage.setItem('energysync_age_group', newAgeGroup);
+        
+        let ageDescription = `Your child's app experience has been updated.`;
+        if (newAgeGroup === 'under14') ageDescription = "Experience set for users under 14.";
+        if (newAgeGroup === '14to17') ageDescription = "Experience set for users 14-17.";
+        if (newAgeGroup === 'over18') ageDescription = "Experience set for users 18 and over. Parental controls will be disabled.";
+
+        toast({
+            title: "Age Group Updated",
+            description: ageDescription,
+        });
+        
+        if (newAgeGroup === 'over18' && appUser) {
+            setAppUser({ parentalPin: null, parentEmail: null });
+            router.push('/');
         }
     };
 
@@ -100,6 +126,40 @@ export default function ParentDashboardPage() {
                                     onCheckedChange={(checked) => handleVisibilityChange('communityMode', checked)}
                                 />
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="mt-6 bg-card/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="flex items-center text-xl">
+                                <Users2 className="text-teal-500 mr-3" />
+                                Child's Age Group
+                            </CardTitle>
+                            <CardDescription>Adjust your child's age group for a tailored experience.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {ageGroup ? (
+                                <RadioGroup 
+                                    value={ageGroup} 
+                                    onValueChange={(value) => handleAgeGroupChange(value as 'under14' | '14to17' | 'over18')}
+                                    className="space-y-2 pt-2"
+                                >
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="under14" id="pd-under14" />
+                                        <Label htmlFor="pd-under14" className="font-normal">Under 14</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="14to17" id="pd-14to17" />
+                                        <Label htmlFor="pd-14to17" className="font-normal">14-17</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="over18" id="pd-over18" />
+                                        <Label htmlFor="pd-over18" className="font-normal">18 or Over</Label>
+                                    </div>
+                                </RadioGroup>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Could not load age group setting.</p>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -175,4 +235,5 @@ export default function ParentDashboardPage() {
             />
         </main>
     );
-}
+
+    
