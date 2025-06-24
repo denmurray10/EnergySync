@@ -211,10 +211,10 @@ export default function ParentSetupPage() {
              case 3: return (
                  <CardContent className="space-y-4">
                     <FormField control={form.control} name="childName" render={({ field }) => (
-                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} autoComplete="off" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} autoComplete="new-password" /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="childUsername" render={({ field }) => (
-                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} autoComplete="off" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} autoComplete="new-password" /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </CardContent>
             );
