@@ -81,14 +81,14 @@ export const INITIAL_PET_TASKS: PetTask[] = [
 ];
 
 export const INITIAL_FRIENDS: Friend[] = [
-    { id: 'friend-1', name: 'Liam Smith', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man smiling', energyStatus: 'Feeling energized!', currentEnergy: 85, isFavorite: true },
-    { id: 'friend-2', name: 'Olivia Johnson', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman face', energyStatus: 'A bit tired today.', currentEnergy: 45, isFavorite: true },
-    { id: 'friend-3', name: 'Noah Williams', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man portrait', energyStatus: 'Ready to take on the day!', currentEnergy: 92, isFavorite: true },
-    { id: 'friend-4', name: 'Emma Brown', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman coffee', energyStatus: 'Need a coffee break.', currentEnergy: 55, isFavorite: true },
-    { id: 'friend-5', name: 'Oliver Jones', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man glasses', energyStatus: 'Focused and in the zone.', currentEnergy: 78, isFavorite: false },
-    { id: 'friend-6', name: 'Ava Garcia', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman nature', energyStatus: 'Relaxing after a long week.', currentEnergy: 65, isFavorite: false },
-    { id: 'friend-7', name: 'Elijah Miller', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man desk', energyStatus: 'Super productive morning!', currentEnergy: 88, isFavorite: false },
-    { id: 'friend-8', name: 'Sophia Davis', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman outdoors', energyStatus: 'Enjoying the sunshine.', currentEnergy: 72, isFavorite: false },
-    { id: 'friend-9', name: 'James Rodriguez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man tired', energyStatus: 'Could use a nap.', currentEnergy: 38, isFavorite: false },
-    { id: 'friend-10', name: 'Isabella Martinez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman happy', energyStatus: 'Excited for the weekend!', currentEnergy: 95, isFavorite: false },
+    { id: 'friend-1', name: 'Liam Smith', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man smiling', energyStatus: 'Feeling energized!', currentEnergy: 85, isFavorite: true, hasUpdatedToday: true },
+    { id: 'friend-2', name: 'Olivia Johnson', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman face', energyStatus: 'A bit tired today.', currentEnergy: 45, isFavorite: true, hasUpdatedToday: false },
+    { id: 'friend-3', name: 'Noah Williams', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man portrait', energyStatus: 'Ready to take on the day!', currentEnergy: 92, isFavorite: true, hasUpdatedToday: true },
+    { id: 'friend-4', name: 'Emma Brown', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman coffee', energyStatus: 'Need a coffee break.', currentEnergy: 55, isFavorite: true, hasUpdatedToday: false },
+    { id: 'friend-5', name: 'Oliver Jones', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man glasses', energyStatus: 'Focused and in the zone.', currentEnergy: 78, isFavorite: false, hasUpdatedToday: true },
+    { id: 'friend-6', name: 'Ava Garcia', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman nature', energyStatus: 'Relaxing after a long week.', currentEnergy: 65, isFavorite: false, hasUpdatedToday: false },
+    { id: 'friend-7', name: 'Elijah Miller', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man desk', energyStatus: 'Super productive morning!', currentEnergy: 88, isFavorite: false, hasUpdatedToday: true },
+    { id: 'friend-8', name: 'Sophia Davis', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman outdoors', energyStatus: 'Enjoying the sunshine.', currentEnergy: 72, isFavorite: false, hasUpdatedToday: false },
+    { id: 'friend-9', name: 'James Rodriguez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man tired', energyStatus: 'Could use a nap.', currentEnergy: 38, isFavorite: false, hasUpdatedToday: true },
+    { id: 'friend-10', name: 'Isabella Martinez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman happy', energyStatus: 'Excited for the weekend!', currentEnergy: 95, isFavorite: false, hasUpdatedToday: false },
 ];

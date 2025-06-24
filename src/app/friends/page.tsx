@@ -42,10 +42,15 @@ function SortableFriendItem({ friend, onToggleFavorite }: { friend: Friend, onTo
                     </button>
                 )}
                 {friend.isMe && <div className="w-5 h-5"></div>}
-                <Avatar className="h-12 w-12 border-2 border-primary/20">
-                    <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
-                    <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                    <Avatar className="h-12 w-12 border-2 border-primary/20">
+                        <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
+                        <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {friend.hasUpdatedToday && (
+                         <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-card" title="Status updated today" />
+                    )}
+                </div>
                 <div className="flex-grow">
                     <p className="font-semibold text-card-foreground flex items-center gap-2">
                     {friend.name}
@@ -127,7 +132,7 @@ export default function AllFriendsPage() {
                     </DndContext>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
-                    <Button onClick={() => router.back()} className="w-full">
+                    <Button onClick={() => router.back()} className="w-full bg-primary hover:bg-primary/90">
                         <ArrowLeft className="mr-2 h-4 w-4"/>
                         Back
                     </Button>

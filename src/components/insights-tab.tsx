@@ -40,10 +40,15 @@ function SortableFavoriteFriend({ friend }: { friend: Friend }) {
 
   return (
     <div ref={setNodeRef} style={style} className={cn("relative flex items-center gap-4 p-3 rounded-2xl bg-muted/50 transition-shadow", isDragging && "shadow-lg")}>
-        <Avatar className="h-12 w-12 border-2 border-primary/20">
-            <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
-            <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-        </Avatar>
+        <div className="relative">
+            <Avatar className="h-12 w-12 border-2 border-primary/20">
+                <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
+                <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+             {friend.hasUpdatedToday && (
+                <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-muted/50" title="Status updated today" />
+            )}
+        </div>
         <div className="flex-grow">
             <p className="font-semibold text-card-foreground">{friend.name}</p>
             <p className="text-xs text-muted-foreground">{friend.energyStatus}</p>
@@ -154,10 +159,15 @@ export function InsightsTab({
         <CardContent className="space-y-4">
             {userProfile && (
                 <div className="relative flex items-center gap-4 p-3 rounded-2xl bg-primary/10 border-2 border-primary/20">
-                     <Avatar className="h-12 w-12 border-2 border-primary/20">
-                        <AvatarImage src={userProfile.avatar} data-ai-hint={userProfile.avatarHint} />
-                        <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                     <div className="relative">
+                         <Avatar className="h-12 w-12 border-2 border-primary/20">
+                            <AvatarImage src={userProfile.avatar} data-ai-hint={userProfile.avatarHint} />
+                            <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                         {userProfile.hasUpdatedToday && (
+                            <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-primary/10" title="Status updated today" />
+                        )}
+                    </div>
                     <div className="flex-grow">
                         <p className="font-semibold text-card-foreground flex items-center gap-2">
                             {userProfile.name}

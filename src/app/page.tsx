@@ -424,6 +424,7 @@ export default function HomePage() {
           energyStatus: getEnergyStatus(currentEnergy),
           currentEnergy: currentEnergy,
           isMe: true,
+          hasUpdatedToday: true,
         };
 
         // Remove existing "me" entry if it exists

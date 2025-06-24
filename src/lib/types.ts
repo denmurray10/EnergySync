@@ -131,4 +131,5 @@ export interface Friend {
   isPlaceholder?: boolean;
   isMe?: boolean;
   isFavorite?: boolean;
+  hasUpdatedToday?: boolean;
 }
