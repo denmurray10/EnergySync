@@ -127,7 +127,7 @@ export default function AllFriendsPage() {
                     </DndContext>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
-                    <Button onClick={() => router.back()} className="w-full" variant="outline">
+                    <Button onClick={() => router.back()} className="w-full">
                         <ArrowLeft className="mr-2 h-4 w-4"/>
                         Back
                     </Button>
