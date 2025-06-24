@@ -73,9 +73,14 @@ export function OnboardingScreen() {
         // The setAppUser function in context will handle creating/saving this to localStorage
         setAppUser(initialUser);
 
+        // Force a reload to ensure the app state is correctly initialized
+        // A small delay ensures localStorage has time to update.
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 100);
+
     } catch (error: any) {
         toast({ title: 'Profile Update Failed', description: error.message, variant: 'destructive'});
-    } finally {
         setLoading(false);
     }
   }
