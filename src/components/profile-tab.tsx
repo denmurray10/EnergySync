@@ -22,13 +22,12 @@ type ProfileTabProps = {
   onShowDebrief: () => void;
   onTierChange: (tier: 'free' | 'pro') => void;
   onTogglePet: (enabled: boolean) => void;
-  onAgeGroupChange: (group: 'under14' | '14to17' | 'over18') => void;
   onUpdateUser: (updatedData: Partial<User>) => void;
   openModal: (modalName: string) => void;
   isParentModeUnlocked: boolean;
 };
 
-export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser, openModal, isParentModeUnlocked }: ProfileTabProps) {
+export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onUpdateUser, openModal, isParentModeUnlocked }: ProfileTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { signOut } = useAuth();
   const router = useRouter();
@@ -150,38 +149,6 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                 />
               </div>
             )}
-             <div className="rounded-lg border p-3 shadow-sm">
-                <div className="space-y-1.5">
-                    <Label className="text-base flex items-center"><Users className="mr-2 h-4 w-4" /> Age Group</Label>
-                    <p className="text-sm text-muted-foreground pb-2">
-                        Select your age group for a tailored experience.
-                    </p>
-                </div>
-                 {areSettingsLocked ? (
-                    <div className="flex items-center justify-center p-4 bg-muted rounded-lg text-muted-foreground">
-                        <LockKeyhole className="mr-2 h-4 w-4"/> Locked
-                    </div>
-                ) : (
-                    <RadioGroup 
-                        value={ageGroup ?? '14to17'} 
-                        onValueChange={(value) => onAgeGroupChange(value as 'under14' | '14to17' | 'over18')}
-                        className="space-y-2 pt-2"
-                    >
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="under14" id="under14" />
-                            <Label htmlFor="under14" className="font-normal">Under 14</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="14to17" id="14to17" />
-                            <Label htmlFor="14to17" className="font-normal">14-17</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="over18" id="over18" />
-                            <Label htmlFor="over18" className="font-normal">18 or Over</Label>
-                        </div>
-                    </RadioGroup>
-                )}
-            </div>
              <Button onClick={() => openModal('qrCode')} variant="outline" className="w-full justify-start">
                 <QrCode className="mr-2 h-4 w-4" />
                 Show My Friend Code

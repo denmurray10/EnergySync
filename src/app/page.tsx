@@ -310,25 +310,6 @@ export default function HomePage() {
     }
   };
   
-  const handleAgeGroupChange = (newAgeGroup: 'under14' | '14to17' | 'over18') => {
-    setAgeGroup(newAgeGroup);
-    localStorage.setItem('energysync_age_group', newAgeGroup);
-    
-    let ageDescription = `Your app experience has been updated.`;
-    if (newAgeGroup === 'under14') ageDescription = 'Experience set for users under 14.';
-    if (newAgeGroup === '14to17') ageDescription = 'Experience set for users 14-17.';
-    if (newAgeGroup === 'over18') ageDescription = 'Experience set for users 18 and over.';
-
-    toast({
-        title: "Experience Updated",
-        description: ageDescription,
-    });
-
-    if (newAgeGroup === 'under14' && appUser && !appUser.petEnabled) {
-        handleTogglePet(true);
-    }
-  };
-
   const handleTutorialComplete = () => {
     setShowTutorial(false);
     localStorage.setItem('energysync_tutorial_seen', 'true');
@@ -847,7 +828,6 @@ export default function HomePage() {
               ageGroup={ageGroup}
               onTierChange={handleTierChange}
               onTogglePet={handleTogglePet}
-              onAgeGroupChange={handleAgeGroupChange}
               onUpdateUser={handleUpdateUser}
               openModal={openModal}
               isParentModeUnlocked={isParentModeUnlocked}
