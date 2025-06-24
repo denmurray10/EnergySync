@@ -1,10 +1,9 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Temporarily allow any authenticated user to read/write to debug permissions.
-    // This is NOT secure for production.
+    // This rule allows any signed-in user to read and write.
+    // This is for debugging purposes and is not secure for production.
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
