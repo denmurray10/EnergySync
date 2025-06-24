@@ -33,7 +33,7 @@ const setupSchema = z.object({
     communityMode: z.boolean().default(true),
   }).default({ insights: true, friends: true, communityMode: true }),
   childName: z.string().min(2, "Child's name must be at least 2 characters."),
-  childEmail: z.string().email("Please enter a valid email for the child."),
+  childUsername: z.string().min(3, "Username must be at least 3 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
   acceptTrial: z.boolean().default(false),
 }).refine(data => data.parentalPin === data.confirmPin, {
   message: "PINs do not match.",
@@ -58,7 +58,7 @@ export default function ParentSetupPage() {
             ageGroup: 'under14',
             featureVisibility: { insights: true, friends: true, communityMode: true },
             childName: '',
-            childEmail: '',
+            childUsername: '',
             acceptTrial: false,
         },
     });
@@ -74,7 +74,7 @@ export default function ParentSetupPage() {
             case 0: fieldsToValidate = ['parentEmail', 'parentalPin', 'confirmPin']; break;
             case 1: fieldsToValidate = ['ageGroup']; break;
             case 2: fieldsToValidate = ageGroup !== 'over18' ? ['featureVisibility'] : []; break;
-            case 3: fieldsToValidate = ['childName', 'childEmail']; break;
+            case 3: fieldsToValidate = ['childName', 'childUsername']; break;
             case 4: fieldsToValidate = ageGroup !== 'over18' ? ['acceptTrial'] : []; break;
         }
 
@@ -104,8 +104,16 @@ export default function ParentSetupPage() {
         const randomPassword = Math.random().toString(36).slice(-8);
         setTempPassword(randomPassword);
 
+        const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+        if (!projectId) {
+            toast({ title: "Configuration Error", description: "Firebase Project ID is not set.", variant: "destructive" });
+            setLoading(false);
+            return;
+        }
+        const email = `${data.childUsername.toLowerCase().trim()}@${projectId}.fake-user.com`;
+
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, data.childEmail, randomPassword);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, randomPassword);
             const user = userCredential.user;
 
             await updateProfile(user, { displayName: data.childName });
@@ -115,6 +123,7 @@ export default function ParentSetupPage() {
             const initialUser: User = {
                 userId: user.uid,
                 name: data.childName,
+                username: data.childUsername,
                 avatar: `https://placehold.co/100x100.png`,
                 membershipTier: data.acceptTrial ? 'pro' : 'free',
                 proTrialEndDate: trialEndDate,
@@ -138,7 +147,7 @@ export default function ParentSetupPage() {
             console.error("Account creation error:", error);
             let description = "An unexpected error occurred. Please try again.";
             if (error.code === 'auth/email-already-in-use') {
-                description = "This email is already registered. Please use a different email.";
+                description = "This username is already taken. Please choose another one.";
             }
             toast({ title: 'Account Creation Failed', description, variant: 'destructive' });
         } finally {
@@ -203,8 +212,8 @@ export default function ParentSetupPage() {
                     <FormField control={form.control} name="childName" render={({ field }) => (
                         <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                    <FormField control={form.control} name="childEmail" render={({ field }) => (
-                        <FormItem><FormLabel>What's your child's email?</FormLabel><FormControl><Input type="email" placeholder="alex@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormField control={form.control} name="childUsername" render={({ field }) => (
+                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </CardContent>
             );
@@ -223,9 +232,8 @@ export default function ParentSetupPage() {
                 <CardContent className="text-center space-y-4">
                     <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
-                    <p className="text-muted-foreground">Please have your child log in with these credentials. They will be prompted to change their password.</p>
                     <div className="p-4 bg-muted rounded-lg text-left space-y-2">
-                        <p><strong>Email:</strong> {form.getValues('childEmail')}</p>
+                        <p><strong>Username:</strong> {form.getValues('childUsername')}</p>
                         <p><strong>Temporary Password:</strong> {tempPassword}</p>
                     </div>
                 </CardContent>
@@ -239,9 +247,21 @@ export default function ParentSetupPage() {
             case 0: return 'Set Up Parental Controls';
             case 1: return "What is your child's age group?";
             case 2: return 'Select Visible Features';
-            case 3: return "Child's Details";
+            case 3: return "Child's Account Details";
             case 4: return 'Free Pro Trial';
             case totalSteps: return "All Done!";
+            default: return '';
+        }
+    };
+
+    const getStepDescription = () => {
+        switch (step) {
+            case 0: return "Your email is for receiving important updates. The PIN protects access to sensitive settings and the Parent Dashboard.";
+            case 1: return "This helps us tailor the app experience. Selecting '18 or Over' will disable all parental controls.";
+            case 2: return "Choose which major features your child can access. You can change these later from the Parent Dashboard.";
+            case 3: return "This creates the login for your child. The username must be unique. A temporary password will be generated.";
+            case 4: return "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.";
+            case totalSteps: return "Your child's account is ready. Please share these login details with them. They will be prompted to change their password on first login.";
             default: return '';
         }
     };
@@ -263,6 +283,7 @@ export default function ParentSetupPage() {
                         <Shield className="h-8 w-8 text-primary" />
                     </div>
                     <CardTitle className="text-2xl">{getStepTitle()}</CardTitle>
+                    <CardDescription>{getStepDescription()}</CardDescription>
                 </CardHeader>
                 
                 {step < totalSteps && <Progress value={progress} className="w-[90%] mx-auto mb-4" />}
