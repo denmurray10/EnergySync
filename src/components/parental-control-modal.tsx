@@ -132,11 +132,11 @@ export function ParentalControlModal({
           {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
 
-        <DialogFooter className="sm:justify-start">
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={mode === 'set' ? handleSetPin : handleVerifyPin}>
             {mode === 'set' ? "Set PIN & Email" : "Unlock"}
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
