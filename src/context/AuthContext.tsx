@@ -52,12 +52,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setAppUser = useCallback(async (updatedData: Partial<User>) => {
-    if (!firebaseUser) {
-        console.error("Cannot set user data, no firebase user logged in.");
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+        console.error("Cannot set user data, no firebase user is available in `auth.currentUser`.");
         return;
     }
-
-    const userRef = doc(firestore, 'users', firebaseUser.uid);
+    
+    const userRef = doc(firestore, 'users', currentUser.uid);
 
     setLocalAppUser(prevUser => {
         const newUser = prevUser ? { ...prevUser, ...updatedData } : updatedData as User;
@@ -76,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return newUser;
     });
 
-  }, [firebaseUser]);
+  }, []);
   
   const addChatMessage = useCallback((message: ChatMessage) => {
     if (appUser) {
