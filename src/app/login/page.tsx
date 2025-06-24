@@ -88,6 +88,9 @@ export default function LoginPage() {
         case 'auth/network-request-failed':
             description = "A network error occurred. Please check your internet connection.";
             break;
+        case 'auth/api-key-not-valid':
+            description = "The Firebase API Key is not valid. Please copy the credentials from your Firebase project settings into the .env file.";
+            break;
         default:
           if (error.message && (error.message.includes('auth/unauthorized-domain') || error.message.includes('authorized-domain'))) {
               description = "This app's domain is not authorized for authentication. Please add it to the 'Authorized domains' list in your Firebase Authentication settings.";
