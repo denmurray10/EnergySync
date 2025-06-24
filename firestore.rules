@@ -1,12 +1,10 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Insecure: Allow read/write access to all documents.
-    // This is for development purposes only.
-    // You should secure your database before deploying to production.
-    match /{document=**} {
-      allow read, write: if true;
+    // Users can only read and write their own document in the 'users' collection
+    match /users/{userId} {
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null;
     }
   }
 }
