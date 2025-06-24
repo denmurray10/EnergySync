@@ -14,12 +14,13 @@ import { Zap } from "lucide-react";
 
 type AgeGateModalProps = {
   open: boolean;
+  onOpenChange: (open: boolean) => void;
   onSelect: (group: 'under14' | '14to17' | 'over18') => void;
 };
 
-export function AgeGateModal({ open, onSelect }: AgeGateModalProps) {
+export function AgeGateModal({ open, onOpenChange, onSelect }: AgeGateModalProps) {
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-lg sm:max-w-md" hideCloseButton>
         <DialogHeader className="text-center items-center pt-4">
           <div className="p-3 bg-primary/10 rounded-full mb-4">

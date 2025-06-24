@@ -1,13 +1,28 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Zap, Shield, User } from 'lucide-react';
+import { AgeGateModal } from '@/components/age-gate-modal';
+import { GuardianRequiredModal } from '@/components/guardian-required-modal';
 
 export default function WelcomePage() {
   const router = useRouter();
+  const [showAgeGate, setShowAgeGate] = useState(false);
+  const [showGuardianMessage, setShowGuardianMessage] = useState(false);
+
+  const handleAgeSelect = (group: 'under14' | '14to17' | 'over18') => {
+    setShowAgeGate(false);
+    if (group === 'over18') {
+      router.push('/parent-setup');
+    } else {
+      setShowGuardianMessage(true);
+    }
+  };
+
 
   return (
     <main className="min-h-dvh bg-background flex items-center justify-center p-4">
@@ -31,7 +46,7 @@ export default function WelcomePage() {
                 </div>
             </div>
           </Button>
-          <Button onClick={() => router.push('/login')} size="lg" variant="secondary" className="w-full h-auto py-4">
+          <Button onClick={() => setShowAgeGate(true)} size="lg" variant="secondary" className="w-full h-auto py-4">
              <div className="flex items-center">
                 <User className="mr-3 h-6 w-6"/>
                 <div>
@@ -57,6 +72,9 @@ export default function WelcomePage() {
           </Button>
         </CardContent>
       </Card>
+
+      <AgeGateModal open={showAgeGate} onOpenChange={setShowAgeGate} onSelect={handleAgeSelect} />
+      <GuardianRequiredModal open={showGuardianMessage} onOpenChange={setShowGuardianMessage} />
     </main>
   );
 }
