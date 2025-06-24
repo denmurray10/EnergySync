@@ -146,11 +146,19 @@ export default function ParentSetupPage() {
 
         } catch (error: any) {
             console.error("Account creation error:", error);
-            let description = "An unexpected error occurred. Please try again.";
-            if (error.code === 'auth/email-already-in-use') {
-                description = "This username is already taken. Please choose another one.";
+             if (error.code === 'auth/email-already-in-use') {
+                form.setError('childUsername', {
+                    type: 'manual',
+                    message: 'This username is already taken. Please choose another one.'
+                });
+                setStep(3); // Go back to the username step
+            } else {
+                toast({ 
+                    title: 'Account Creation Failed', 
+                    description: "An unexpected error occurred. Please try again.", 
+                    variant: 'destructive' 
+                });
             }
-            toast({ title: 'Account Creation Failed', description, variant: 'destructive' });
         } finally {
             setLoading(false);
         }
@@ -300,8 +308,8 @@ export default function ParentSetupPage() {
                                 </Button>
                             )}
                              {step === totalSteps && (
-                                <Button type="button" onClick={() => router.push('/')} className="w-full">
-                                    Go to App
+                                <Button type="button" onClick={() => router.push('/login')} className="w-full">
+                                    Go to Login
                                 </Button>
                             )}
                         </CardContent>
