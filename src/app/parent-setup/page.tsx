@@ -31,7 +31,15 @@ const hearOptions = [
     { value: "other", label: "Other" },
 ];
 
-const whatToGetOptions = [
+const parentWhatToGetOptions = [
+    { value: "track_energy", label: "Track their energy levels" },
+    { value: "mental_wellbeing", label: "Improve their wellbeing" },
+    { value: "understand_routine", label: "Understand their daily routine" },
+    { value: "get_suggestions", label: "Get activity suggestions" },
+    { value: "other", label: "Other" },
+];
+
+const adultWhatToGetOptions = [
     { value: "track_energy", label: "Track my energy levels" },
     { value: "mental_wellbeing", label: "Improve my wellbeing" },
     { value: "understand_routine", label: "Understand my daily routine" },
@@ -162,7 +170,7 @@ function ParentSetupForm() {
             setAppUser(initialUser);
             localStorage.setItem('energysync_age_group', data.ageGroup);
             
-            router.push('/');
+            setStep(s => s + 1);
 
         } catch (error: any) {
              if (error.code === 'auth/email-already-in-use') {
@@ -271,7 +279,7 @@ function ParentSetupForm() {
                          <FormItem>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
-                                    {whatToGetOptions.map(opt => (
+                                    {parentWhatToGetOptions.map(opt => (
                                          <Label key={opt.value} htmlFor={`expect-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                             <p>{opt.label}</p>
                                             <RadioGroupItem value={opt.value} id={`expect-${opt.value}`} />
@@ -299,7 +307,7 @@ function ParentSetupForm() {
                  <CardContent className="text-center space-y-4" key="step-final-parent">
                     <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
-                    <p className="text-sm text-muted-foreground">You can now start using the app.</p>
+                    <p className="text-sm text-muted-foreground">Your child can now log in with their new account.</p>
                 </CardContent>
             )
             default: return null;
@@ -352,12 +360,12 @@ function ParentSetupForm() {
                         {getStepContent()}
 
                         <CardContent className="flex flex-col gap-2">
-                             {step < totalSteps && (
+                             {step < totalSteps ? (
                                 <>
                                     {step === totalSteps - 1 ? (
                                          <Button type="submit" className="w-full" disabled={loading}>
                                             {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                                            Create Account & Finish
+                                            Create Account
                                         </Button>
                                     ) : (
                                          <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
@@ -366,6 +374,10 @@ function ParentSetupForm() {
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </>
+                             ) : (
+                                <Button type="button" onClick={() => router.push('/login')} className="w-full">
+                                    Go to Login
+                                </Button>
                              )}
                         </CardContent>
                     </form>
@@ -551,7 +563,7 @@ function AdultSignupForm() {
                          <FormItem>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
-                                    {whatToGetOptions.map(opt => (
+                                    {adultWhatToGetOptions.map(opt => (
                                          <Label key={opt.value} htmlFor={`expect-adult-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                             <p>{opt.label}</p>
                                             <RadioGroupItem value={opt.value} id={`expect-adult-${opt.value}`} />
