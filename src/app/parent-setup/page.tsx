@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, functions } from '@/lib/firebase';
+import { httpsCallable } from 'firebase/functions';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
@@ -474,14 +475,27 @@ function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
         setLoading(true);
 
         if (isTeen) {
-            // Simulate sending approval email for teens
-            await new Promise(res => setTimeout(res, 1000));
-            toast({
-                title: "Approval Request Sent",
-                description: `We've sent an approval link to ${data.parentEmailForApproval}.`,
-            });
-            setStep(s => s + 1); // Move to final "Request Sent" screen
-            setLoading(false);
+            try {
+                const sendApprovalEmail = httpsCallable(functions, 'sendApprovalEmail');
+                await sendApprovalEmail({
+                    parentEmail: data.parentEmailForApproval,
+                    childName: data.name,
+                });
+                toast({
+                    title: "Approval Request Sent",
+                    description: `We've sent an approval link to ${data.parentEmailForApproval}.`,
+                });
+                setStep(s => s + 1); // Move to final "Request Sent" screen
+            } catch (error) {
+                console.error("Failed to send approval email:", error);
+                toast({
+                    title: "Could Not Send Email",
+                    description: "There was a problem sending the approval request. Please check the email and try again.",
+                    variant: "destructive",
+                });
+            } finally {
+                setLoading(false);
+            }
             return;
         }
 
