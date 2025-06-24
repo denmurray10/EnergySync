@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, GripVertical } from 'lucide-react';
+import { ArrowLeft, GripVertical, Star } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -14,8 +14,9 @@ import type { Friend } from '@/lib/types';
 import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useToast } from '@/hooks/use-toast';
 
-function SortableFriendItem({ friend }: { friend: Friend }) {
+function SortableFriendItem({ friend, onToggleFavorite }: { friend: Friend, onToggleFavorite: (id: string) => void }) {
   const {
     attributes,
     listeners,
@@ -23,7 +24,7 @@ function SortableFriendItem({ friend }: { friend: Friend }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: friend.id, disabled: friend.isPlaceholder });
+  } = useSortable({ id: friend.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -35,6 +36,12 @@ function SortableFriendItem({ friend }: { friend: Friend }) {
     <Card ref={setNodeRef} style={style} className={cn("bg-card/80 backdrop-blur-sm transition-shadow", isDragging && "shadow-lg")}>
         <CardContent className="p-4">
             <div className="relative flex items-center gap-4">
+                {!friend.isMe && (
+                    <button onClick={() => onToggleFavorite(friend.id)} className="p-2 -m-2 text-muted-foreground/50 hover:text-muted-foreground">
+                        <Star className={cn("h-5 w-5", friend.isFavorite ? "fill-yellow-400 text-yellow-400" : "fill-none text-yellow-400")} />
+                    </button>
+                )}
+                {friend.isMe && <div className="w-5 h-5"></div>}
                 <Avatar className="h-12 w-12 border-2 border-primary/20">
                     <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
                     <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
@@ -47,11 +54,9 @@ function SortableFriendItem({ friend }: { friend: Friend }) {
                     <p className={cn("text-xs", friend.isPlaceholder ? "text-blue-500 font-medium" : "text-muted-foreground")}>{friend.energyStatus}</p>
                     {!friend.isPlaceholder && <Progress value={friend.currentEnergy} className="h-1.5 mt-2" />}
                 </div>
-                 {!friend.isPlaceholder && (
-                    <button {...attributes} {...listeners} className="p-2 -m-2 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none">
-                        <GripVertical className="h-5 w-5" />
-                    </button>
-                )}
+                 <button {...attributes} {...listeners} className="p-2 -m-2 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none">
+                     <GripVertical className="h-5 w-5" />
+                 </button>
             </div>
         </CardContent>
     </Card>
@@ -62,6 +67,7 @@ function SortableFriendItem({ friend }: { friend: Friend }) {
 export default function AllFriendsPage() {
     const { friends, setFriends } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
 
     function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
@@ -73,6 +79,28 @@ export default function AllFriendsPage() {
                 setFriends(arrayMove(friends, oldIndex, newIndex));
             }
         }
+    }
+
+    function handleToggleFavorite(id: string) {
+        const friendToToggle = friends.find(f => f.id === id);
+        if (!friendToToggle) return;
+
+        const favoriteCount = friends.filter(f => f.isFavorite).length;
+
+        if (!friendToToggle.isFavorite && favoriteCount >= 4) {
+            toast({
+                title: "Favorite Limit Reached",
+                description: "You can only have up to 4 favorite friends.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        setFriends(prevFriends => 
+            prevFriends.map(f => 
+                f.id === id ? { ...f, isFavorite: !f.isFavorite } : f
+            )
+        );
     }
 
     return (
@@ -92,7 +120,7 @@ export default function AllFriendsPage() {
                         >
                             <div className="space-y-4">
                                 {friends.map((friend: Friend) => (
-                                    <SortableFriendItem key={friend.id} friend={friend} />
+                                    <SortableFriendItem key={friend.id} friend={friend} onToggleFavorite={handleToggleFavorite} />
                                 ))}
                             </div>
                         </SortableContext>

@@ -130,4 +130,5 @@ export interface Friend {
   currentEnergy: number;
   isPlaceholder?: boolean;
   isMe?: boolean;
+  isFavorite?: boolean;
 }

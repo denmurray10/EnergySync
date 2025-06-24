@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Achievement, Activity, Goal, Challenge, EnergyHotspotAnalysis, Friend } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,13 +9,53 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, Sparkles, LoaderCircle, MapPin, TrendingUp, TrendingDown } from "lucide-react";
+import { Trophy, BrainCircuit, Users, LineChart, Target, Star, Users2, FileText, BarChart2, Sparkles, LoaderCircle, MapPin, TrendingUp, TrendingDown, GripVertical } from "lucide-react";
 import { WeeklyEnergyChart } from "@/components/weekly-energy-chart";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+
+function SortableFavoriteFriend({ friend }: { friend: Friend }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: friend.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 0,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn("relative flex items-center gap-4 p-3 rounded-2xl bg-muted/50 transition-shadow", isDragging && "shadow-lg")}>
+        <Avatar className="h-12 w-12 border-2 border-primary/20">
+            <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
+            <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div className="flex-grow">
+            <p className="font-semibold text-card-foreground">{friend.name}</p>
+            <p className="text-xs text-muted-foreground">{friend.energyStatus}</p>
+            <Progress value={friend.currentEnergy} className="h-1.5 mt-2" />
+        </div>
+        <button {...attributes} {...listeners} className="p-2 -m-2 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing touch-none">
+            <GripVertical className="h-5 w-5" />
+        </button>
+    </div>
+  );
+}
+
 
 type InsightsTabProps = {
   isProMember: boolean;
@@ -56,8 +96,33 @@ export function InsightsTab({
 }: InsightsTabProps) {
   
   const router = useRouter();
+  const { setFriends } = useAuth();
   const suggestButtonText = ageGroup === 'under14' ? 'Ask Pet' : 'Suggest New';
-  const displayedFriends = friends.slice(0, 5);
+
+  const { userProfile, favoriteFriends } = useMemo(() => {
+    const userProfile = friends.find(f => f.isMe);
+    const favoriteFriends = friends.filter(f => f.isFavorite && !f.isMe);
+    return { userProfile, favoriteFriends };
+  }, [friends]);
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+        setFriends((currentFriends) => {
+            const oldIndex = currentFriends.findIndex((f) => f.id === active.id);
+            const newIndex = currentFriends.findIndex((f) => f.id === over.id);
+
+            if (oldIndex > -1 && newIndex > -1 &&
+                currentFriends[oldIndex].isFavorite && !currentFriends[oldIndex].isMe &&
+                currentFriends[newIndex].isFavorite && !currentFriends[newIndex].isMe) {
+                return arrayMove(currentFriends, oldIndex, newIndex);
+            }
+
+            return currentFriends;
+        });
+    }
+  }
   
   return (
     <div className="space-y-6">
@@ -83,31 +148,50 @@ export function InsightsTab({
             Friend Network
           </CardTitle>
           <CardDescription>
-            See your friends' energy levels to know when it's a good time to connect.
+            Your favorite friends at a glance. Manage your full list and favorites from the "All Friends" page.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
-            {displayedFriends.map((friend) => (
-                <div key={friend.id} className="relative flex items-center gap-4 p-3 rounded-2xl bg-muted/50">
-                    <Avatar className="h-12 w-12 border-2 border-primary/20">
-                        <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
-                        <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+        <CardContent className="space-y-4">
+            {userProfile && (
+                <div className="relative flex items-center gap-4 p-3 rounded-2xl bg-primary/10 border-2 border-primary/20">
+                     <Avatar className="h-12 w-12 border-2 border-primary/20">
+                        <AvatarImage src={userProfile.avatar} data-ai-hint={userProfile.avatarHint} />
+                        <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex-grow">
                         <p className="font-semibold text-card-foreground flex items-center gap-2">
-                        {friend.name}
-                        {friend.isMe && <Badge className="bg-primary">Me</Badge>}
+                            {userProfile.name}
+                            <Badge className="bg-primary">Me</Badge>
                         </p>
-                        <p className={cn("text-xs", friend.isPlaceholder ? "text-blue-500 font-medium" : "text-muted-foreground")}>{friend.energyStatus}</p>
-                        {!friend.isPlaceholder && <Progress value={friend.currentEnergy} className="h-1.5 mt-2" />}
+                        <p className="text-xs text-muted-foreground">{userProfile.energyStatus}</p>
+                        <Progress value={userProfile.currentEnergy} className="h-1.5 mt-2" />
                     </div>
                 </div>
-            ))}
-            {friends.length > 5 && (
-                <Button onClick={() => router.push('/friends')} className="w-full mt-4">
-                    View All Friends
-                </Button>
             )}
+            
+            <DndContext
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={favoriteFriends.map(f => f.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    <div className="space-y-2">
+                        {favoriteFriends.map((friend) => (
+                           <SortableFavoriteFriend key={friend.id} friend={friend} />
+                        ))}
+                    </div>
+                </SortableContext>
+            </DndContext>
+
+            {favoriteFriends.length === 0 && userProfile && (
+                <p className="text-sm text-muted-foreground text-center py-4">You haven't favorited any friends yet. Visit the "All Friends" page to add some!</p>
+            )}
+
+            <Button onClick={() => router.push('/friends')} className="w-full mt-4">
+                View All Friends
+            </Button>
         </CardContent>
       </Card>
 
