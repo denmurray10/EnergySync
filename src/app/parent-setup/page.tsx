@@ -80,12 +80,9 @@ export default function ParentSetupPage() {
 
         const isValid = await form.trigger(fieldsToValidate as any);
         if (isValid) {
-            if (step === 2 && ageGroup === 'over18') {
+            if (step === 1 && ageGroup === 'over18') {
                  setStep(3); // Skip feature visibility for over 18
-            } else if (step === 3 && ageGroup !== 'over18') {
-                 setStep(4); // Go to trial screen for under 18
-            }
-             else {
+            } else {
                 setStep(s => s + 1);
             }
         }
@@ -269,13 +266,8 @@ export default function ParentSetupPage() {
     return (
         <main className="min-h-dvh bg-background flex items-center justify-center p-4">
             <Card className="w-full max-w-md shadow-2xl">
-                <CardHeader className="text-center items-center relative">
-                     {step > 0 && step <= totalSteps && (
-                        <Button variant="ghost" size="icon" onClick={handleBack} className="absolute left-4 top-4">
-                            <ArrowLeft/>
-                        </Button>
-                     )}
-                     <Button variant="ghost" size="icon" onClick={() => router.push('/welcome')} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
+                <CardHeader className="text-center items-center">
+                    <Button variant="ghost" size="icon" onClick={() => router.push('/welcome')} className="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
                         <X className="h-5 w-5" />
                         <span className="sr-only">Close</span>
                     </Button>
@@ -292,7 +284,7 @@ export default function ParentSetupPage() {
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         {renderStep()}
 
-                        <CardContent>
+                        <CardContent className="flex flex-col gap-2">
                             {step < totalSteps -1 && (
                                 <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                             )}
@@ -302,7 +294,12 @@ export default function ParentSetupPage() {
                                     Create Account & Finish
                                 </Button>
                             )}
-                            {step === totalSteps && (
+                            {step > 0 && step < totalSteps && (
+                                <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                </Button>
+                            )}
+                             {step === totalSteps && (
                                 <Button type="button" onClick={() => router.push('/login')} className="w-full">
                                     Go to Login Page
                                 </Button>
