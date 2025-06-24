@@ -117,18 +117,25 @@ export default function HomePage() {
   }, [toast]);
 
   const unlockAchievement = useCallback((name: string) => {
-    const isAlreadyUnlocked = achievements.some(a => a.name === name && a.unlocked);
+    setAchievements(prevAchievements => {
+      const isAlreadyUnlocked = prevAchievements.some(a => a.name === name && a.unlocked);
 
-    if (!isAlreadyUnlocked) {
+      if (!isAlreadyUnlocked) {
         const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
         if (achievement) {
+          // Defer the toast notification to run after the current render cycle.
+          setTimeout(() => {
             showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+          }, 0);
         }
-        setAchievements(prev => {
-            return prev.map(a => a.name === name ? { ...a, unlocked: true } : a);
-        });
-    }
-  }, [achievements, showToast]);
+        // Return the new, updated state.
+        return prevAchievements.map(a => a.name === name ? { ...a, unlocked: true } : a);
+      }
+      
+      // If already unlocked, return the existing state to prevent a re-render.
+      return prevAchievements;
+    });
+  }, [showToast]);
 
   // REDIRECT AND ONBOARDING LOGIC
   useEffect(() => {
