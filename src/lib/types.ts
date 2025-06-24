@@ -61,6 +61,11 @@ export interface User {
   petType: 'cat' | 'dog' | 'horse' | 'chicken';
   petEnabled: boolean;
   parentalPin?: string | null;
+  featureVisibility?: {
+    insights: boolean;
+    friends: boolean;
+    communityMode: boolean;
+  };
 }
 
 export interface Goal {

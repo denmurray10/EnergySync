@@ -3,7 +3,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { Achievement, Activity, Goal, Challenge, EnergyHotspotAnalysis, Friend } from "@/lib/types";
+import type { Achievement, Activity, Goal, Challenge, EnergyHotspotAnalysis, Friend, User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,7 @@ function SortableFavoriteFriend({ friend }: { friend: Friend }) {
 
 
 type InsightsTabProps = {
+  user: User | null;
   isProMember: boolean;
   ageGroup: 'under14' | 'over14' | null;
   dynamicInsights: { drainPattern: string; rechargePattern: string };
@@ -82,6 +83,7 @@ type InsightsTabProps = {
 };
 
 export function InsightsTab({
+  user,
   isProMember,
   ageGroup,
   dynamicInsights,
@@ -146,64 +148,66 @@ export function InsightsTab({
         </CardContent>
       </Card>
       
-      <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <Users className="text-blue-500 mr-3" />
-            Friend Network
-          </CardTitle>
-          <CardDescription>
-            Your favorite friends at a glance. Manage your full list and favorites from the "All Friends" page.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-            {userProfile && (
-                <div className="relative flex items-center gap-4 p-3 rounded-2xl bg-primary/10 border-2 border-primary/20">
-                     <div className="relative">
-                         <Avatar className="h-12 w-12 border-2 border-primary/20">
-                            <AvatarImage src={userProfile.avatar} data-ai-hint={userProfile.avatarHint} />
-                            <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                         {userProfile.hasUpdatedToday && (
-                            <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-primary/10" title="Status updated today" />
-                        )}
-                    </div>
-                    <div className="flex-grow">
-                        <div className="font-semibold text-card-foreground flex items-center gap-2">
-                            {userProfile.name}
-                            <Badge className="bg-primary">Me</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{userProfile.energyStatus}</p>
-                        <Progress value={userProfile.currentEnergy} className="h-1.5 mt-2" />
-                    </div>
-                </div>
-            )}
-            
-            <DndContext
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={favoriteFriends.map(f => f.id)}
-                    strategy={verticalListSortingStrategy}
-                >
-                    <div className="space-y-2">
-                        {favoriteFriends.map((friend) => (
-                           <SortableFavoriteFriend key={friend.id} friend={friend} />
-                        ))}
-                    </div>
-                </SortableContext>
-            </DndContext>
+      {user?.featureVisibility?.friends && (
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+              <Users className="text-blue-500 mr-3" />
+              Friend Network
+            </CardTitle>
+            <CardDescription>
+              Your favorite friends at a glance. Manage your full list and favorites from the "All Friends" page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {userProfile && (
+                  <div className="relative flex items-center gap-4 p-3 rounded-2xl bg-primary/10 border-2 border-primary/20">
+                      <div className="relative">
+                          <Avatar className="h-12 w-12 border-2 border-primary/20">
+                              <AvatarImage src={userProfile.avatar} data-ai-hint={userProfile.avatarHint} />
+                              <AvatarFallback>{userProfile.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          {userProfile.hasUpdatedToday && (
+                              <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-primary/10" title="Status updated today" />
+                          )}
+                      </div>
+                      <div className="flex-grow">
+                          <div className="font-semibold text-card-foreground flex items-center gap-2">
+                              {userProfile.name}
+                              <Badge className="bg-primary">Me</Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{userProfile.energyStatus}</p>
+                          <Progress value={userProfile.currentEnergy} className="h-1.5 mt-2" />
+                      </div>
+                  </div>
+              )}
+              
+              <DndContext
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleDragEnd}
+              >
+                  <SortableContext
+                      items={favoriteFriends.map(f => f.id)}
+                      strategy={verticalListSortingStrategy}
+                  >
+                      <div className="space-y-2">
+                          {favoriteFriends.map((friend) => (
+                            <SortableFavoriteFriend key={friend.id} friend={friend} />
+                          ))}
+                      </div>
+                  </SortableContext>
+              </DndContext>
 
-            {favoriteFriends.length === 0 && userProfile && (
-                <p className="text-sm text-muted-foreground text-center py-4">You haven't favorited any friends yet. Visit the "All Friends" page to add some!</p>
-            )}
+              {favoriteFriends.length === 0 && userProfile && (
+                  <p className="text-sm text-muted-foreground text-center py-4">You haven't favorited any friends yet. Visit the "All Friends" page to add some!</p>
+              )}
 
-            <Button onClick={() => router.push('/friends')} className="w-full mt-4">
-                View All Friends
-            </Button>
-        </CardContent>
-      </Card>
+              <Button onClick={() => router.push('/friends')} className="w-full mt-4">
+                  View All Friends
+              </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <ProFeatureWrapper isPro={isProMember}>
         <Card className="bg-card/80 backdrop-blur-sm">

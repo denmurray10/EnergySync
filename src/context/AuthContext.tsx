@@ -5,7 +5,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import type { User, PetCustomization, Friend } from '@/lib/types';
+import type { User, PetCustomization, Friend, ChatMessage } from '@/lib/types';
 import { INITIAL_FRIENDS } from '@/lib/data';
 
 interface AuthContextType {
@@ -16,6 +16,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   friends: Friend[];
   setFriends: React.Dispatch<React.SetStateAction<Friend[]>>;
+  chatHistory: ChatMessage[];
+  addChatMessage: (message: ChatMessage) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [appUser, setLocalAppUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [friends, setFriends] = useState<Friend[]>(INITIAL_FRIENDS);
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
 
   // Load user data from localStorage
   useEffect(() => {
@@ -45,7 +48,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // User is logged in, try to load app user data from localStorage
         const storedUser = localStorage.getItem(`energysync_user_${user.uid}`);
         if (storedUser) {
-          setLocalAppUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          if (!parsedUser.featureVisibility) {
+            parsedUser.featureVisibility = { insights: true, friends: true, communityMode: true };
+          }
+          setLocalAppUser(parsedUser);
         } else if (user.displayName) {
           // Fallback: If user has a display name but no stored data (e.g., first login after onboarding)
           const newUser: User = {
@@ -60,13 +67,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             petType: 'dog',
             petEnabled: true,
             parentalPin: null,
+            featureVisibility: {
+                insights: true,
+                friends: true,
+                communityMode: true,
+            }
           };
           setLocalAppUser(newUser);
           localStorage.setItem(`energysync_user_${user.uid}`, JSON.stringify(newUser));
         }
+
+        const storedChatHistory = localStorage.getItem(`energysync_chat_${user.uid}`);
+        if (storedChatHistory) {
+            setChatHistory(JSON.parse(storedChatHistory));
+        }
+
       } else {
         // User is logged out
         setLocalAppUser(null);
+        setChatHistory([]);
       }
       setLoading(false);
     });
@@ -85,15 +104,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [firebaseUser]);
   
+  const addChatMessage = useCallback((message: ChatMessage) => {
+    if (firebaseUser) {
+      setChatHistory(prev => {
+        const newHistory = [...prev, message];
+        localStorage.setItem(`energysync_chat_${firebaseUser.uid}`, JSON.stringify(newHistory));
+        return newHistory;
+      });
+    }
+  }, [firebaseUser]);
+
+
   const signOut = async () => {
     await auth.signOut();
     if(firebaseUser) {
         localStorage.removeItem(`energysync_user_${firebaseUser.uid}`);
+        localStorage.removeItem(`energysync_chat_${firebaseUser.uid}`);
     }
     setLocalAppUser(null);
   };
 
-  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends };
+  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

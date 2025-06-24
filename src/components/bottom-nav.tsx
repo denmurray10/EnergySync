@@ -4,11 +4,13 @@
 import { Home, ListChecks, LineChart, User, PawPrint } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
+import type { User as AppUser } from "@/lib/types";
 
 type BottomNavProps = {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   petEnabled: boolean;
+  featureVisibility?: AppUser['featureVisibility'];
 };
 
 const allNavItems = [
@@ -19,13 +21,18 @@ const allNavItems = [
   { id: "profile", icon: User, label: "Profile" },
 ];
 
-export function BottomNav({ activeTab, setActiveTab, petEnabled }: BottomNavProps) {
+export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibility }: BottomNavProps) {
   const navItems = useMemo(() => {
-    if (petEnabled) {
-      return allNavItems;
+    let items = [...allNavItems];
+    
+    if (!petEnabled) {
+      items = items.filter(item => item.id !== 'pet');
     }
-    return allNavItems.filter(item => item.id !== 'pet');
-  }, [petEnabled]);
+    if (!featureVisibility?.insights) {
+      items = items.filter(item => item.id !== 'insights');
+    }
+    return items;
+  }, [petEnabled, featureVisibility]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40">

@@ -46,7 +46,7 @@ const locations = ['Home', 'Office', 'Park', 'Cafe'];
 export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends } = useAuth();
+  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
@@ -94,7 +94,6 @@ export default function HomePage() {
   const [isReadinessLoading, setIsReadinessLoading] = useState(false);
   const [energyStory, setEnergyStory] = useState<string | null>(null);
   const [isStoryLoading, setIsStoryLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [isChatting, setIsChatting] = useState(false);
   const [energyForecast, setEnergyForecast] = useState<EnergyForecastData[] | null>(null);
   const [isForecastLoading, setIsForecastLoading] = useState(false);
@@ -267,7 +266,7 @@ export default function HomePage() {
         fetchEnergyForecast();
       }
     }
-    if (activeTab === 'insights' && appUser) {
+    if (activeTab === 'insights' && appUser?.featureVisibility?.insights) {
         fetchEnergyHotspots();
     }
   }, [activeTab, appUser, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast, fetchEnergyHotspots]);
@@ -442,7 +441,9 @@ export default function HomePage() {
       description: 'Your status is now at the top of your Friend Network.',
     });
     
-    setActiveTab('insights');
+    if (appUser?.featureVisibility?.insights) {
+        setActiveTab('insights');
+    }
   };
 
   const openModal = (modalName: keyof typeof modals) => setModals(prev => ({ ...prev, [modalName]: true }));
@@ -534,26 +535,28 @@ export default function HomePage() {
   
   const handleChatSubmit = useCallback(async (query: string) => {
       if (!isProMember) return;
-      const newHistory: ChatMessage[] = [...chatHistory, { role: 'user', content: query }];
-      setChatHistory(newHistory);
+      
+      const userMessage: ChatMessage = { role: 'user', content: query };
+      addChatMessage(userMessage);
       setIsChatting(true);
+      
       try {
           const result = await chatWithCoach({
               query,
-              chatHistory: newHistory.slice(0, -1),
+              chatHistory: [...chatHistory, userMessage],
               currentEnergy,
               activities: JSON.stringify(activities.slice(0, 10)),
               events: JSON.stringify(upcomingEvents),
           });
-          setChatHistory(prev => [...prev, { role: 'model', content: result.response }]);
+          addChatMessage({ role: 'model', content: result.response });
           unlockAchievement('Chatterbox');
       } catch (error) {
           console.error("Chat error:", error);
-          setChatHistory(prev => [...prev, { role: 'model', content: "Sorry, I'm having trouble connecting right now." }]);
+          addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
       } finally {
           setIsChatting(false);
       }
-  }, [chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
+  }, [addChatMessage, chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
 
   const changeLocation = () => {
     setLocationIndex((prevIndex) => {
@@ -698,13 +701,15 @@ export default function HomePage() {
       handleUpdateUser({ parentalPin: pin });
       setIsParentModeUnlocked(true); // Unlock automatically after setting
       toast({ title: "Parental PIN Set!", description: "Sensitive settings are now protected." });
+      router.push('/parent-dashboard');
     }
   };
 
   const handlePinVerified = () => {
     setIsParentModeUnlocked(true);
     closeModal('parentalControls');
-    toast({ title: "Controls Unlocked", description: "You can now access parent settings." });
+    toast({ title: "Controls Unlocked", description: "Taking you to the Parent Dashboard." });
+    router.push('/parent-dashboard');
   };
 
 
@@ -789,8 +794,9 @@ export default function HomePage() {
               lastTaskCompletionTime={lastTaskCompletionTime}
             />
           )}
-          {activeTab === "insights" && (
+          {activeTab === "insights" && appUser.featureVisibility?.insights && (
             <InsightsTab
+              user={appUser}
               isProMember={isProMember}
               ageGroup={ageGroup}
               dynamicInsights={dynamicInsights}
@@ -826,7 +832,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} />
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} featureVisibility={appUser.featureVisibility} />
         
         <RechargeModal
           open={modals.recharge}

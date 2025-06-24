@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 type ProfileTabProps = {
   user: User | null;
@@ -30,6 +31,7 @@ type ProfileTabProps = {
 export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser, openModal, isParentModeUnlocked }: ProfileTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { signOut } = useAuth();
+  const router = useRouter();
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -46,6 +48,14 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
   if (!user) return null;
   
   const areSettingsLocked = !!user.parentalPin && !isParentModeUnlocked;
+
+  const handleParentalClick = () => {
+    if (isParentModeUnlocked) {
+      router.push('/parent-dashboard');
+    } else {
+      openModal('parentalControls');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -82,15 +92,15 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
             <ShieldCheck className="text-green-500 mr-3" />
-            Parental Controls
+            Parent Dashboard
           </CardTitle>
           <CardDescription>
-            {user.parentalPin ? "PIN is set. Settings are locked." : "Set a PIN to lock sensitive settings."}
+            {user.parentalPin ? "Unlock with your PIN to manage features and view activity." : "Set a PIN to access the parent dashboard."}
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <Button onClick={() => openModal('parentalControls')} className="w-full">
-                {user.parentalPin ? (areSettingsLocked ? "Unlock Settings" : "Manage PIN") : "Set PIN"}
+            <Button onClick={handleParentalClick} className="w-full">
+               {user.parentalPin ? (isParentModeUnlocked ? "Go to Dashboard" : "Unlock Dashboard") : "Set PIN & Open Dashboard"}
             </Button>
         </CardContent>
       </Card>

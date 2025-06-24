@@ -126,31 +126,33 @@ export function HomeTab({
         </p>
       </div>
 
-      <Card className="bg-card/80 backdrop-blur-sm">
-        <CardContent className="p-3 flex items-center justify-center space-x-3">
-          <Users
-            className={`text-primary transition-opacity ${
-              communityMode ? "opacity-100" : "opacity-50"
-            }`}
-          />
-          <Switch
-            id="communityToggle"
-            checked={communityMode}
-            onCheckedChange={setCommunityMode}
-            aria-label="Community Mode Toggle"
-          />
-          <Label
-            htmlFor="communityToggle"
-            className={`font-medium text-sm transition-colors ${
-              communityMode ? "text-primary" : "text-muted-foreground"
-            }`}
-          >
-            Community Mode
-          </Label>
-        </CardContent>
-      </Card>
+      {user?.featureVisibility?.communityMode && (
+        <Card className="bg-card/80 backdrop-blur-sm">
+          <CardContent className="p-3 flex items-center justify-center space-x-3">
+            <Users
+              className={`text-primary transition-opacity ${
+                communityMode ? "opacity-100" : "opacity-50"
+              }`}
+            />
+            <Switch
+              id="communityToggle"
+              checked={communityMode}
+              onCheckedChange={setCommunityMode}
+              aria-label="Community Mode Toggle"
+            />
+            <Label
+              htmlFor="communityToggle"
+              className={`font-medium text-sm transition-colors ${
+                communityMode ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Community Mode
+            </Label>
+          </CardContent>
+        </Card>
+      )}
 
-      {communityMode && (
+      {communityMode && user?.featureVisibility?.communityMode && (
         <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 text-center">
           <CardContent className="p-4">
             <p className="font-semibold text-purple-800 mb-2">

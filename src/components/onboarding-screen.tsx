@@ -63,6 +63,11 @@ export function OnboardingScreen() {
             petType: 'dog',
             petEnabled: true,
             parentalPin: null,
+            featureVisibility: {
+                insights: true,
+                friends: true,
+                communityMode: true,
+            },
         };
         // The setAppUser function in context will handle creating/saving this to localStorage
         setAppUser(initialUser);
