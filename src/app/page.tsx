@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import type { Activity, UpcomingEvent, Achievement, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
-import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS, INITIAL_FRIENDS } from "@/lib/data";
+import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
@@ -45,7 +45,7 @@ const locations = ['Home', 'Office', 'Park', 'Cafe'];
 export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { firebaseUser, appUser, setAppUser, loading: authLoading } = useAuth();
+  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
@@ -104,9 +104,6 @@ export default function HomePage() {
   const [petInteractions, setPetInteractions] = useState<number>(0);
   const [lastTaskCompletionTime, setLastTaskCompletionTime] = useState<number | null>(null);
   
-  // Friend feature state
-  const [friends, setFriends] = useState<Friend[]>(INITIAL_FRIENDS);
-  
   const petHappiness = currentEnergy;
 
   const showToast = useCallback((title: string, description: string, icon: string = '✨') => {
@@ -120,17 +117,13 @@ export default function HomePage() {
   }, [toast]);
 
   const unlockAchievement = useCallback((name: string) => {
-    const isAlreadyUnlocked = achievements.some(a => a.name === name && a.unlocked);
-    if (isAlreadyUnlocked) return;
+    const achievement = achievements.find((a) => a.name === name);
+    if (!achievement || achievement.unlocked) return;
 
     setAchievements(prevAchievements =>
-      prevAchievements.map(a => a.name === name ? { ...a, unlocked: true } : a)
+      prevAchievements.map(a => (a.name === name ? { ...a, unlocked: true } : a))
     );
-    
-    const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
-    if (achievement) {
-        showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
-    }
+    showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
   }, [achievements, showToast]);
 
   // REDIRECT AND ONBOARDING LOGIC
@@ -161,23 +154,6 @@ export default function HomePage() {
         setAppUser({ petExp: newExp });
     }
   }, [appUser, setAppUser, toast, unlockAchievement]);
-
-  // Syncs the user's avatar in the friends list if it changes
-  useEffect(() => {
-    const userIndex = friends.findIndex(f => f.isMe);
-
-    // Check if user is in the list and their avatar needs an update
-    if (userIndex !== -1 && appUser?.avatar && friends[userIndex].avatar !== appUser.avatar) {
-      setFriends(prevFriends => {
-        const newFriends = [...prevFriends];
-        newFriends[userIndex] = { ...newFriends[userIndex], avatar: appUser.avatar };
-        return newFriends;
-      });
-    }
-    // We only want this to run when the avatar changes.
-    // The friends array is updated inside, which would cause an infinite loop if included.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appUser?.avatar]);
 
   useEffect(() => {
     const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
@@ -338,6 +314,16 @@ export default function HomePage() {
   const handleUpdateUser = (updatedData: Partial<User>) => {
     if(appUser) {
       setAppUser(updatedData);
+      if (updatedData.avatar) {
+        const userIndex = friends.findIndex(f => f.isMe);
+        if (userIndex !== -1) {
+            setFriends(prevFriends => {
+                const newFriends = [...prevFriends];
+                newFriends[userIndex] = { ...newFriends[userIndex], avatar: updatedData.avatar! };
+                return newFriends;
+            });
+        }
+      }
     }
   };
 
@@ -429,18 +415,21 @@ export default function HomePage() {
   const handleShareStatus = () => {
     if (!appUser) return;
   
-    const meFriend: Friend = {
-      id: appUser.userId,
-      name: appUser.name,
-      avatar: appUser.avatar || 'https://placehold.co/100x100.png',
-      avatarHint: 'profile picture',
-      energyStatus: getEnergyStatus(currentEnergy),
-      currentEnergy: currentEnergy,
-      isMe: true,
-    };
+    setFriends(prevFriends => {
+        const meFriend: Friend = {
+          id: appUser.userId,
+          name: appUser.name,
+          avatar: appUser.avatar || 'https://placehold.co/100x100.png',
+          avatarHint: 'profile picture',
+          energyStatus: getEnergyStatus(currentEnergy),
+          currentEnergy: currentEnergy,
+          isMe: true,
+        };
 
-    const otherFriends = friends.filter(f => !f.isMe);
-    setFriends([meFriend, ...otherFriends]);
+        // Remove existing "me" entry if it exists
+        const otherFriends = prevFriends.filter(f => !f.isMe);
+        return [meFriend, ...otherFriends];
+    });
 
     toast({
       title: 'Status Shared',
@@ -797,7 +786,6 @@ export default function HomePage() {
               energyHotspots={energyHotspots}
               isHotspotsLoading={isHotspotsLoading}
               friends={friends}
-              setFriends={setFriends}
             />
           )}
           {activeTab === "profile" && (

@@ -5,7 +5,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import type { User, PetCustomization } from '@/lib/types';
+import type { User, PetCustomization, Friend } from '@/lib/types';
+import { INITIAL_FRIENDS } from '@/lib/data';
 
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
@@ -13,6 +14,8 @@ interface AuthContextType {
   setAppUser: (user: Partial<User>) => void;
   loading: boolean;
   signOut: () => Promise<void>;
+  friends: Friend[];
+  setFriends: React.Dispatch<React.SetStateAction<Friend[]>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +35,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [appUser, setLocalAppUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [friends, setFriends] = useState<Friend[]>(INITIAL_FRIENDS);
 
   // Load user data from localStorage
   useEffect(() => {
@@ -88,7 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLocalAppUser(null);
   };
 
-  const value = { firebaseUser, appUser, setAppUser, loading, signOut };
+  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
