@@ -15,7 +15,7 @@ import { INITIAL_FRIENDS } from '@/lib/data';
 
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -351,7 +351,9 @@ export function ParentSetupForm() {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        {getStepContent()}
+                        <CardContent className="min-h-[300px]">
+                          {getStepContent()}
+                        </CardContent>
 
                         <CardFooter className="flex flex-col gap-2 pt-4">
                              {step < totalSteps -1 ? (

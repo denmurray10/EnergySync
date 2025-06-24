@@ -83,7 +83,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
         mode: 'onTouched',
     });
 
-    const totalSteps = isTeen ? 5 : 4;
+    const totalSteps = isTeen ? 4 : 3;
     const progress = ((step + 1) / (totalSteps + 1)) * 100;
     
     const handleNext = async () => {
@@ -218,7 +218,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
     const getStepContent = () => {
          switch (step) {
             case 0: return (
-                <CardContent className="space-y-4" key="step-0-adult">
+                <>
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Alex Smith" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -231,10 +231,10 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                         <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                         <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                </CardContent>
+                </>
             );
             case 1: return (
-                <CardContent key="step-1-adult">
+                
                     <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
                         <FormItem>
                             <FormControl>
@@ -250,10 +250,10 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             <FormMessage className="pt-2" />
                         </FormItem>
                     )}/>
-                </CardContent>
+                
             );
             case 2: return (
-                 <CardContent key="step-2-adult">
+                 
                      <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -269,10 +269,10 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             <FormMessage className="pt-2" />
                          </FormItem>
                      )}/>
-                 </CardContent>
+                 
             );
             case 3: return isTeen ? (
-                <CardContent className="space-y-4" key="step-3-teen">
+                
                     <FormField control={form.control} name="parentEmailForApproval" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Parent/Guardian Email</FormLabel>
@@ -280,19 +280,19 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             <FormMessage />
                         </FormItem>
                     )}/>
-                </CardContent>
+                
             ) : (
-                <CardContent className="text-center" key="step-3-adult">
+                <div className="text-center">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features?</p>
                     <p className="text-sm text-muted-foreground mt-2">Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.</p>
-                </CardContent>
+                </div>
             );
             case totalSteps: return ( // Final success/info screen
-                <CardContent className="text-center space-y-4" key="step-4-final">
+                <div className="text-center space-y-4">
                     <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
                         {isTeen ? <Mail className="h-12 w-12 text-primary" /> : <PartyPopper className="h-12 w-12 text-primary" />}
                     </div>
-                </CardContent>
+                </div>
             );
             default: return null;
          }
@@ -314,16 +314,18 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        {getStepContent()}
+                        <CardContent className="space-y-4 min-h-[300px]">
+                            {getStepContent()}
+                        </CardContent>
                         <CardFooter className="flex flex-col gap-2 pt-4">
-                             {step < 3 ? (
+                             {step < totalSteps -1 ? (
                                 <>
                                     <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full">
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </>
-                            ) : step === 3 && isTeen ? (
+                            ) : step === totalSteps - 1 && isTeen ? (
                                 <>
                                     <Button type="button" onClick={form.handleSubmit(onSubmit)} className="w-full" disabled={loading}>
                                         {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4"/>}
@@ -333,7 +335,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </>
-                            ) : step === 3 && !isTeen ? (
+                            ) : step === totalSteps - 1 && !isTeen ? (
                                 <div className="flex flex-col gap-2 w-full">
                                     <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
                                         {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}

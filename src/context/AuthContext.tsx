@@ -11,7 +11,7 @@ import { INITIAL_FRIENDS } from '@/lib/data';
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   appUser: User | null;
-  setAppUser: (user: Partial<User>) => Promise<void>;
+  setAppUser: (user: User) => Promise<void>;
   loading: boolean;
   signOut: () => Promise<void>;
   friends: Friend[];
@@ -51,40 +51,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
-  const setAppUser = useCallback(async (updatedData: Partial<User>) => {
+  const setAppUser = useCallback(async (userData: User) => {
+    // Always get the freshest user from the auth object, not from closure
     const currentUser = auth.currentUser;
     if (!currentUser) {
         console.error("Cannot set user data, no firebase user is available.");
-        return;
+        // This can happen in a race condition, so we'll just wait a moment and try to use the provided uid.
+        if (!userData.userId) {
+             throw new Error("User not authenticated and no userId provided.");
+        }
     }
     
-    const userRef = doc(firestore, 'users', currentUser.uid);
-    const userSnap = await getDoc(userRef);
+    const userId = currentUser ? currentUser.uid : userData.userId;
+    const userRef = doc(firestore, 'users', userId);
+    
+    // During signup, we are always creating a new document.
+    // For updates, we would check if the doc exists first.
+    await setDoc(userRef, userData);
+    setLocalAppUser(userData);
 
-    if (userSnap.exists()) {
-        // Update existing document
-        await updateDoc(userRef, updatedData);
-        setLocalAppUser(prevUser => ({ ...(prevUser as User), ...updatedData }));
-    } else {
-        // Create new document
-        const newUser = updatedData as User;
-        await setDoc(userRef, newUser);
-        setLocalAppUser(newUser);
-    }
   }, []);
   
   const addChatMessage = useCallback((message: ChatMessage) => {
     if (appUser) {
         const newHistory = [...(appUser.chatHistory || []), message];
-        setAppUser({ chatHistory: newHistory });
+        const userRef = doc(firestore, 'users', appUser.userId);
+        updateDoc(userRef, { chatHistory: newHistory });
+        setLocalAppUser(prev => prev ? ({ ...prev, chatHistory: newHistory }) : null);
     }
-  }, [appUser, setAppUser]);
+  }, [appUser]);
   
   const setFriends = useCallback((friends: Friend[]) => {
       if(appUser) {
-          setAppUser({ friends });
+          const userRef = doc(firestore, 'users', appUser.userId);
+          updateDoc(userRef, { friends });
+          setLocalAppUser(prev => prev ? ({ ...prev, friends }) : null);
       }
-  }, [appUser, setAppUser]);
+  }, [appUser]);
 
 
   const signOut = async () => {
