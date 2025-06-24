@@ -81,8 +81,8 @@ export function ParentalControlModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
-        <DialogHeader className="text-center items-center">
-          <div className="p-3 rounded-full bg-primary/10 mb-2">
+        <DialogHeader className="text-left">
+          <div className="p-3 rounded-full bg-primary/10 mb-2 w-fit">
             <ShieldCheck className="w-8 h-8 text-primary" />
           </div>
           <DialogTitle className="text-2xl">
@@ -116,7 +116,6 @@ export function ParentalControlModal({
               setError(null);
               setPin(e.target.value.replace(/\D/g, ''));
             }}
-            className="text-center"
           />
           {mode === 'set' && (
             <Input
@@ -128,17 +127,16 @@ export function ParentalControlModal({
                 setError(null);
                 setConfirmPin(e.target.value.replace(/\D/g, ''));
               }}
-              className="text-center"
             />
           )}
-          {error && <p className="text-sm font-medium text-destructive text-center">{error}</p>}
+          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
         </div>
 
-        <DialogFooter className="sm:justify-center">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+        <DialogFooter className="sm:justify-start">
           <Button onClick={mode === 'set' ? handleSetPin : handleVerifyPin}>
             {mode === 'set' ? "Set PIN & Email" : "Unlock"}
           </Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
