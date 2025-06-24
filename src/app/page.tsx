@@ -49,7 +49,6 @@ export default function HomePage() {
   const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage, signOut } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
-  const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
   
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
@@ -104,7 +103,6 @@ export default function HomePage() {
   // Pet feature state
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
-  const [lastTaskCompletionTime, setLastTaskCompletionTime] = useState<number | null>(null);
   
   const petHappiness = currentEnergy;
 
@@ -173,21 +171,11 @@ export default function HomePage() {
   }, [appUser, setAppUser, toast, unlockAchievement]);
 
   useEffect(() => {
-    const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | '14to17' | 'over18' | null;
-    if (storedAgeGroup) {
-      setAgeGroup(storedAgeGroup);
-      const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
-      if (!tutorialSeen) {
+    if (appUser && !appUser.tutorialSeen) {
         setShowTutorial(true);
-      }
     }
-    
-    const storedLastCompletion = localStorage.getItem('energysync_last_task_completion');
-    
-    if (storedLastCompletion) {
-        setLastTaskCompletionTime(Number(storedLastCompletion));
-    }
-  }, []);
+  }, [appUser]);
+
 
   const isProMember = useMemo(() => {
     if (!appUser) return false;
@@ -199,7 +187,7 @@ export default function HomePage() {
   }, [appUser]);
   
   const fetchProactiveSuggestion = useCallback(async () => {
-    if (!isProMember || (ageGroup !== 'under14' && !appUser?.petEnabled)) {
+    if (!isProMember || (appUser?.ageGroup !== 'under14' && !appUser?.petEnabled)) {
         setAiSuggestion(null);
         setIsSuggestionLoading(false);
         return;
@@ -222,7 +210,7 @@ export default function HomePage() {
     } finally {
       setIsSuggestionLoading(false);
     }
-  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember, ageGroup, appUser?.petEnabled]);
+  }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember, appUser]);
   
   const fetchEnergyForecast = useCallback(async () => {
     if (!isProMember || !readinessReport) return;
@@ -303,7 +291,7 @@ export default function HomePage() {
   
   const handleTutorialComplete = () => {
     setShowTutorial(false);
-    localStorage.setItem('energysync_tutorial_seen', 'true');
+    setAppUser({ tutorialSeen: true });
   };
 
   const handleShowTutorial = () => {
@@ -316,11 +304,9 @@ export default function HomePage() {
       if (updatedData.avatar) {
         const userIndex = friends.findIndex(f => f.isMe);
         if (userIndex !== -1) {
-            setFriends(prevFriends => {
-                const newFriends = [...prevFriends];
-                newFriends[userIndex] = { ...newFriends[userIndex], avatar: updatedData.avatar! };
-                return newFriends;
-            });
+            const newFriends = [...friends];
+            newFriends[userIndex] = { ...newFriends[userIndex], avatar: updatedData.avatar! };
+            setFriends(newFriends);
         }
       }
     }
@@ -414,22 +400,19 @@ export default function HomePage() {
   const handleShareStatus = () => {
     if (!appUser) return;
   
-    setFriends(prevFriends => {
-        const meFriend: Friend = {
-          id: appUser.userId,
-          name: appUser.name,
-          avatar: appUser.avatar || 'https://placehold.co/100x100.png',
-          avatarHint: 'profile picture',
-          energyStatus: getEnergyStatus(currentEnergy),
-          currentEnergy: currentEnergy,
-          isMe: true,
-          hasUpdatedToday: true,
-        };
+    const meFriend: Friend = {
+      id: appUser.userId,
+      name: appUser.name,
+      avatar: appUser.avatar || 'https://placehold.co/100x100.png',
+      avatarHint: 'profile picture',
+      energyStatus: getEnergyStatus(currentEnergy),
+      currentEnergy: currentEnergy,
+      isMe: true,
+      hasUpdatedToday: true,
+    };
 
-        // Remove existing "me" entry if it exists
-        const otherFriends = prevFriends.filter(f => !f.isMe);
-        return [meFriend, ...otherFriends];
-    });
+    const otherFriends = friends.filter(f => !f.isMe);
+    setFriends([meFriend, ...otherFriends]);
 
     toast({
       title: 'Status Shared',
@@ -608,6 +591,7 @@ export default function HomePage() {
   }, [activities]);
 
   const handleTaskComplete = (taskId: number) => {
+    if (!appUser) return;
     const task = petTasks.find(t => t.id === taskId);
     if (!task) return;
 
@@ -619,9 +603,7 @@ export default function HomePage() {
         setPetInteractions(prev => prev + 5);
         gainPetExp(10);
         toast({ title: "Task Complete!", description: "You've earned 5 interactions & 10 pet XP! 🎉" });
-        const now = Date.now();
-        setLastTaskCompletionTime(now);
-        localStorage.setItem('energysync_last_task_completion', now.toString());
+        setAppUser({ lastTaskCompletionTime: Date.now() });
     } else {
         setPetInteractions(prev => Math.max(0, prev - 5));
     }
@@ -751,7 +733,7 @@ export default function HomePage() {
             <HomeTab
               user={appUser}
               isProMember={isProMember}
-              ageGroup={ageGroup}
+              ageGroup={appUser.ageGroup}
               currentEnergy={currentEnergy}
               energyDebt={energyDebt}
               upcomingEvents={upcomingEvents}
@@ -780,7 +762,7 @@ export default function HomePage() {
               openModal={openModal}
               isProMember={isProMember}
               onDeleteActivity={handleDeleteActivity}
-              ageGroup={ageGroup}
+              ageGroup={appUser.ageGroup}
             />
           )}
           {activeTab === "pet" && appUser && appUser.petEnabled && (
@@ -797,14 +779,14 @@ export default function HomePage() {
               exp={appUser.petExp}
               petName={appUser.petName}
               petType={appUser.petType}
-              lastTaskCompletionTime={lastTaskCompletionTime}
+              lastTaskCompletionTime={appUser.lastTaskCompletionTime}
             />
           )}
           {activeTab === "insights" && appUser.featureVisibility?.insights && (
             <InsightsTab
               user={appUser}
               isProMember={isProMember}
-              ageGroup={ageGroup}
+              ageGroup={appUser.ageGroup}
               dynamicInsights={dynamicInsights}
               selfCareStreak={selfCareStreak}
               achievements={achievements}
@@ -827,7 +809,7 @@ export default function HomePage() {
               onShowTutorial={handleShowTutorial}
               onShowDebrief={handleShowDebrief}
               isProMember={isProMember}
-              ageGroup={ageGroup}
+              ageGroup={appUser.ageGroup}
               onTierChange={handleTierChange}
               onTogglePet={handleTogglePet}
               onUpdateUser={handleUpdateUser}
@@ -848,33 +830,33 @@ export default function HomePage() {
           onCustomRecharge={handleCustomRecharge}
           onLogActivity={handleLogActivity}
           isProMember={isProMember}
-          ageGroup={ageGroup}
+          ageGroup={appUser.ageGroup}
         />
         <VoiceCheckinModal
             open={modals.voiceCheckIn}
             onOpenChange={() => closeModal('voiceCheckIn')}
             onCheckinComplete={handleVoiceCheckinComplete}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         <WeeklyReportModal
             open={modals.weeklyReport}
             onOpenChange={() => closeModal('weeklyReport')}
             activities={activities}
             isProMember={isProMember}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         <AddActivityModal
             open={modals.addActivity}
             onOpenChange={() => closeModal('addActivity')}
             onLogActivity={handleLogActivity}
             isProMember={isProMember}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         <TutorialModal
             open={showTutorial}
             onOpenChange={setShowTutorial}
             onComplete={handleTutorialComplete}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         <DailyDebriefModal
           open={modals.dailyDebrief}
@@ -882,7 +864,7 @@ export default function HomePage() {
           story={energyStory}
           loading={isStoryLoading}
           isProMember={isProMember}
-          ageGroup={ageGroup}
+          ageGroup={appUser.ageGroup}
         />
         <ChatCoachModal
             open={modals.chatCoach}
@@ -891,20 +873,20 @@ export default function HomePage() {
             isThinking={isChatting}
             onSendMessage={handleChatSubmit}
             isProMember={isProMember}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         <ImageCheckinModal
             open={modals.imageCheckin}
             onOpenChange={() => closeModal('imageCheckin')}
             onLogActivity={handleLogActivity}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         <AddEventModal
             open={modals.addEvent}
             onOpenChange={() => closeModal('addEvent')}
             onLogEvent={handleLogEvent}
             isProMember={isProMember}
-            ageGroup={ageGroup}
+            ageGroup={appUser.ageGroup}
         />
         {appUser && (
             <PetCustomizationModal

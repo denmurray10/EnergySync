@@ -101,11 +101,10 @@ export default function AllFriendsPage() {
             return;
         }
 
-        setFriends(prevFriends => 
-            prevFriends.map(f => 
-                f.id === id ? { ...f, isFavorite: !f.isFavorite } : f
-            )
+        const newFriends = friends.map(f => 
+            f.id === id ? { ...f, isFavorite: !f.isFavorite } : f
         );
+        setFriends(newFriends);
     }
 
     return (

@@ -219,9 +219,9 @@ export default function LoginPage() {
           </Tabs>
         </CardContent>
         <CardFooter className="pt-0">
-            <Button variant="outline" onClick={() => router.back()} className="w-full">
+            <Button variant="outline" onClick={() => router.push('/welcome')} className="w-full">
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
+                Back to Welcome
             </Button>
         </CardFooter>
       </Card>

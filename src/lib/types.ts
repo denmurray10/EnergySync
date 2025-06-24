@@ -71,6 +71,11 @@ export interface User {
   };
   howDidYouHear?: string;
   whatDoYouExpect?: string;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
+  tutorialSeen: boolean;
+  lastTaskCompletionTime: number | null;
+  chatHistory: ChatMessage[];
+  friends: Friend[];
 }
 
 export interface Goal {

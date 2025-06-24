@@ -34,7 +34,6 @@ export default function ParentDashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
-    const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
 
     const [isConfirmingAgeChange, setIsConfirmingAgeChange] = useState(false);
     const [pendingAgeGroup, setPendingAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
@@ -57,10 +56,6 @@ export default function ParentDashboardPage() {
         if (!authLoading && !appUser?.parentalPin) {
              router.push('/');
         }
-        const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | '14to17' | 'over18' | null;
-        if (storedAgeGroup) {
-            setAgeGroup(storedAgeGroup);
-        }
     }, [appUser, authLoading, router]);
 
     const handleVisibilityChange = (feature: keyof NonNullable<User['featureVisibility']>, isVisible: boolean) => {
@@ -75,8 +70,7 @@ export default function ParentDashboardPage() {
     };
     
     const handleAgeGroupChange = (newAgeGroup: 'under14' | '14to17' | 'over18') => {
-        setAgeGroup(newAgeGroup);
-        localStorage.setItem('energysync_age_group', newAgeGroup);
+        setAppUser({ ageGroup: newAgeGroup });
         
         let ageDescription = `Your child's app experience has been updated.`;
         if (newAgeGroup === 'under14') ageDescription = "Experience set for users under 14.";
@@ -175,9 +169,9 @@ export default function ParentDashboardPage() {
                             <CardDescription>Adjust your child's age group for a tailored experience.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {ageGroup ? (
+                            {appUser.ageGroup ? (
                                 <RadioGroup 
-                                    value={ageGroup} 
+                                    value={appUser.ageGroup} 
                                     onValueChange={(value) => {
                                         setPendingAgeGroup(value as 'under14' | '14to17' | 'over18');
                                         setIsConfirmingAgeChange(true);

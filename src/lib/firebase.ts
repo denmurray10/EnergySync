@@ -2,6 +2,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getAuth, Auth } from "firebase/auth";
 import { getFunctions, Functions } from "firebase/functions";
+import { getFirestore, Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -15,6 +16,7 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 let functions: Functions;
+let firestore: Firestore;
 
 // This safeguard prevents the app from crashing if Firebase credentials are not set.
 // It will log a clear error to the console and disable Firebase features.
@@ -23,6 +25,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     auth = getAuth(app);
     functions = getFunctions(app);
+    firestore = getFirestore(app);
   } catch (e: any) {
     console.error("Failed to initialize Firebase. Please check your credentials in the .env file.", e);
     // Create a mock auth object if initialization fails
@@ -35,6 +38,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     } as any; // Using 'as any' to mock the Auth interface for crash prevention.
     app = {} as FirebaseApp;
     functions = {} as Functions;
+    firestore = {} as Firestore;
   }
 } else {
   console.error(
@@ -54,6 +58,7 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
   } as any;
   app = {} as FirebaseApp;
   functions = {} as Functions;
+  firestore = {} as Firestore;
 }
 
-export { app, auth, functions };
+export { app, auth, functions, firestore };

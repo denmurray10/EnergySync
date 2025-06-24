@@ -17,9 +17,9 @@ export default function WelcomePage() {
 
   const handleAgeSelect = (group: 'under14' | '14to17' | 'over18') => {
     setShowAgeGate(false);
+    localStorage.setItem('energysync_age_group', group);
     if (group === 'over18') {
       localStorage.setItem('energysync_signup_mode', 'adult');
-      localStorage.setItem('energysync_age_group', 'over18');
       router.push('/parent-setup');
     } else {
       setAgeGroupForApproval(group);
@@ -31,7 +31,6 @@ export default function WelcomePage() {
     setShowGuardianMessage(false);
     if (ageGroupForApproval === '14to17') {
       localStorage.setItem('energysync_signup_mode', 'teen');
-      localStorage.setItem('energysync_age_group', '14to17');
       router.push('/parent-setup');
     }
   };

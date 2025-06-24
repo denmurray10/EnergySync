@@ -11,6 +11,7 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
+import { INITIAL_FRIENDS } from '@/lib/data';
 
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -159,10 +160,15 @@ export function ParentSetupForm() {
                 featureVisibility: data.featureVisibility,
                 howDidYouHear: data.howDidYouHear,
                 whatDoYouExpect: data.whatDoYouExpect,
+                ageGroup: data.ageGroup,
+                tutorialSeen: false,
+                lastTaskCompletionTime: null,
+                chatHistory: [],
+                friends: INITIAL_FRIENDS,
             };
             
             setAppUser(initialUser);
-            localStorage.setItem('energysync_age_group', data.ageGroup);
+            // localStorage is no longer needed, AuthContext handles persistence
             
             setStep(s => s + 1);
 
