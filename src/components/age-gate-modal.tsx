@@ -14,7 +14,7 @@ import { Zap } from "lucide-react";
 
 type AgeGateModalProps = {
   open: boolean;
-  onSelect: (group: 'under14' | 'over14') => void;
+  onSelect: (group: 'under14' | '14to17' | 'over18') => void;
 };
 
 export function AgeGateModal({ open, onSelect }: AgeGateModalProps) {
@@ -31,10 +31,13 @@ export function AgeGateModal({ open, onSelect }: AgeGateModalProps) {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="mt-4 flex-col sm:flex-col sm:space-x-0 gap-3">
-          <Button onClick={() => onSelect('over14')} size="lg" className="w-full">
-            I am 14 or older
+          <Button onClick={() => onSelect('over18')} size="lg" className="w-full">
+            I am 18 or older
           </Button>
-          <Button onClick={() => onSelect('under14')} size="lg" variant="secondary" className="w-full">
+          <Button onClick={() => onSelect('14to17')} size="lg" variant="secondary" className="w-full">
+            I am between 14 and 17
+          </Button>
+           <Button onClick={() => onSelect('under14')} size="lg" variant="secondary" className="w-full">
             I am under 14
           </Button>
         </DialogFooter>

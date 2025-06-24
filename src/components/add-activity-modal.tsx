@@ -49,7 +49,7 @@ type AddActivityModalProps = {
   onOpenChange: (open: boolean) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMember, ageGroup }: AddActivityModalProps) {

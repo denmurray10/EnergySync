@@ -22,7 +22,7 @@ type DailyDebriefModalProps = {
   story: string | null;
   loading: boolean;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function DailyDebriefModal({ open, onOpenChange, story, loading, isProMember, ageGroup }: DailyDebriefModalProps) {

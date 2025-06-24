@@ -24,7 +24,7 @@ type ChatCoachModalProps = {
   isThinking: boolean;
   onSendMessage: (message: string) => void;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function ChatCoachModal({ open, onOpenChange, chatHistory, isThinking, onSendMessage, isProMember, ageGroup }: ChatCoachModalProps) {

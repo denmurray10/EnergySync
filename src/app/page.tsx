@@ -50,7 +50,7 @@ export default function HomePage() {
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [showAgeGate, setShowAgeGate] = useState(false);
-  const [ageGroup, setAgeGroup] = useState<'under14' | 'over14' | null>(null);
+  const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
   
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
@@ -160,7 +160,7 @@ export default function HomePage() {
   }, [appUser, setAppUser, toast, unlockAchievement]);
 
   useEffect(() => {
-    const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
+    const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | '14to17' | 'over18' | null;
     if (storedAgeGroup) {
       setAgeGroup(storedAgeGroup);
       const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
@@ -178,7 +178,7 @@ export default function HomePage() {
     }
   }, []);
 
-  const handleAgeSelect = (group: 'under14' | 'over14') => {
+  const handleAgeSelect = (group: 'under14' | '14to17' | 'over18') => {
     setAgeGroup(group);
     localStorage.setItem('energysync_age_group', group);
     setShowAgeGate(false);
@@ -191,7 +191,7 @@ export default function HomePage() {
   const isProMember = useMemo(() => appUser?.membershipTier === 'pro', [appUser]);
   
   const fetchProactiveSuggestion = useCallback(async () => {
-    if (!isProMember || (ageGroup === 'over14' && !appUser?.petEnabled)) {
+    if (!isProMember || (ageGroup !== 'under14' && !appUser?.petEnabled)) {
         setAiSuggestion(null);
         setIsSuggestionLoading(false);
         return;
@@ -293,14 +293,20 @@ export default function HomePage() {
     }
   };
   
-  const handleAgeGroupChange = (newAgeGroup: 'under14' | 'over14') => {
+  const handleAgeGroupChange = (newAgeGroup: 'under14' | '14to17' | 'over18') => {
     setAgeGroup(newAgeGroup);
     localStorage.setItem('energysync_age_group', newAgeGroup);
+    
+    let ageDescription = `Your app experience has been updated.`;
+    if (newAgeGroup === 'under14') ageDescription = 'Experience set for users under 14.';
+    if (newAgeGroup === '14to17') ageDescription = 'Experience set for users 14-17.';
+    if (newAgeGroup === 'over18') ageDescription = 'Experience set for users 18 and over.';
+
     toast({
         title: "Experience Updated",
-        description: `Your app experience has been set for users ${newAgeGroup === 'under14' ? 'under 14' : '14 and over'}.`,
+        description: ageDescription,
     });
-    // If user switches to under 14, automatically enable pet
+
     if (newAgeGroup === 'under14' && appUser && !appUser.petEnabled) {
         handleTogglePet(true);
     }
@@ -696,9 +702,9 @@ export default function HomePage() {
     }
   };
   
-  const handlePinSet = (pin: string) => {
+  const handlePinSet = (pin: string, email: string) => {
     if (appUser) {
-      handleUpdateUser({ parentalPin: pin });
+      handleUpdateUser({ parentalPin: pin, parentEmail: email });
       setIsParentModeUnlocked(true); // Unlock automatically after setting
       toast({ title: "Parental PIN Set!", description: "Sensitive settings are now protected." });
       router.push('/parent-dashboard');

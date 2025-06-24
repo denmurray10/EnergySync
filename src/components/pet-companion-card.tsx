@@ -5,7 +5,7 @@ import { PawPrint, BrainCircuit, ChevronsRight } from "lucide-react";
 
 type PetCompanionCardProps = {
   onClick: () => void;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function PetCompanionCard({ onClick, ageGroup }: PetCompanionCardProps) {

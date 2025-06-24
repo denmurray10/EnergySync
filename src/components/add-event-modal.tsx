@@ -48,7 +48,7 @@ type AddEventModalProps = {
   onOpenChange: (open: boolean) => void;
   onLogEvent: (data: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => void;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup }: AddEventModalProps) {

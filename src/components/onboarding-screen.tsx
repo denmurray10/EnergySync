@@ -63,6 +63,7 @@ export function OnboardingScreen() {
             petType: 'dog',
             petEnabled: true,
             parentalPin: null,
+            parentEmail: null,
             featureVisibility: {
                 insights: true,
                 friends: true,

@@ -61,6 +61,7 @@ export interface User {
   petType: 'cat' | 'dog' | 'horse' | 'chicken';
   petEnabled: boolean;
   parentalPin?: string | null;
+  parentEmail?: string | null;
   featureVisibility?: {
     insights: boolean;
     friends: boolean;

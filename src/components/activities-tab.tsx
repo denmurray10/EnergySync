@@ -23,7 +23,7 @@ type ActivitiesTabProps = {
   openModal: (modalName: string) => void;
   isProMember: boolean;
   onDeleteActivity: (id: number) => void;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function ActivitiesTab({ activities, openModal, isProMember, onDeleteActivity, ageGroup }: ActivitiesTabProps) {

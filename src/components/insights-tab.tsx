@@ -65,7 +65,7 @@ function SortableFavoriteFriend({ friend }: { friend: Friend }) {
 type InsightsTabProps = {
   user: User | null;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
   dynamicInsights: { drainPattern: string; rechargePattern: string };
   selfCareStreak: number;
   achievements: Achievement[];

@@ -21,7 +21,7 @@ type VoiceCheckinModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCheckinComplete: (result: AnalyzeCheckinOutput) => void;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function VoiceCheckinModal({

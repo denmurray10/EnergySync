@@ -48,7 +48,7 @@ type ImageCheckinModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function ImageCheckinModal({ open, onOpenChange, onLogActivity, ageGroup }: ImageCheckinModalProps) {

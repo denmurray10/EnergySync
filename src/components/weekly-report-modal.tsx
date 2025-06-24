@@ -20,7 +20,7 @@ type WeeklyReportModalProps = {
   onOpenChange: (open: boolean) => void;
   activities: Activity[];
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
 export function WeeklyReportModal({

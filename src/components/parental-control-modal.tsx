@@ -20,7 +20,7 @@ type ParentalControlModalProps = {
   onOpenChange: (open: boolean) => void;
   mode: 'set' | 'verify';
   correctPin: string | null | undefined;
-  onPinSet: (pin: string) => void;
+  onPinSet: (pin: string, email: string) => void;
   onPinVerified: () => void;
 };
 
@@ -35,17 +35,23 @@ export function ParentalControlModal({
   const { toast } = useToast();
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setPin('');
       setConfirmPin('');
+      setEmail('');
       setError(null);
     }
   }, [open]);
 
   const handleSetPin = () => {
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setError("Please enter a valid parent email address.");
+      return;
+    }
     if (pin.length !== 4) {
       setError("PIN must be 4 digits.");
       return;
@@ -54,7 +60,7 @@ export function ParentalControlModal({
       setError("PINs do not match.");
       return;
     }
-    onPinSet(pin);
+    onPinSet(pin, email);
     onOpenChange(false);
   };
 
@@ -80,16 +86,27 @@ export function ParentalControlModal({
             <ShieldCheck className="w-8 h-8 text-primary" />
           </div>
           <DialogTitle className="text-2xl">
-            {mode === 'set' ? "Set Parental PIN" : "Enter Parental PIN"}
+            {mode === 'set' ? "Set Up Parental Controls" : "Enter Parental PIN"}
           </DialogTitle>
           <DialogDescription>
             {mode === 'set'
-              ? "Create a 4-digit PIN to protect settings."
+              ? "Create a 4-digit PIN and provide a parent's email to protect settings and get updates."
               : "Enter the 4-digit PIN to unlock settings."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {mode === 'set' && (
+             <Input
+                type="email"
+                placeholder="Parent's Email Address"
+                value={email}
+                onChange={(e) => {
+                    setError(null);
+                    setEmail(e.target.value)
+                }}
+              />
+          )}
           <Input
             type="password"
             maxLength={4}
@@ -120,7 +137,7 @@ export function ParentalControlModal({
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={mode === 'set' ? handleSetPin : handleVerifyPin}>
-            {mode === 'set' ? "Set PIN" : "Unlock"}
+            {mode === 'set' ? "Set PIN & Email" : "Unlock"}
           </Button>
         </DialogFooter>
       </DialogContent>

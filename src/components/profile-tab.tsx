@@ -17,12 +17,12 @@ import { useRouter } from "next/navigation";
 type ProfileTabProps = {
   user: User | null;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
   onShowTutorial: () => void;
   onShowDebrief: () => void;
   onTierChange: (tier: 'free' | 'pro') => void;
   onTogglePet: (enabled: boolean) => void;
-  onAgeGroupChange: (group: 'under14' | 'over14') => void;
+  onAgeGroupChange: (group: 'under14' | '14to17' | 'over18') => void;
   onUpdateUser: (updatedData: Partial<User>) => void;
   openModal: (modalName: string) => void;
   isParentModeUnlocked: boolean;
@@ -87,7 +87,8 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
             <p className="font-semibold text-muted-foreground -mt-2">Pet Level: {user.petLevel}</p>
         )}
       </div>
-
+      
+      {ageGroup === 'under14' && (
        <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
@@ -95,15 +96,16 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
             Parent Dashboard
           </CardTitle>
           <CardDescription>
-            {user.parentalPin ? "Unlock with your PIN to manage features and view activity." : "Set a PIN to access the parent dashboard."}
+            {user.parentalPin ? "Unlock with your PIN to manage features and view activity." : "Set a PIN to access the parent dashboard and receive updates."}
           </CardDescription>
         </CardHeader>
         <CardContent>
             <Button onClick={handleParentalClick} className="w-full">
-               {user.parentalPin ? (isParentModeUnlocked ? "Go to Dashboard" : "Unlock Dashboard") : "Set PIN & Open Dashboard"}
+               {user.parentalPin ? (isParentModeUnlocked ? "Go to Dashboard" : "Unlock Dashboard") : "Set Up Parental Controls"}
             </Button>
         </CardContent>
       </Card>
+      )}
 
 
       <Card className="bg-card/80 backdrop-blur-sm">
@@ -143,7 +145,7 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
             <CardTitle>Settings & Features</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-            {ageGroup === 'over14' && (
+            {ageGroup !== 'under14' && (
               <div className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
                 <div className="space-y-0.5">
                   <Label htmlFor="pet-toggle" className="text-base flex items-center"><PawPrint className="mr-2 h-4 w-4" /> Pet Companion</Label>
@@ -171,8 +173,8 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                     </div>
                 ) : (
                     <RadioGroup 
-                        value={ageGroup ?? 'over14'} 
-                        onValueChange={(value) => onAgeGroupChange(value as 'under14' | 'over14')}
+                        value={ageGroup ?? '14to17'} 
+                        onValueChange={(value) => onAgeGroupChange(value as 'under14' | '14to17' | 'over18')}
                         className="space-y-2 pt-2"
                     >
                         <div className="flex items-center space-x-2">
@@ -180,8 +182,12 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                             <Label htmlFor="under14" className="font-normal">Under 14</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="over14" id="over14" />
-                            <Label htmlFor="over14" className="font-normal">14 or Over</Label>
+                            <RadioGroupItem value="14to17" id="14to17" />
+                            <Label htmlFor="14to17" className="font-normal">14-17</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="over18" id="over18" />
+                            <Label htmlFor="over18" className="font-normal">18 or Over</Label>
                         </div>
                     </RadioGroup>
                 )}

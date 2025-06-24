@@ -18,10 +18,10 @@ type TutorialModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onComplete: () => void;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
-const getTutorialSteps = (ageGroup: 'under14' | 'over14' | null) => {
+const getTutorialSteps = (ageGroup: 'under14' | '14to17' | 'over18' | null) => {
     const isPetCentric = ageGroup === 'under14';
     return [
         {

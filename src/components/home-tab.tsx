@@ -40,7 +40,7 @@ import {
 type HomeTabProps = {
   user: User | null;
   isProMember: boolean;
-  ageGroup: 'under14' | 'over14' | null;
+  ageGroup: 'under14' | '14to17' | 'over18' | null;
   currentEnergy: number;
   energyDebt: number;
   upcomingEvents: UpcomingEvent[];
@@ -191,7 +191,7 @@ export function HomeTab({
         </ProFeatureWrapper>
        )}
       
-      {ageGroup === 'over14' && (
+      {ageGroup !== 'under14' && (
         <ProFeatureWrapper isPro={isProMember}>
           <ReadinessCard
             report={readinessReport}
@@ -245,7 +245,7 @@ export function HomeTab({
         </CardContent>
       </Card>
 
-      {ageGroup === 'over14' && (
+      {ageGroup !== 'under14' && (
         <ProFeatureWrapper isPro={isProMember}>
           <Card className="bg-card/80 backdrop-blur-sm">
               <CardHeader>
