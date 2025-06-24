@@ -109,6 +109,27 @@ export default function HomePage() {
   
   const petHappiness = currentEnergy;
 
+  const showToast = useCallback((title: string, description: string, icon: string = '✨') => {
+    toast({
+      title: `${icon} ${title}`,
+      description: description,
+    });
+  }, [toast]);
+
+  const unlockAchievement = useCallback((name: string) => {
+    const isAlreadyUnlocked = achievements.some(a => a.name === name && a.unlocked);
+
+    if (!isAlreadyUnlocked) {
+        const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
+        if (achievement) {
+            showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+        }
+        setAchievements(prev => {
+            return prev.map(a => a.name === name ? { ...a, unlocked: true } : a);
+        });
+    }
+  }, [achievements, showToast]);
+
   // REDIRECT AND ONBOARDING LOGIC
   useEffect(() => {
     if (!authLoading) {
@@ -136,7 +157,7 @@ export default function HomePage() {
     } else {
         setAppUser({ petExp: newExp });
     }
-  }, [appUser, setAppUser, toast]);
+  }, [appUser, setAppUser, toast, unlockAchievement]);
 
   useEffect(() => {
     const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
@@ -300,27 +321,6 @@ export default function HomePage() {
     }
   };
 
-  const showToast = (title: string, description: string, icon: string = '✨') => {
-    toast({
-      title: `${icon} ${title}`,
-      description: description,
-    });
-  };
-
-  const unlockAchievement = useCallback((name: string) => {
-    setAchievements(prev => {
-        const isAlreadyUnlocked = prev.some(a => a.name === name && a.unlocked);
-        if (!isAlreadyUnlocked) {
-            const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
-            if (achievement) {
-                showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
-            }
-            return prev.map(a => a.name === name ? { ...a, unlocked: true } : a);
-        }
-        return prev;
-    });
-  }, []);
-  
   const handleLogActivity = (newActivityData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
       ...newActivityData,
