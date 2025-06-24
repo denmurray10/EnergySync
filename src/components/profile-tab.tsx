@@ -88,7 +88,7 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
         )}
       </div>
       
-      {ageGroup === 'under14' && (
+      {ageGroup !== 'over18' && (
        <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
