@@ -50,7 +50,7 @@ function SortableFavoriteFriend({ friend }: { friend: Friend }) {
             )}
         </div>
         <div className="flex-grow">
-            <p className="font-semibold text-card-foreground">{friend.name}</p>
+            <div className="font-semibold text-card-foreground">{friend.name}</div>
             <p className="text-xs text-muted-foreground">{friend.energyStatus}</p>
             <Progress value={friend.currentEnergy} className="h-1.5 mt-2" />
         </div>
@@ -169,10 +169,10 @@ export function InsightsTab({
                         )}
                     </div>
                     <div className="flex-grow">
-                        <p className="font-semibold text-card-foreground flex items-center gap-2">
+                        <div className="font-semibold text-card-foreground flex items-center gap-2">
                             {userProfile.name}
                             <Badge className="bg-primary">Me</Badge>
-                        </p>
+                        </div>
                         <p className="text-xs text-muted-foreground">{userProfile.energyStatus}</p>
                         <Progress value={userProfile.currentEnergy} className="h-1.5 mt-2" />
                     </div>

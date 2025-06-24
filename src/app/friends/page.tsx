@@ -52,10 +52,10 @@ function SortableFriendItem({ friend, onToggleFavorite }: { friend: Friend, onTo
                     )}
                 </div>
                 <div className="flex-grow">
-                    <p className="font-semibold text-card-foreground flex items-center gap-2">
+                    <div className="font-semibold text-card-foreground flex items-center gap-2">
                     {friend.name}
                     {friend.isMe && <Badge className="bg-primary">Me</Badge>}
-                    </p>
+                    </div>
                     <p className={cn("text-xs", friend.isPlaceholder ? "text-blue-500 font-medium" : "text-muted-foreground")}>{friend.energyStatus}</p>
                     {!friend.isPlaceholder && <Progress value={friend.currentEnergy} className="h-1.5 mt-2" />}
                 </div>
