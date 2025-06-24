@@ -37,6 +37,7 @@ import { LoaderCircle } from "lucide-react";
 import { AgeGateModal } from "@/components/age-gate-modal";
 import { QRCodeModal } from "@/components/qr-code-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
+import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
@@ -53,7 +54,6 @@ export default function HomePage() {
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
   const [activeTab, setActiveTab] = useState("home");
-  const [biometricData, setBiometricData] = useState({ heartRate: 72, sleepQuality: 85, stressLevel: 30 });
   const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>(INITIAL_UPCOMING_EVENTS);
 
@@ -69,6 +69,7 @@ export default function HomePage() {
     petCustomization: false,
     petSettings: false,
     qrCode: false,
+    readinessSurvey: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -457,22 +458,18 @@ export default function HomePage() {
     unlockAchievement('Scheduler Supreme');
   };
 
-  const simulateHealthSync = useCallback(async () => {
+  const handleReadinessSurveyComplete = useCallback(async (surveyData: any) => {
     if (!isProMember) return;
+    closeModal('readinessSurvey');
     setIsReadinessLoading(true);
     setReadinessReport(null);
     try {
-        const newHeartRate = Math.floor(Math.random() * (85 - 60 + 1)) + 60;
-        const newStressLevel = Math.floor(Math.random() * (50 - 20 + 1)) + 20;
-        const newSleepQuality = Math.floor(Math.random() * (95 - 70 + 1)) + 70;
-        const updatedBiometrics = { heartRate: newHeartRate, stressLevel: newStressLevel, sleepQuality: newSleepQuality };
-        setBiometricData(updatedBiometrics);
         const recentActivities = activities.slice(0, 3);
-        const report = await getReadinessScore({ biometrics: updatedBiometrics, recentActivities });
+        const report = await getReadinessScore({ surveyData, recentActivities });
         setReadinessReport(report);
         toast({
-            title: "Health Readiness Synced!",
-            description: "We've analyzed your latest data to generate a readiness score.",
+            title: "Readiness Score Calculated!",
+            description: "We've analyzed your survey to generate your readiness score.",
         });
         unlockAchievement('Bio-Scanner');
     } catch (error) {
@@ -715,7 +712,7 @@ export default function HomePage() {
               changeLocation={changeLocation}
               readinessReport={readinessReport}
               isReadinessLoading={isReadinessLoading}
-              onSyncHealth={simulateHealthSync}
+              onSyncHealth={() => openModal('readinessSurvey')}
               onDeleteEvent={handleDeleteEvent}
               energyForecast={energyForecast}
               isForecastLoading={isForecastLoading}
@@ -879,6 +876,12 @@ export default function HomePage() {
             />
         )}
          <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />
+         <ReadinessSurveyModal
+            open={modals.readinessSurvey}
+            onOpenChange={() => closeModal('readinessSurvey')}
+            onComplete={handleReadinessSurveyComplete}
+            isProMember={isProMember}
+         />
       </div>
     </main>
   );
