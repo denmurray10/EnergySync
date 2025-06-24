@@ -709,14 +709,9 @@ export default function HomePage() {
   }
 
   if (!appUser) {
-    // User is logged in but their profile hasn't loaded or is malformed.
-    // This can happen on first login. A simple error and sign-out is safest.
-     signOut();
-     toast({
-        title: "Session Error",
-        description: "There was a problem loading your profile. Please log in again.",
-        variant: "destructive"
-     });
+    // This state means we are logged in with Firebase, but the app user profile
+    // from Firestore hasn't loaded yet. This is expected during the first login,
+    // so we show a spinner and wait for AuthContext to provide the appUser.
     return (
         <main className="min-h-dvh bg-background flex items-center justify-center">
             <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
