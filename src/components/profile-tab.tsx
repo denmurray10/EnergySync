@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useRef, ChangeEvent } from "react";
+import { useRef, ChangeEvent, useMemo } from "react";
 import type { User } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { differenceInDays } from "date-fns";
 
 type ProfileTabProps = {
   user: User | null;
@@ -55,6 +56,13 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
       openModal('parentalControls');
     }
   };
+
+  const daysLeftOnTrial = useMemo(() => {
+    if (!user?.proTrialEndDate) return null;
+    const endDate = new Date(user.proTrialEndDate);
+    if (endDate <= new Date()) return null;
+    return differenceInDays(endDate, new Date()) + 1;
+  }, [user?.proTrialEndDate]);
 
   return (
     <div className="space-y-6">
@@ -115,10 +123,15 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                 Membership
             </CardTitle>
             <CardDescription>
-                You are currently on the <span className="font-semibold">{user.membershipTier}</span> plan.
+                You are currently on the <span className="font-semibold">{isProMember ? 'Pro' : 'Free'}</span> plan.
             </CardDescription>
+             {daysLeftOnTrial !== null && daysLeftOnTrial > 0 && user.membershipTier !== 'pro' && (
+                <p className="text-sm text-primary pt-2 font-semibold">
+                    Your Pro trial ends in {daysLeftOnTrial} {daysLeftOnTrial === 1 ? 'day' : 'days'}.
+                </p>
+            )}
             </CardHeader>
-            {user.membershipTier === 'free' && (
+            {!isProMember && (
                 <CardContent>
                     <Button onClick={() => openModal('membership')} className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none shadow-lg hover:shadow-xl">
                         <Star className="mr-2 h-4 w-4 fill-white"/>

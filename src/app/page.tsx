@@ -36,7 +36,6 @@ import { PetSettingsModal } from "@/components/pet-settings-modal";
 import { LoaderCircle } from "lucide-react";
 import { AgeGateModal } from "@/components/age-gate-modal";
 import { QRCodeModal } from "@/components/qr-code-modal";
-import { OnboardingScreen } from "@/components/onboarding-screen";
 import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
 import { ParentalControlModal } from "@/components/parental-control-modal";
 import { MembershipModal } from "@/components/membership-modal";
@@ -47,7 +46,7 @@ const locations = ['Home', 'Office', 'Park', 'Cafe'];
 export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage } = useAuth();
+  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage, signOut } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
@@ -728,8 +727,19 @@ export default function HomePage() {
   }
 
   if (!appUser) {
-    // User is logged in but hasn't completed onboarding.
-    return <OnboardingScreen />;
+    // User is logged in but their profile hasn't loaded or is malformed.
+    // This can happen on first login. A simple error and sign-out is safest.
+     signOut();
+     toast({
+        title: "Session Error",
+        description: "There was a problem loading your profile. Please log in again.",
+        variant: "destructive"
+     });
+    return (
+        <main className="min-h-dvh bg-background flex items-center justify-center">
+            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+        </main>
+    );
   }
 
   return (

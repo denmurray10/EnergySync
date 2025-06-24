@@ -307,7 +307,7 @@ function ParentSetupForm() {
                  <CardContent className="text-center space-y-4" key="step-final-parent">
                     <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
-                    <p className="text-sm text-muted-foreground">Your child can now log in with their new account.</p>
+                    <p className="text-sm text-muted-foreground">Your child's account is ready. You will be logged in automatically.</p>
                 </CardContent>
             )
             default: return null;

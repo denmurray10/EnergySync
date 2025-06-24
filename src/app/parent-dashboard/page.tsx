@@ -12,7 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown, Star, Users2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MembershipModal } from '@/components/membership-modal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -26,6 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { differenceInDays } from 'date-fns';
 
 
 export default function ParentDashboardPage() {
@@ -37,6 +38,19 @@ export default function ParentDashboardPage() {
 
     const [isConfirmingAgeChange, setIsConfirmingAgeChange] = useState(false);
     const [pendingAgeGroup, setPendingAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
+
+    const isProMember = useMemo(() => {
+        if (!appUser) return false;
+        if (appUser.membershipTier === 'pro') return true;
+        if (appUser.proTrialEndDate) {
+            return new Date(appUser.proTrialEndDate) > new Date();
+        }
+        return false;
+    }, [appUser]);
+
+    const daysLeftOnTrial = appUser?.proTrialEndDate && new Date(appUser.proTrialEndDate) > new Date()
+        ? differenceInDays(new Date(appUser.proTrialEndDate), new Date()) + 1
+        : null;
 
 
     useEffect(() => {
@@ -90,7 +104,7 @@ export default function ParentDashboardPage() {
 
     const handleTierChange = (newTier: 'free' | 'pro') => {
         if (appUser) {
-            setAppUser({ membershipTier: newTier });
+            setAppUser({ membershipTier: newTier, proTrialEndDate: null });
             toast({
                 title: `Membership Updated!`,
                 description: `Your child is now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
@@ -195,10 +209,15 @@ export default function ParentDashboardPage() {
                                 <Crown className="text-yellow-500 mr-3" />
                                 Membership
                             </CardTitle>
-                            <CardDescription>Your child is on the <span className="font-semibold">{appUser.membershipTier}</span> plan.</CardDescription>
+                            <CardDescription>Your child is on the <span className="font-semibold">{isProMember ? 'Pro' : 'Free'}</span> plan.</CardDescription>
+                             {daysLeftOnTrial !== null && daysLeftOnTrial > 0 && (
+                                <p className="text-sm text-primary pt-2 font-semibold">
+                                    Their Pro trial ends in {daysLeftOnTrial} {daysLeftOnTrial === 1 ? 'day' : 'days'}.
+                                </p>
+                            )}
                         </CardHeader>
                         <CardContent>
-                             {appUser.membershipTier === 'free' ? (
+                             {!isProMember ? (
                                 <Button onClick={() => setIsMembershipModalOpen(true)} className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none shadow-lg hover:shadow-xl">
                                     <Star className="mr-2 h-4 w-4 fill-white"/>
                                     Upgrade to Pro
@@ -277,5 +296,4 @@ export default function ParentDashboardPage() {
             </AlertDialog>
         </main>
     );
-
-    
+}
