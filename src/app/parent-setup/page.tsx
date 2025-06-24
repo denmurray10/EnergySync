@@ -128,6 +128,11 @@ function ParentSetupForm() {
         }
     };
 
+    const handleTrialDecisionAndSubmit = (accept: boolean) => {
+        form.setValue('acceptTrial', accept, { shouldValidate: true });
+        form.handleSubmit(onSubmit)();
+    }
+
     async function onSubmit(data: ParentSetupFormValues) {
         setLoading(true);
         const randomPassword = Math.random().toString(36).slice(-8);
@@ -295,12 +300,7 @@ function ParentSetupForm() {
             case 6: return (
                 <CardContent className="text-center" key="step-6-parent">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features for your child?</p>
-                     <FormField control={form.control} name="acceptTrial" render={({ field }) => (
-                        <div className="flex items-center justify-center gap-4 mt-6">
-                            <Button type="button" variant={field.value ? "default" : "outline"} onClick={() => field.onChange(true)}>Yes, start trial</Button>
-                            <Button type="button" variant={!field.value ? "default" : "outline"} onClick={() => field.onChange(false)}>No, thanks</Button>
-                        </div>
-                    )}/>
+                    <p className="text-sm text-muted-foreground mt-2">Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.</p>
                 </CardContent>
             );
             case totalSteps: return (
@@ -337,7 +337,7 @@ function ParentSetupForm() {
             "This helps us understand how people find EnergySync.",
             "This helps us improve the app based on your needs.",
             "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
-            "Your child's account is ready. Please share their login details with them.",
+            "Your child's account is ready to use. You will be logged in automatically.",
         ];
         return descriptions[step] || '';
     };
@@ -360,23 +360,29 @@ function ParentSetupForm() {
                         {getStepContent()}
 
                         <CardContent className="flex flex-col gap-2">
-                             {step < totalSteps ? (
+                             {step < totalSteps -1 ? (
                                 <>
-                                    {step === totalSteps - 1 ? (
-                                         <Button type="submit" className="w-full" disabled={loading}>
-                                            {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                                            Create Account
-                                        </Button>
-                                    ) : (
-                                         <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
-                                    )}
+                                    <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full">
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </>
+                             ) : step === totalSteps - 1 ? (
+                                <div className="flex flex-col gap-2">
+                                    <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                        Yes, Start Free Trial & Create
+                                    </Button>
+                                    <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks & Create'}
+                                    </Button>
+                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
+                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                    </Button>
+                                </div>
                              ) : (
-                                <Button type="button" onClick={() => router.push('/login')} className="w-full">
-                                    Go to Login
+                                <Button type="button" onClick={() => router.push('/')} className="w-full">
+                                    Go to App
                                 </Button>
                              )}
                         </CardContent>
@@ -453,6 +459,11 @@ function AdultSignupForm() {
             setStep(s => s - 1);
         }
     };
+
+    const handleTrialDecisionAndSubmit = (accept: boolean) => {
+        form.setValue('acceptTrial', accept, { shouldValidate: true });
+        form.handleSubmit(onSubmit)();
+    }
 
     async function onSubmit(data: AdultSignupFormValues) {
         setLoading(true);
@@ -579,12 +590,7 @@ function AdultSignupForm() {
             case 3: return (
                 <CardContent className="text-center" key="step-3-adult">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features?</p>
-                     <FormField control={form.control} name="acceptTrial" render={({ field }) => (
-                        <div className="flex items-center justify-center gap-4 mt-6">
-                            <Button type="button" variant={field.value ? "default" : "outline"} onClick={() => field.onChange(true)}>Yes, start trial</Button>
-                            <Button type="button" variant={!field.value ? "default" : "outline"} onClick={() => field.onChange(false)}>No, thanks</Button>
-                        </div>
-                    )}/>
+                    <p className="text-sm text-muted-foreground mt-2">Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.</p>
                 </CardContent>
             );
             default: return null;
@@ -610,16 +616,26 @@ function AdultSignupForm() {
                         {getStepContent()}
                         <CardContent className="flex flex-col gap-2">
                              {step < totalSteps - 1 ? (
-                                <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                                <>
+                                    <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                                    <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                    </Button>
+                                </>
                             ) : (
-                                <Button type="submit" className="w-full" disabled={loading}>
-                                    {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                                    Create Account & Finish
-                                </Button>
+                                <div className="flex flex-col gap-2">
+                                    <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                        Yes, Start Trial & Finish
+                                    </Button>
+                                    <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks, Just Finish'}
+                                    </Button>
+                                    <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
+                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                    </Button>
+                                </div>
                             )}
-                             <Button type="button" variant="outline" onClick={handleBack} className="w-full">
-                                <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                            </Button>
                         </CardContent>
                     </form>
                 </Form>
