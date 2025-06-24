@@ -16,6 +16,17 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MembershipModal } from '@/components/membership-modal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 export default function ParentDashboardPage() {
     const { appUser, setAppUser, chatHistory, loading: authLoading } = useAuth();
@@ -23,6 +34,10 @@ export default function ParentDashboardPage() {
     const { toast } = useToast();
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
     const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
+
+    const [isConfirmingAgeChange, setIsConfirmingAgeChange] = useState(false);
+    const [pendingAgeGroup, setPendingAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
+
 
     useEffect(() => {
         if (!authLoading && !appUser?.parentalPin) {
@@ -63,6 +78,14 @@ export default function ParentDashboardPage() {
             setAppUser({ parentalPin: null, parentEmail: null });
             router.push('/');
         }
+    };
+
+    const confirmAgeChange = () => {
+        if (pendingAgeGroup) {
+            handleAgeGroupChange(pendingAgeGroup);
+        }
+        setPendingAgeGroup(null);
+        setIsConfirmingAgeChange(false);
     };
 
     const handleTierChange = (newTier: 'free' | 'pro') => {
@@ -141,7 +164,10 @@ export default function ParentDashboardPage() {
                             {ageGroup ? (
                                 <RadioGroup 
                                     value={ageGroup} 
-                                    onValueChange={(value) => handleAgeGroupChange(value as 'under14' | '14to17' | 'over18')}
+                                    onValueChange={(value) => {
+                                        setPendingAgeGroup(value as 'under14' | '14to17' | 'over18');
+                                        setIsConfirmingAgeChange(true);
+                                    }}
                                     className="space-y-2 pt-2"
                                 >
                                     <div className="flex items-center space-x-2">
@@ -233,6 +259,22 @@ export default function ParentDashboardPage() {
                 onUpgrade={() => handleTierChange('pro')}
                 currentTier={appUser.membershipTier}
             />
+            <AlertDialog open={isConfirmingAgeChange} onOpenChange={(isOpen) => { if(!isOpen) setPendingAgeGroup(null); setIsConfirmingAgeChange(isOpen); }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {pendingAgeGroup === 'over18'
+                                ? "Changing the age group to '18 or Over' will disable all parental controls and grant the user full access. This action cannot be undone. Are you sure you want to continue?"
+                                : `Are you sure you want to change the age group to '${pendingAgeGroup === 'under14' ? 'Under 14' : '14-17'}'?`}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setPendingAgeGroup(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmAgeChange}>Continue</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </main>
     );
 
