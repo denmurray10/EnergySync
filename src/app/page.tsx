@@ -110,10 +110,13 @@ export default function HomePage() {
   const petHappiness = currentEnergy;
 
   const showToast = useCallback((title: string, description: string, icon: string = '✨') => {
-    toast({
-      title: `${icon} ${title}`,
-      description: description,
-    });
+    // Defer toast to avoid state updates during render
+    setTimeout(() => {
+        toast({
+            title: `${icon} ${title}`,
+            description: description,
+        });
+    }, 0);
   }, [toast]);
 
   const unlockAchievement = useCallback((name: string) => {
@@ -124,13 +127,10 @@ export default function HomePage() {
       prevAchievements.map(a => a.name === name ? { ...a, unlocked: true } : a)
     );
     
-    // Defer toast to avoid state updates during render
-    setTimeout(() => {
-      const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
-      if (achievement) {
+    const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
+    if (achievement) {
         showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
-      }
-    }, 0);
+    }
   }, [achievements, showToast]);
 
   // REDIRECT AND ONBOARDING LOGIC
@@ -161,6 +161,23 @@ export default function HomePage() {
         setAppUser({ petExp: newExp });
     }
   }, [appUser, setAppUser, toast, unlockAchievement]);
+
+  // Syncs the user's avatar in the friends list if it changes
+  useEffect(() => {
+    const userIndex = friends.findIndex(f => f.isMe);
+
+    // Check if user is in the list and their avatar needs an update
+    if (userIndex !== -1 && appUser?.avatar && friends[userIndex].avatar !== appUser.avatar) {
+      setFriends(prevFriends => {
+        const newFriends = [...prevFriends];
+        newFriends[userIndex] = { ...newFriends[userIndex], avatar: appUser.avatar };
+        return newFriends;
+      });
+    }
+    // We only want this to run when the avatar changes.
+    // The friends array is updated inside, which would cause an infinite loop if included.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appUser?.avatar]);
 
   useEffect(() => {
     const storedAgeGroup = localStorage.getItem('energysync_age_group') as 'under14' | 'over14' | null;
