@@ -52,6 +52,8 @@ const parentSetupSchema = z.object({
   }).default({ insights: true, friends: true, communityMode: true }),
   childName: z.string().min(2, "Child's name must be at least 2 characters."),
   childUsername: z.string().min(3, "Username must be at least 3 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+  childPassword: z.string().min(6, "Password must be at least 6 characters."),
+  confirmChildPassword: z.string(),
   howDidYouHear: z.enum(["social", "friend", "app_store", "advertisement", "other"], {
     errorMap: () => ({ message: "Please select an option." }),
   }),
@@ -62,6 +64,9 @@ const parentSetupSchema = z.object({
 }).refine(data => data.parentalPin === data.confirmPin, {
   message: "PINs do not match.",
   path: ["confirmPin"],
+}).refine(data => data.childPassword === data.confirmChildPassword, {
+  message: "Child's passwords do not match.",
+  path: ["confirmChildPassword"],
 });
 
 type ParentSetupFormValues = z.infer<typeof parentSetupSchema>;
@@ -83,6 +88,8 @@ export function ParentSetupForm() {
             featureVisibility: { insights: true, friends: true, communityMode: true },
             childName: '',
             childUsername: '',
+            childPassword: '',
+            confirmChildPassword: '',
             howDidYouHear: undefined,
             whatDoYouExpect: undefined,
             acceptTrial: false,
@@ -99,7 +106,7 @@ export function ParentSetupForm() {
             case 0: fieldsToValidate = ['parentEmail', 'parentalPin', 'confirmPin']; break;
             case 1: fieldsToValidate = ['ageGroup']; break;
             case 2: fieldsToValidate = ['featureVisibility']; break;
-            case 3: fieldsToValidate = ['childName', 'childUsername']; break;
+            case 3: fieldsToValidate = ['childName', 'childUsername', 'childPassword', 'confirmChildPassword']; break;
             case 4: fieldsToValidate = ['howDidYouHear']; break;
             case 5: fieldsToValidate = ['whatDoYouExpect']; break;
         }
@@ -125,7 +132,6 @@ export function ParentSetupForm() {
 
     async function onSubmit(data: ParentSetupFormValues) {
         setLoading(true);
-        const randomPassword = Math.random().toString(36).slice(-8);
 
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         if (!projectId) {
@@ -136,7 +142,7 @@ export function ParentSetupForm() {
         const email = `${data.childUsername.toLowerCase().trim()}@${projectId}.fake-user.com`;
 
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, randomPassword);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, data.childPassword);
             const user = userCredential.user;
 
             await updateProfile(user, { displayName: data.childName });
@@ -251,6 +257,12 @@ export function ParentSetupForm() {
                     <FormField control={form.control} name="childUsername" render={({ field }) => (
                         <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" autoComplete="new-password" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
+                    <FormField control={form.control} name="childPassword" render={({ field }) => (
+                        <FormItem><FormLabel>Create a password for your child</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="confirmChildPassword" render={({ field }) => (
+                        <FormItem><FormLabel>Confirm child's password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
                 </CardContent>
             );
             case 4: return (
@@ -327,7 +339,7 @@ export function ParentSetupForm() {
             "Your email is for receiving important updates. The PIN protects access to sensitive settings and the Parent Dashboard.",
             "This helps us tailor the app experience.",
             "Choose which major features your child can access. You can change these later from the Parent Dashboard.",
-            "This creates the login for your child. The username must be unique. A temporary password will be generated.",
+            "This creates the login for your child. The username must be unique.",
             "This helps us understand how people find EnergySync.",
             "This helps us improve the app based on your needs.",
             "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
