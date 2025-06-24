@@ -16,8 +16,11 @@ const firebaseConfig = {
 // This check provides a clear error message if the environment variables are missing.
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
     console.error(
-        '🔴 Firebase API Key or Project ID is missing. The application will not be able to connect to Firebase.'
+        '🔴 Firebase API Key or Project ID is missing from your environment variables. The application will not connect to Firebase. Please ensure your .env file is configured correctly.'
     );
+} else {
+    // Log the project ID to help with debugging.
+    console.log(`⚪️ Connecting to Firebase project: ${firebaseConfig.projectId}`);
 }
 
 // Initialize Firebase

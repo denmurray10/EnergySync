@@ -129,7 +129,7 @@ export function ParentSetupForm() {
 
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         if (!projectId) {
-            toast({ title: "Configuration Error", description: "Firebase Project ID is not set.", variant: "destructive" });
+            toast({ title: "Configuration Error", description: "Firebase Project ID is not set in your environment variables.", variant: "destructive" });
             setLoading(false);
             return;
         }
