@@ -76,14 +76,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const setAppUser = useCallback((updatedData: Partial<User>) => {
-    if (firebaseUser) {
-      setLocalAppUser(prevUser => {
-        // If prevUser is null (e.g., during onboarding), updatedData is the full new user object
-        const newUser = prevUser ? { ...prevUser, ...updatedData } : updatedData as User;
-        localStorage.setItem(`energysync_user_${firebaseUser.uid}`, JSON.stringify(newUser));
-        return newUser;
-      });
-    }
+    setLocalAppUser(prevUser => {
+      const newUser = prevUser ? { ...prevUser, ...updatedData } : updatedData as User;
+      // Get UID from the context's logged in user, or from the new data object itself
+      const uid = firebaseUser?.uid ?? newUser.userId;
+
+      if (uid) {
+        localStorage.setItem(`energysync_user_${uid}`, JSON.stringify(newUser));
+      } else {
+        console.error("AuthContext: Cannot save user data, UID is missing.");
+      }
+      
+      return newUser;
+    });
   }, [firebaseUser]);
   
   const addChatMessage = useCallback((message: ChatMessage) => {

@@ -10,6 +10,7 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
+import { useAuth } from '@/context/AuthContext';
 
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,7 @@ type SetupFormValues = z.infer<typeof setupSchema>;
 export default function ParentSetupPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const { setAppUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(0);
     const [tempPassword, setTempPassword] = useState('');
@@ -138,9 +140,8 @@ export default function ParentSetupPage() {
                 featureVisibility: ageGroup !== 'over18' ? data.featureVisibility : { insights: true, friends: true, communityMode: true },
             };
             
-            localStorage.setItem(`energysync_user_${user.uid}`, JSON.stringify(initialUser));
+            setAppUser(initialUser);
             localStorage.setItem('energysync_age_group', data.ageGroup);
-
             
             setStep(totalSteps); // Go to success screen
 
@@ -245,6 +246,7 @@ export default function ParentSetupPage() {
                         <p><strong>Username:</strong> {form.getValues('childUsername')}</p>
                         <p><strong>Temporary Password:</strong> {tempPassword}</p>
                     </div>
+                    <p className="text-sm text-muted-foreground">Please save these login details for your child. You can now start using the app.</p>
                 </CardContent>
             )
             default: return null;
@@ -308,8 +310,8 @@ export default function ParentSetupPage() {
                                 </Button>
                             )}
                              {step === totalSteps && (
-                                <Button type="button" onClick={() => router.push('/login')} className="w-full">
-                                    Go to Login
+                                <Button type="button" onClick={() => router.push('/')} className="w-full">
+                                    Start Using App
                                 </Button>
                             )}
                         </CardContent>
