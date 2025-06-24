@@ -39,7 +39,7 @@ export const sendApprovalEmail = functions.runWith({ secrets: ["RESEND_API_KEY"]
 
         try {
             await resend.emails.send({
-                from: "onboarding@your-domain.com", // This must be a verified domain in your Resend account.
+                from: "YOUR_VERIFIED_EMAIL@your-domain.com", // This must be a verified domain in your Resend account.
                 to: parentEmail,
                 subject: subject,
                 html: body,

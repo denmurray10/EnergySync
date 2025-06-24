@@ -478,12 +478,12 @@ function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
             try {
                 const sendApprovalEmail = httpsCallable(functions, 'sendApprovalEmail');
                 await sendApprovalEmail({
-                    parentEmail: data.parentEmailForApproval,
+                    parentEmail: 'dennis.murray10@gmail.com', // Temporarily hardcoded for testing
                     childName: data.name,
                 });
                 toast({
                     title: "Approval Request Sent",
-                    description: `We've sent an approval link to ${data.parentEmailForApproval}.`,
+                    description: `We've sent an approval link to the parent/guardian.`,
                 });
                 setStep(s => s + 1); // Move to final "Request Sent" screen
             } catch (error) {
