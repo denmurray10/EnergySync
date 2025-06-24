@@ -40,17 +40,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userSnap.exists()) {
             setLocalAppUser(userSnap.data() as User);
           } else {
-            // This is the tricky case: a user is logged in, but their profile document is missing.
-            // We need to differentiate between a new user signing up and an existing user with a missing profile.
             const creationTime = new Date(user.metadata.creationTime!).getTime();
             const lastSignInTime = new Date(user.metadata.lastSignInTime!).getTime();
             
-            // If the account was created in the last 5 seconds, it's a new signup.
-            // We give the signup form time to create the document.
             if (lastSignInTime - creationTime < 5000) {
               setLocalAppUser(null);
             } else {
-              // This is an existing user whose profile is missing. This is an error.
               console.error(`Profile document not found for existing user ${user.uid}.`);
               toast({
                 title: 'Profile Not Found',
@@ -63,12 +58,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (error: any) {
             console.error("Error fetching user document from Firestore:", error);
-            // This can happen if rules are wrong or firestore is down.
-            toast({
-                title: 'Could not load profile',
-                description: `There was a problem fetching your user data. Please try logging in again. Error: ${error.message}`,
-                variant: 'destructive',
-            });
+            if (error.code === 'permission-denied') {
+                toast({
+                    title: 'Could Not Load Profile (Permissions)',
+                    description: "The app was denied permission to read your profile. Please check that the Cloud Firestore API is enabled in your Google Cloud Console.",
+                    variant: 'destructive',
+                });
+            } else {
+                toast({
+                    title: 'Could not load profile',
+                    description: `There was a problem fetching your user data. Please try logging in again.`,
+                    variant: 'destructive',
+                });
+            }
             await auth.signOut();
             setLocalAppUser(null);
         } finally {
@@ -84,8 +86,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const setAppUser = useCallback(async (userData: Partial<User>) => {
-    // This function can be called before the user is set in state,
-    // so we get the user directly from auth.
     const currentUser = auth.currentUser;
     const userId = userData.userId || currentUser?.uid;
 
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const errorMsg = "Could not save user data because no user is logged in.";
       console.error("setAppUser failed:", errorMsg);
       toast({ title: 'Save Failed', description: errorMsg, variant: 'destructive' });
-      return; // Return instead of throwing to prevent app crash
+      return;
     }
 
     const userRef = doc(firestore, 'users', userId);
@@ -114,7 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: `There was a problem saving your data. Error: ${error.message}`,
         variant: 'destructive'
       });
-      throw error; // Re-throw to be caught by the calling form
+      throw error;
     }
   }, [toast]);
   
