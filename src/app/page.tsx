@@ -119,14 +119,29 @@ export default function HomePage() {
   }, [toast]);
 
   const unlockAchievement = useCallback((name: string) => {
+    let achievementAlreadyUnlocked = false;
+    let achievementExists = false;
+    let achievementName = '';
+    let achievementIcon = '✨';
+
     setAchievements(prevAchievements => {
         const achievement = prevAchievements.find((a) => a.name === name);
-        if (achievement && !achievement.unlocked) {
-            showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+        if (achievement) {
+            achievementExists = true;
+            achievementName = achievement.name;
+            achievementIcon = achievement.icon;
+            if (achievement.unlocked) {
+                achievementAlreadyUnlocked = true;
+                return prevAchievements;
+            }
             return prevAchievements.map(a => (a.name === name ? { ...a, unlocked: true } : a));
         }
         return prevAchievements;
     });
+
+    if (achievementExists && !achievementAlreadyUnlocked) {
+        showToast(`Achievement Unlocked!`, `You've earned: ${achievementName}`, achievementIcon);
+    }
   }, [showToast]);
 
 
@@ -944,10 +959,8 @@ export default function HomePage() {
             <ParentalControlModal
                 open={modals.parentalControls}
                 onOpenChange={(isOpen) => {
-                    if (!isOpen && !isParentModeUnlocked) {
-                        // Don't close if they failed to verify, just let them try again or cancel
-                    } else {
-                         closeModal('parentalControls');
+                    if (!isOpen) {
+                        closeModal('parentalControls');
                     }
                 }}
                 mode={appUser.parentalPin ? 'verify' : 'set'}
