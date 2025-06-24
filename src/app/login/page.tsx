@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -47,6 +48,17 @@ export default function LoginPage() {
 
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
+
+    if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) {
+      toast({
+        title: 'Firebase Not Configured',
+        description: "Your Firebase API Key is missing. Please make sure your .env file is correct and restart the app.",
+        variant: 'destructive',
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       if (activeTab === 'signin') {
         await signInWithEmailAndPassword(auth, data.email, data.password);
@@ -62,7 +74,7 @@ export default function LoginPage() {
       const isApiKeyError = (error.code && String(error.code).includes('api-key')) || (error.message && String(error.message).includes('api-key'));
 
       if (isApiKeyError) {
-        description = "The Firebase configuration is invalid. Please make sure you have set the correct NEXT_PUBLIC_FIREBASE variables in your .env file.";
+        description = "Authentication failed. This can happen if the app's domain is not authorized in your Firebase project. Please check your Firebase console settings.";
       } else {
         console.error(`${activeTab} error:`, error);
          switch (error.code) {
