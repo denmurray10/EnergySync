@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
@@ -17,6 +17,17 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoaderCircle, Zap, ArrowLeft } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Label } from "@/components/ui/label";
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.34 2.06-4.1 2.06-4.92 0-8.92-4.02-8.92-8.92s4-8.92 8.92-8.92c2.5 0 4.3.96 5.72 2.3l2.2-2.2C18.48.96 15.82 0 12.48 0 5.6 0 0 5.6 0 12.48s5.6 12.48 12.48 12.48c7.1 0 12.04-4.92 12.04-12.04 0-.76-.08-1.52-.2-2.28H12.48z"/></svg>
@@ -47,6 +58,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('child');
   const { firebaseUser, loading: authLoading } = useAuth();
+
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   const childForm = useForm<ChildFormValues>({
     resolver: zodResolver(childLoginSchema),
@@ -128,6 +143,35 @@ export default function LoginPage() {
       });
   }
 
+  const handleChildPasswordHelp = () => {
+    toast({
+        title: "Ask a Grown-up for Help",
+        description: "Your parent or guardian can help you reset your password from their Parent Dashboard.",
+    });
+  }
+
+  const handleSendResetEmail = async () => {
+    if (!resetEmail) {
+      toast({ title: "Email Required", description: "Please enter your email address.", variant: "destructive" });
+      return;
+    }
+    setIsSendingReset(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail);
+      toast({ title: "Password Reset Email Sent", description: "Please check your inbox for a password reset link." });
+      setIsResetDialogOpen(false);
+      setResetEmail('');
+    } catch (error: any) {
+      let description = "An unexpected error occurred. Please try again.";
+      if (error.code === 'auth/user-not-found') {
+        description = "No user found with this email address.";
+      }
+      toast({ title: "Error sending reset email", description, variant: "destructive" });
+    } finally {
+      setIsSendingReset(false);
+    }
+  };
+
   if (authLoading || firebaseUser) {
     return (
       <main className="min-h-dvh bg-background flex items-center justify-center p-4">
@@ -166,7 +210,18 @@ export default function LoginPage() {
                         )}/>
                         <FormField control={childForm.control} name="password" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <div className="flex items-center justify-between">
+                                    <FormLabel>Password</FormLabel>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        size="sm"
+                                        className="p-0 h-auto font-normal text-primary hover:text-primary/90"
+                                        onClick={handleChildPasswordHelp}
+                                    >
+                                        Forgot password?
+                                    </Button>
+                                </div>
                                 <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -190,7 +245,18 @@ export default function LoginPage() {
                         )}/>
                         <FormField control={adultForm.control} name="password" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Password</FormLabel>
+                                <div className="flex items-center justify-between">
+                                    <FormLabel>Password</FormLabel>
+                                    <Button
+                                        type="button"
+                                        variant="link"
+                                        size="sm"
+                                        className="p-0 h-auto font-normal text-primary hover:text-primary/90"
+                                        onClick={() => setIsResetDialogOpen(true)}
+                                    >
+                                        Forgot password?
+                                    </Button>
+                                </div>
                                 <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -225,6 +291,35 @@ export default function LoginPage() {
             </Button>
         </CardFooter>
       </Card>
+
+      <AlertDialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset Your Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter the email address associated with your account, and we'll send you a link to reset your password.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+              <Label htmlFor="reset-email" className="sr-only">Email</Label>
+              <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  disabled={isSendingReset}
+              />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSendingReset}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSendResetEmail} disabled={isSendingReset}>
+              {isSendingReset && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              Send Reset Link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
