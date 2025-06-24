@@ -81,7 +81,14 @@ export const INITIAL_PET_TASKS: PetTask[] = [
 ];
 
 export const INITIAL_FRIENDS: Friend[] = [
-    { id: 'placeholder-1', name: 'Friend Name', avatar: 'https://placehold.co/100x100.png', avatarHint: 'person avatar', energyStatus: 'Scan QR Code to add Friend', currentEnergy: 0, isPlaceholder: true },
-    { id: 'placeholder-2', name: 'Friend Name', avatar: 'https://placehold.co/100x100.png', avatarHint: 'person avatar', energyStatus: 'Scan QR Code to add Friend', currentEnergy: 0, isPlaceholder: true },
-    { id: 'placeholder-3', name: 'Friend Name', avatar: 'https://placehold.co/100x100.png', avatarHint: 'person avatar', energyStatus: 'Scan QR Code to add Friend', currentEnergy: 0, isPlaceholder: true },
+    { id: 'friend-1', name: 'Liam Smith', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man smiling', energyStatus: 'Feeling energized!', currentEnergy: 85 },
+    { id: 'friend-2', name: 'Olivia Johnson', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman face', energyStatus: 'A bit tired today.', currentEnergy: 45 },
+    { id: 'friend-3', name: 'Noah Williams', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man portrait', energyStatus: 'Ready to take on the day!', currentEnergy: 92 },
+    { id: 'friend-4', name: 'Emma Brown', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman coffee', energyStatus: 'Need a coffee break.', currentEnergy: 55 },
+    { id: 'friend-5', name: 'Oliver Jones', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man glasses', energyStatus: 'Focused and in the zone.', currentEnergy: 78 },
+    { id: 'friend-6', name: 'Ava Garcia', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman nature', energyStatus: 'Relaxing after a long week.', currentEnergy: 65 },
+    { id: 'friend-7', name: 'Elijah Miller', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man desk', energyStatus: 'Super productive morning!', currentEnergy: 88 },
+    { id: 'friend-8', name: 'Sophia Davis', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman outdoors', energyStatus: 'Enjoying the sunshine.', currentEnergy: 72 },
+    { id: 'friend-9', name: 'James Rodriguez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man tired', energyStatus: 'Could use a nap.', currentEnergy: 38 },
+    { id: 'friend-10', name: 'Isabella Martinez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman happy', energyStatus: 'Excited for the weekend!', currentEnergy: 95 },
 ];
