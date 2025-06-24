@@ -13,14 +13,26 @@ export default function WelcomePage() {
   const router = useRouter();
   const [showAgeGate, setShowAgeGate] = useState(false);
   const [showGuardianMessage, setShowGuardianMessage] = useState(false);
+  const [ageGroupForApproval, setAgeGroupForApproval] = useState<'under14' | '14to17' | null>(null);
 
   const handleAgeSelect = (group: 'under14' | '14to17' | 'over18') => {
     setShowAgeGate(false);
     if (group === 'over18') {
       localStorage.setItem('energysync_signup_mode', 'adult');
+      localStorage.setItem('energysync_age_group', 'over18');
       router.push('/parent-setup');
     } else {
+      setAgeGroupForApproval(group);
       setShowGuardianMessage(true);
+    }
+  };
+
+  const handleGuardianProceed = () => {
+    setShowGuardianMessage(false);
+    if (ageGroupForApproval === '14to17') {
+      localStorage.setItem('energysync_signup_mode', 'teen');
+      localStorage.setItem('energysync_age_group', '14to17');
+      router.push('/parent-setup');
     }
   };
 
@@ -80,7 +92,12 @@ export default function WelcomePage() {
       </Card>
 
       <AgeGateModal open={showAgeGate} onOpenChange={setShowAgeGate} onSelect={handleAgeSelect} />
-      <GuardianRequiredModal open={showGuardianMessage} onOpenChange={setShowGuardianMessage} />
+      <GuardianRequiredModal 
+        open={showGuardianMessage} 
+        onOpenChange={setShowGuardianMessage} 
+        onProceed={handleGuardianProceed}
+        ageGroup={ageGroupForApproval}
+      />
     </main>
   );
 }

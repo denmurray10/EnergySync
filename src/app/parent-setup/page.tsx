@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { LoaderCircle, Shield, User as UserIcon, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper } from 'lucide-react';
+import { LoaderCircle, Shield, User as UserIcon, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper, Mail } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const hearOptions = [
@@ -407,6 +407,7 @@ const adultSignupSchema = z.object({
     errorMap: () => ({ message: "Please select an option." }),
   }),
   acceptTrial: z.boolean().default(false),
+  parentEmailForApproval: z.string().email("Please provide a valid parent email.").optional(),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match.",
   path: ["confirmPassword"],
@@ -414,7 +415,7 @@ const adultSignupSchema = z.object({
 
 type AdultSignupFormValues = z.infer<typeof adultSignupSchema>;
 
-function AdultSignupForm() {
+function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
     const router = useRouter();
     const { toast } = useToast();
     const { setAppUser } = useAuth();
@@ -430,12 +431,13 @@ function AdultSignupForm() {
             confirmPassword: '', 
             howDidYouHear: undefined,
             whatDoYouExpect: undefined,
-            acceptTrial: false
+            acceptTrial: false,
+            parentEmailForApproval: '',
         },
         mode: 'onTouched',
     });
 
-    const totalSteps = 4;
+    const totalSteps = isTeen ? 5 : 4;
     const progress = ((step + 1) / totalSteps) * 100;
     
     const handleNext = async () => {
@@ -444,6 +446,9 @@ function AdultSignupForm() {
             case 0: fieldsToValidate = ['name', 'email', 'password', 'confirmPassword']; break;
             case 1: fieldsToValidate = ['howDidYouHear']; break;
             case 2: fieldsToValidate = ['whatDoYouExpect']; break;
+            case 3: 
+                if (isTeen) fieldsToValidate = ['parentEmailForApproval'];
+                break;
         }
 
         const isValid = await form.trigger(fieldsToValidate as any);
@@ -467,6 +472,20 @@ function AdultSignupForm() {
 
     async function onSubmit(data: AdultSignupFormValues) {
         setLoading(true);
+
+        if (isTeen) {
+            // Simulate sending approval email for teens
+            await new Promise(res => setTimeout(res, 1000));
+            toast({
+                title: "Approval Request Sent",
+                description: `We've sent an approval link to ${data.parentEmailForApproval}.`,
+            });
+            setStep(s => s + 1); // Move to final "Request Sent" screen
+            setLoading(false);
+            return;
+        }
+
+        // --- Standard Adult Signup Logic ---
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
@@ -477,7 +496,7 @@ function AdultSignupForm() {
             const initialUser: User = {
                 userId: user.uid,
                 name: data.name,
-                username: data.email.split('@')[0], // Use email part as username
+                username: data.email.split('@')[0],
                 avatar: `https://placehold.co/100x100.png`,
                 membershipTier: data.acceptTrial ? 'pro' : 'free',
                 proTrialEndDate: trialEndDate,
@@ -500,7 +519,7 @@ function AdultSignupForm() {
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
                 form.setError('email', { type: 'manual', message: 'This email is already in use.' });
-                setStep(0); // Go back to the email step
+                setStep(0);
                 toast({ title: 'Email in Use', description: 'This email is already registered. Please log in or use a different email.', variant: 'destructive' });
             } else {
                 console.error("Account creation error:", error);
@@ -516,7 +535,8 @@ function AdultSignupForm() {
             "Create Your Account",
             "How did you hear about us?",
             "What do you expect from the app?",
-            "Free Pro Trial",
+            isTeen ? "Parental Approval" : "Free Pro Trial",
+            isTeen ? "Request Sent!" : "All Done!",
         ];
         return titles[step] || '';
     };
@@ -526,7 +546,8 @@ function AdultSignupForm() {
             "Let's get you set up with your own account.",
             "This helps us understand our community.",
             "This helps us improve the app based on your needs.",
-            "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
+            isTeen ? "Enter your parent or guardian's email. We'll send them a link to approve your account." : "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
+            isTeen ? "Great! Ask your parent or guardian to check their email to finish setting up your account." : "Your account is ready to use! You will now be logged in.",
         ];
         return descriptions[step] || '';
     };
@@ -587,10 +608,27 @@ function AdultSignupForm() {
                      )}/>
                  </CardContent>
             );
-            case 3: return (
+            case 3: return isTeen ? (
+                <CardContent className="space-y-4" key="step-3-teen">
+                    <FormField control={form.control} name="parentEmailForApproval" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Parent/Guardian Email</FormLabel>
+                            <FormControl><Input type="email" placeholder="parent@example.com" {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}/>
+                </CardContent>
+            ) : (
                 <CardContent className="text-center" key="step-3-adult">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features?</p>
                     <p className="text-sm text-muted-foreground mt-2">Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.</p>
+                </CardContent>
+            );
+            case 4: return ( // Final success/info screen
+                <CardContent className="text-center space-y-4" key="step-4-final">
+                    <div className="mx-auto bg-primary/10 p-4 rounded-full w-fit">
+                        {isTeen ? <Mail className="h-12 w-12 text-primary" /> : <PartyPopper className="h-12 w-12 text-primary" />}
+                    </div>
                 </CardContent>
             );
             default: return null;
@@ -609,20 +647,30 @@ function AdultSignupForm() {
                     <CardDescription>{getStepDescription()}</CardDescription>
                 </CardHeader>
 
-                <Progress value={progress} className="w-[90%] mx-auto mb-4" />
+                {step < totalSteps && <Progress value={progress} className="w-[90%] mx-auto mb-4" />}
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         {getStepContent()}
                         <CardContent className="flex flex-col gap-2">
-                             {step < totalSteps - 1 ? (
+                             {step < 3 ? (
                                 <>
                                     <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full">
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </>
-                            ) : (
+                            ) : step === 3 && isTeen ? (
+                                <>
+                                    <Button type="button" onClick={form.handleSubmit(onSubmit)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4"/>}
+                                        Send Approval & Finish
+                                    </Button>
+                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
+                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                    </Button>
+                                </>
+                            ) : step === 3 && !isTeen ? (
                                 <div className="flex flex-col gap-2">
                                     <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
                                         {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
@@ -635,6 +683,10 @@ function AdultSignupForm() {
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </div>
+                            ) : (
+                                 <Button type="button" onClick={() => router.push('/welcome')} className="w-full">
+                                    Back to Welcome
+                                </Button>
                             )}
                         </CardContent>
                     </form>
@@ -646,15 +698,14 @@ function AdultSignupForm() {
 
 // --- Main Page Component ---
 export default function SetupPage() {
-    const [mode, setMode] = useState<'parent' | 'adult' | null>(null);
+    const [mode, setMode] = useState<'parent' | 'adult' | 'teen' | null>(null);
     const router = useRouter();
 
     useEffect(() => {
         const setupMode = localStorage.getItem('energysync_signup_mode');
-        if (setupMode === 'parent' || setupMode === 'adult') {
-            setMode(setupMode);
+        if (setupMode === 'parent' || setupMode === 'adult' || setupMode === 'teen') {
+            setMode(setupMode as 'parent' | 'adult' | 'teen');
         } else {
-            // If no mode is set, default to welcome to prevent errors.
             router.push('/welcome');
         }
     }, [router]);
@@ -667,5 +718,9 @@ export default function SetupPage() {
         );
     }
 
-    return mode === 'adult' ? <AdultSignupForm /> : <ParentSetupForm />;
+    if (mode === 'parent') return <ParentSetupForm />;
+    if (mode === 'adult') return <AdultSignupForm />;
+    if (mode === 'teen') return <AdultSignupForm isTeen />;
+
+    return null;
 }
