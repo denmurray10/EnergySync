@@ -9,14 +9,17 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
 import { useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export default function ParentDashboardPage() {
     const { appUser, setAppUser, chatHistory, loading: authLoading } = useAuth();
     const router = useRouter();
+    const { toast } = useToast();
 
     useEffect(() => {
         if (!authLoading && !appUser?.parentalPin) {
@@ -32,6 +35,16 @@ export default function ParentDashboardPage() {
                 [feature]: isVisible,
             };
             setAppUser({ featureVisibility: newVisibility });
+        }
+    };
+
+    const handleTierChange = (newTier: 'free' | 'pro') => {
+        if (appUser) {
+            setAppUser({ membershipTier: newTier });
+            toast({
+                title: `Membership Updated!`,
+                description: `Your child is now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
+            });
         }
     };
     
@@ -86,6 +99,32 @@ export default function ParentDashboardPage() {
                                     onCheckedChange={(checked) => handleVisibilityChange('communityMode', checked)}
                                 />
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="mt-6 bg-card/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle className="flex items-center text-xl">
+                                <Crown className="text-yellow-500 mr-3" />
+                                Membership
+                            </CardTitle>
+                            <CardDescription>Upgrade or downgrade your child's membership plan.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <RadioGroup 
+                                value={appUser.membershipTier} 
+                                onValueChange={(value: 'free' | 'pro') => handleTierChange(value)}
+                                className="space-y-2"
+                            >
+                                <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="free" id="free" />
+                                <Label htmlFor="free">Free</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="pro" id="pro" />
+                                <Label htmlFor="pro">Pro</Label>
+                                </div>
+                            </RadioGroup>
                         </CardContent>
                     </Card>
 

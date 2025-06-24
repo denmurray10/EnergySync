@@ -108,37 +108,39 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
       )}
 
 
-      <Card className="bg-card/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center text-xl">
-            <Crown className="text-yellow-500 mr-3" />
-            Membership
-          </CardTitle>
-          {areSettingsLocked && <CardDescription>Enter Parent PIN to change membership.</CardDescription>}
-        </CardHeader>
-        <CardContent>
-            {areSettingsLocked ? (
-                <div className="flex items-center justify-center p-4 bg-muted rounded-lg text-muted-foreground">
-                    <LockKeyhole className="mr-2 h-4 w-4"/> Locked
-                </div>
-            ) : (
-                <RadioGroup 
-                    value={user.membershipTier} 
-                    onValueChange={(value: 'free' | 'pro') => onTierChange(value)}
-                    className="space-y-2"
-                >
-                    <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="free" id="free" />
-                    <Label htmlFor="free">Free</Label>
+      {ageGroup === 'over18' && (
+        <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+            <CardTitle className="flex items-center text-xl">
+                <Crown className="text-yellow-500 mr-3" />
+                Membership
+            </CardTitle>
+            {areSettingsLocked && <CardDescription>Enter Parent PIN to change membership.</CardDescription>}
+            </CardHeader>
+            <CardContent>
+                {areSettingsLocked ? (
+                    <div className="flex items-center justify-center p-4 bg-muted rounded-lg text-muted-foreground">
+                        <LockKeyhole className="mr-2 h-4 w-4"/> Locked
                     </div>
-                    <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="pro" id="pro" />
-                    <Label htmlFor="pro">Pro</Label>
-                    </div>
-                </RadioGroup>
-            )}
-        </CardContent>
-      </Card>
+                ) : (
+                    <RadioGroup 
+                        value={user.membershipTier} 
+                        onValueChange={(value: 'free' | 'pro') => onTierChange(value)}
+                        className="space-y-2"
+                    >
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="free" id="free" />
+                        <Label htmlFor="free">Free</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="pro" id="pro" />
+                        <Label htmlFor="pro">Pro</Label>
+                        </div>
+                    </RadioGroup>
+                )}
+            </CardContent>
+        </Card>
+      )}
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
