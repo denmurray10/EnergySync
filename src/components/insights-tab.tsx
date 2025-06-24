@@ -116,18 +116,14 @@ export function InsightsTab({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-        setFriends((currentFriends) => {
-            const oldIndex = currentFriends.findIndex((f) => f.id === active.id);
-            const newIndex = currentFriends.findIndex((f) => f.id === over.id);
+        const oldIndex = friends.findIndex((f) => f.id === active.id);
+        const newIndex = friends.findIndex((f) => f.id === over.id);
 
-            if (oldIndex > -1 && newIndex > -1 &&
-                currentFriends[oldIndex].isFavorite && !currentFriends[oldIndex].isMe &&
-                currentFriends[newIndex].isFavorite && !currentFriends[newIndex].isMe) {
-                return arrayMove(currentFriends, oldIndex, newIndex);
-            }
-
-            return currentFriends;
-        });
+        if (oldIndex > -1 && newIndex > -1 &&
+            friends[oldIndex].isFavorite && !friends[oldIndex].isMe &&
+            friends[newIndex].isFavorite && !friends[newIndex].isMe) {
+            setFriends(arrayMove(friends, oldIndex, newIndex));
+        }
     }
   }
   
