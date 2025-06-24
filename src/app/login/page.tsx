@@ -12,11 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LoaderCircle, Zap } from 'lucide-react';
+import { LoaderCircle, Zap, ArrowLeft } from 'lucide-react';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" {...props}><title>Google</title><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.34 2.06-4.1 2.06-4.92 0-8.92-4.02-8.92-8.92s4-8.92 8.92-8.92c2.5 0 4.3.96 5.72 2.3l2.2-2.2C18.48.96 15.82 0 12.48 0 5.6 0 0 5.6 0 12.48s5.6 12.48 12.48 12.48c7.1 0 12.04-4.92 12.04-12.04 0-.76-.08-1.52-.2-2.28H12.48z"/></svg>
@@ -218,6 +218,12 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
         </CardContent>
+        <CardFooter className="pt-4">
+            <Button variant="outline" onClick={() => router.back()} className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back
+            </Button>
+        </CardFooter>
       </Card>
     </main>
   );
