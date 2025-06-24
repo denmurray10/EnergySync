@@ -123,7 +123,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
             try {
                 const sendApprovalEmail = httpsCallable(functions, 'sendApprovalEmail');
                 await sendApprovalEmail({
-                    parentEmail: 'dennis.murray10@gmail.com', // Temporarily hardcoded for testing
+                    parentEmail: data.parentEmailForApproval,
                     childName: data.name,
                 });
                 toast({

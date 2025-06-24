@@ -19,6 +19,13 @@ export const sendApprovalEmail = functions.https.onCall(
     async (data: ApprovalEmailData, context) => {
         const {parentEmail, childName} = data;
 
+        if (!parentEmail || !childName) {
+            throw new functions.https.HttpsError(
+                "invalid-argument",
+                "The function must be called with 'parentEmail' and 'childName' arguments.",
+            );
+        }
+
         const subject = `Approval needed for ${childName}'s EnergySync account`;
         const body = `
             <h1>Hi there!</h1>
@@ -39,8 +46,8 @@ export const sendApprovalEmail = functions.https.onCall(
 
         try {
             await resend.emails.send({
-                from: "YOUR_VERIFIED_EMAIL@your-domain.com", // This must be a verified domain in your Resend account.
-                to: "dennis.murray10@gmail.com",
+                from: "onboarding@resend.dev", // This must be a verified domain in your Resend account.
+                to: parentEmail,
                 subject: subject,
                 html: body,
             });
