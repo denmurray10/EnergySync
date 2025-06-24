@@ -18,7 +18,7 @@ export default function WelcomePage() {
             </div>
           <CardTitle className="text-2xl">Welcome to EnergySync!</CardTitle>
           <CardDescription>
-            Who is setting up this account?
+            How are you getting started today?
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -26,8 +26,8 @@ export default function WelcomePage() {
             <div className="flex items-center">
                 <Shield className="mr-3 h-6 w-6"/>
                 <div>
-                    <p className="font-semibold">Parent or Guardian</p>
-                    <p className="font-normal text-xs">I'm setting this up for a child.</p>
+                    <p className="font-semibold">Set up for a Child</p>
+                    <p className="font-normal text-xs">I'm a parent or guardian.</p>
                 </div>
             </div>
           </Button>
@@ -35,10 +35,13 @@ export default function WelcomePage() {
              <div className="flex items-center">
                 <User className="mr-3 h-6 w-6"/>
                 <div>
-                    <p className="font-semibold">I am the User</p>
-                    <p className="font-normal text-xs">I'm setting up my own account.</p>
+                    <p className="font-semibold">Create My Own Account</p>
+                    <p className="font-normal text-xs">For users setting up their own account.</p>
                 </div>
             </div>
+          </Button>
+          <Button onClick={() => router.push('/login')} variant="link" className="font-semibold">
+            I already have an account
           </Button>
         </CardContent>
       </Card>
