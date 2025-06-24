@@ -3,8 +3,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
-      // Allow users to read and write their own document
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // Temporary rule for debugging: allows any authenticated user to read/write.
+      // This is not secure for production.
+      allow read, write: if request.auth != null;
     }
   }
 }
