@@ -1,3 +1,4 @@
+
 // src/context/AuthContext.tsx
 'use client';
 
@@ -60,9 +61,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             console.error("Error fetching user document from Firestore:", error);
             if (error.code === 'permission-denied') {
                 toast({
-                    title: 'Could Not Load Profile (Permissions)',
-                    description: "The app was denied permission to read your profile. Please check that the Cloud Firestore API is enabled in your Google Cloud Console.",
+                    title: 'Action Required: Enable Firestore API',
+                    description: "Your app is connected, but the Firestore API is disabled in Google Cloud. Please enable it to proceed.",
                     variant: 'destructive',
+                    duration: 10000,
                 });
             } else {
                 toast({
@@ -109,11 +111,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
-      toast({
-        title: 'Save Failed',
-        description: `There was a problem saving your data. Error: ${error.message}`,
-        variant: 'destructive'
-      });
+      if (error.code === 'permission-denied') {
+        toast({
+            title: 'Action Required: Enable Firestore API',
+            description: "Your app is connected, but the Firestore API is disabled in Google Cloud. Please enable it to proceed.",
+            variant: 'destructive',
+            duration: 10000,
+        });
+      } else {
+        toast({
+          title: 'Save Failed',
+          description: `There was a problem saving your data. Error: ${error.message}`,
+          variant: 'destructive'
+        });
+      }
       throw error;
     }
   }, [toast]);
