@@ -159,7 +159,7 @@ export default function ParentSetupPage() {
     const renderStep = () => {
          switch (step) {
             case 0: return (
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4" key="step-0">
                     <FormField control={form.control} name="parentEmail" render={({ field }) => (
                         <FormItem><FormLabel>Your Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -172,7 +172,7 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
             case 1: return (
-                 <CardContent>
+                 <CardContent key="step-1">
                      <FormField control={form.control} name="ageGroup" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -187,7 +187,7 @@ export default function ParentSetupPage() {
                  </CardContent>
             );
             case 2: return (
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4" key="step-2">
                     <FormField control={form.control} name="featureVisibility.insights" render={({ field }) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="insights-toggle" className="flex items-center gap-2 font-normal"><BrainCircuit /> Insights Tab</Label>
@@ -209,7 +209,7 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
              case 3: return (
-                 <CardContent className="space-y-4">
+                 <CardContent className="space-y-4" key="step-3">
                     <FormField control={form.control} name="childName" render={({ field }) => (
                         <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} autoComplete="new-password" /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -219,7 +219,7 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
             case 4: return (
-                <CardContent className="text-center">
+                <CardContent className="text-center" key="step-4">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features for your child?</p>
                      <FormField control={form.control} name="acceptTrial" render={({ field }) => (
                         <div className="flex items-center justify-center gap-4 mt-6">
@@ -230,7 +230,7 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
             case totalSteps: return (
-                <CardContent className="text-center space-y-4">
+                <CardContent className="text-center space-y-4" key="step-final">
                     <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
                     <div className="p-4 bg-muted rounded-lg text-left space-y-2">
