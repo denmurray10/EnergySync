@@ -1,5 +1,4 @@
 
-
 export interface Activity {
   id: number;
   name: string;
@@ -54,6 +53,7 @@ export interface User {
   name: string;
   avatar?: string;
   membershipTier: 'free' | 'pro';
+  proTrialEndDate?: string | null;
   petCustomization: PetCustomization;
   petLevel: number;
   petExp: number;

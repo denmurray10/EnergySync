@@ -50,7 +50,6 @@ export default function HomePage() {
   const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
-  const [showAgeGate, setShowAgeGate] = useState(false);
   const [ageGroup, setAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
   
   const [currentEnergy, setCurrentEnergy] = useState(75);
@@ -149,10 +148,8 @@ export default function HomePage() {
 
   // REDIRECT AND ONBOARDING LOGIC
   useEffect(() => {
-    if (!authLoading) {
-      if (!firebaseUser) {
-        router.push('/login');
-      }
+    if (!authLoading && !firebaseUser) {
+      router.push('/welcome');
     }
   }, [firebaseUser, authLoading, router]);
   
@@ -184,8 +181,6 @@ export default function HomePage() {
       if (!tutorialSeen) {
         setShowTutorial(true);
       }
-    } else {
-      setShowAgeGate(true);
     }
     
     const storedLastCompletion = localStorage.getItem('energysync_last_task_completion');
@@ -195,17 +190,14 @@ export default function HomePage() {
     }
   }, []);
 
-  const handleAgeSelect = (group: 'under14' | '14to17' | 'over18') => {
-    setAgeGroup(group);
-    localStorage.setItem('energysync_age_group', group);
-    setShowAgeGate(false);
-    const tutorialSeen = localStorage.getItem('energysync_tutorial_seen');
-    if (!tutorialSeen) {
-      setShowTutorial(true);
+  const isProMember = useMemo(() => {
+    if (!appUser) return false;
+    if (appUser.membershipTier === 'pro') return true;
+    if (appUser.proTrialEndDate) {
+        return new Date(appUser.proTrialEndDate) > new Date();
     }
-  };
-
-  const isProMember = useMemo(() => appUser?.membershipTier === 'pro', [appUser]);
+    return false;
+  }, [appUser]);
   
   const fetchProactiveSuggestion = useCallback(async () => {
     if (!isProMember || (ageGroup !== 'under14' && !appUser?.petEnabled)) {
@@ -290,7 +282,7 @@ export default function HomePage() {
 
   const handleTierChange = (newTier: 'free' | 'pro') => {
     if (appUser) {
-        setAppUser({ membershipTier: newTier });
+        setAppUser({ membershipTier: newTier, proTrialEndDate: null });
         toast({
             title: `Membership Updated!`,
             description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
@@ -930,7 +922,7 @@ export default function HomePage() {
                 user={appUser}
             />
         )}
-         <AgeGateModal open={showAgeGate} onSelect={handleAgeSelect} />
+         <AgeGateModal open={false} onSelect={() => {}} />
          <ReadinessSurveyModal
             open={modals.readinessSurvey}
             onOpenChange={() => closeModal('readinessSurvey')}
