@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
 import type { User, Friend, ChatMessage } from '@/lib/types';
 import { INITIAL_FRIENDS } from '@/lib/data';
@@ -36,23 +36,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const userRef = doc(firestore, 'users', user.uid);
           const userSnap = await getDoc(userRef);
+
           if (userSnap.exists()) {
             setLocalAppUser(userSnap.data() as User);
           } else {
-            console.error(`CRITICAL: No Firestore document found for authenticated user ${user.uid}. Signing out.`);
-            toast({
-              title: 'Profile Not Found',
-              description: "We couldn't find your user profile. Please try signing up again.",
-              variant: 'destructive',
-            });
-            await auth.signOut();
-            setLocalAppUser(null);
+            // This is the tricky case: a user is logged in, but their profile document is missing.
+            // We need to differentiate between a new user signing up and an existing user with a missing profile.
+            const creationTime = new Date(user.metadata.creationTime!).getTime();
+            const lastSignInTime = new Date(user.metadata.lastSignInTime!).getTime();
+            
+            // If the account was created in the last 5 seconds, it's a new signup.
+            // We give the signup form time to create the document.
+            if (lastSignInTime - creationTime < 5000) {
+              setLocalAppUser(null);
+            } else {
+              // This is an existing user whose profile is missing. This is an error.
+              console.error(`Profile document not found for existing user ${user.uid}.`);
+              toast({
+                title: 'Profile Not Found',
+                description: "We couldn't find your user profile. Please try signing up again.",
+                variant: 'destructive',
+              });
+              await auth.signOut();
+              setLocalAppUser(null);
+            }
           }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching user document from Firestore:", error);
+            // This can happen if rules are wrong or firestore is down.
             toast({
                 title: 'Could not load profile',
-                description: 'There was a problem fetching your user data. Please try logging in again.',
+                description: `There was a problem fetching your user data. Please try logging in again. Error: ${error.message}`,
                 variant: 'destructive',
             });
             await auth.signOut();
@@ -70,14 +84,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const setAppUser = useCallback(async (userData: Partial<User>) => {
-    const currentUser = auth.currentUser; 
+    // This function can be called before the user is set in state,
+    // so we get the user directly from auth.
+    const currentUser = auth.currentUser;
     const userId = userData.userId || currentUser?.uid;
 
     if (!userId) {
       const errorMsg = "Could not save user data because no user is logged in.";
       console.error("setAppUser failed:", errorMsg);
       toast({ title: 'Save Failed', description: errorMsg, variant: 'destructive' });
-      throw new Error(errorMsg);
+      return; // Return instead of throwing to prevent app crash
     }
 
     const userRef = doc(firestore, 'users', userId);
@@ -91,10 +107,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await setDoc(userRef, userData as User);
         setLocalAppUser(userData as User);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
-      toast({ title: 'Save Failed', description: "There was a problem saving your data to the cloud.", variant: 'destructive' });
-      throw error;
+      toast({
+        title: 'Save Failed',
+        description: `There was a problem saving your data. Error: ${error.message}`,
+        variant: 'destructive'
+      });
+      throw error; // Re-throw to be caught by the calling form
     }
   }, [toast]);
   
