@@ -300,8 +300,8 @@ export default function ParentSetupPage() {
                                 </Button>
                             )}
                              {step === totalSteps && (
-                                <Button type="button" onClick={() => router.push('/login')} className="w-full">
-                                    Go to Login Page
+                                <Button type="button" onClick={() => router.push('/')} className="w-full">
+                                    Go to App
                                 </Button>
                             )}
                         </CardContent>

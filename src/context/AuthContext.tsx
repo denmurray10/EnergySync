@@ -53,29 +53,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             parsedUser.featureVisibility = { insights: true, friends: true, communityMode: true };
           }
           setLocalAppUser(parsedUser);
-        } else if (user.displayName) {
-          // Fallback: If user has a display name but no stored data (e.g., first login after onboarding)
-          const newUser: User = {
-            userId: user.uid,
-            name: user.displayName,
-            avatar: user.photoURL || `https://placehold.co/100x100.png`,
-            membershipTier: 'free',
-            petCustomization: defaultPetCustomization,
-            petLevel: 1,
-            petExp: 0,
-            petName: 'Buddy',
-            petType: 'dog',
-            petEnabled: true,
-            parentalPin: null,
-            parentEmail: null,
-            featureVisibility: {
-                insights: true,
-                friends: true,
-                communityMode: true,
-            }
-          };
-          setLocalAppUser(newUser);
-          localStorage.setItem(`energysync_user_${user.uid}`, JSON.stringify(newUser));
+        } else {
+          // If no stored user, set to null to trigger onboarding.
+          // We removed the risky fallback logic here.
+          setLocalAppUser(null);
         }
 
         const storedChatHistory = localStorage.getItem(`energysync_chat_${user.uid}`);
