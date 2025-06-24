@@ -122,10 +122,12 @@ export interface EnergyHotspotAnalysis {
 }
 
 export interface Friend {
-  id: number;
+  id: string;
   name: string;
   avatar: string;
   avatarHint: string;
   energyStatus: string;
   currentEnergy: number;
+  isPlaceholder?: boolean;
+  isMe?: boolean;
 }

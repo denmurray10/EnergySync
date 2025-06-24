@@ -117,25 +117,21 @@ export default function HomePage() {
   }, [toast]);
 
   const unlockAchievement = useCallback((name: string) => {
-    setAchievements(prevAchievements => {
-      const isAlreadyUnlocked = prevAchievements.some(a => a.name === name && a.unlocked);
+    const isAlreadyUnlocked = achievements.some(a => a.name === name && a.unlocked);
+    if (isAlreadyUnlocked) return;
 
-      if (!isAlreadyUnlocked) {
-        const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
-        if (achievement) {
-          // Defer the toast notification to run after the current render cycle.
-          setTimeout(() => {
-            showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
-          }, 0);
-        }
-        // Return the new, updated state.
-        return prevAchievements.map(a => a.name === name ? { ...a, unlocked: true } : a);
+    setAchievements(prevAchievements =>
+      prevAchievements.map(a => a.name === name ? { ...a, unlocked: true } : a)
+    );
+    
+    // Defer toast to avoid state updates during render
+    setTimeout(() => {
+      const achievement = INITIAL_ACHIEVEMENTS.find(a => a.name === name);
+      if (achievement) {
+        showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
       }
-      
-      // If already unlocked, return the existing state to prevent a re-render.
-      return prevAchievements;
-    });
-  }, [showToast]);
+    }, 0);
+  }, [achievements, showToast]);
 
   // REDIRECT AND ONBOARDING LOGIC
   useEffect(() => {
@@ -413,13 +409,28 @@ export default function HomePage() {
     return "Need to recharge 🔋";
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('Status Copied!', 'Your energy status is ready to be shared.', '📋');
-    }).catch(err => {
-      console.error('Failed to copy text: ', err);
-      showToast('Copy Failed', 'Could not copy status to clipboard.', '❌');
+  const handleShareStatus = () => {
+    if (!appUser) return;
+  
+    const meFriend: Friend = {
+      id: appUser.userId,
+      name: appUser.name,
+      avatar: appUser.avatar || 'https://placehold.co/100x100.png',
+      avatarHint: 'profile picture',
+      energyStatus: getEnergyStatus(currentEnergy),
+      currentEnergy: currentEnergy,
+      isMe: true,
+    };
+
+    const otherFriends = friends.filter(f => !f.isMe);
+    setFriends([meFriend, ...otherFriends]);
+
+    toast({
+      title: 'Status Shared',
+      description: 'Your status is now at the top of your Friend Network.',
     });
+    
+    setActiveTab('insights');
   };
 
   const openModal = (modalName: keyof typeof modals) => setModals(prev => ({ ...prev, [modalName]: true }));
@@ -709,7 +720,7 @@ export default function HomePage() {
               communityMode={communityMode}
               setCommunityMode={toggleCommunityMode}
               getEnergyStatus={getEnergyStatus}
-              copyToClipboard={copyToClipboard}
+              onShareStatus={handleShareStatus}
               openModal={openModal}
               aiSuggestion={aiSuggestion}
               actionableSuggestion={actionableSuggestion}
@@ -769,6 +780,7 @@ export default function HomePage() {
               energyHotspots={energyHotspots}
               isHotspotsLoading={isHotspotsLoading}
               friends={friends}
+              setFriends={setFriends}
             />
           )}
           {activeTab === "profile" && (

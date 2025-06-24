@@ -47,7 +47,7 @@ type HomeTabProps = {
   communityMode: boolean;
   setCommunityMode: (value: boolean) => void;
   getEnergyStatus: (energy: number) => string;
-  copyToClipboard: (text: string) => void;
+  onShareStatus: () => void;
   openModal: (modalName: string) => void;
   aiSuggestion: string | null;
   actionableSuggestion: ActionableSuggestion | null;
@@ -89,7 +89,7 @@ export function HomeTab({
   communityMode,
   setCommunityMode,
   getEnergyStatus,
-  copyToClipboard,
+  onShareStatus,
   openModal,
   aiSuggestion,
   actionableSuggestion,
@@ -159,7 +159,7 @@ export function HomeTab({
             <p className="text-lg font-bold text-purple-600 mb-3">
               "{getEnergyStatus(currentEnergy)}"
             </p>
-            <Button onClick={() => copyToClipboard(getEnergyStatus(currentEnergy))}>
+            <Button onClick={onShareStatus}>
               <Share2 className="mr-2 h-4 w-4" />
               Share Status
             </Button>
