@@ -277,7 +277,7 @@ export default function ParentSetupPage() {
 
     return (
         <main className="min-h-dvh bg-background flex items-center justify-center p-4">
-            <Card className="w-full max-w-md shadow-2xl">
+            <Card className="w-full max-w-md shadow-2xl relative">
                 <CardHeader className="text-center items-center">
                     <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
                         <Shield className="h-8 w-8 text-primary" />
