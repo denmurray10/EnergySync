@@ -39,8 +39,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (userSnap.exists()) {
             setLocalAppUser(userSnap.data() as User);
           } else {
-            // This is a critical error state: user exists in Auth, but not in Firestore.
-            // This means their signup failed. We should sign them out and inform them.
             console.error(`CRITICAL: No Firestore document found for authenticated user ${user.uid}. Signing out.`);
             toast({
               title: 'Profile Not Found',
@@ -63,7 +61,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
         }
       } else {
-        // User is logged out
         setLocalAppUser(null);
         setLoading(false);
       }
@@ -73,24 +70,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
 
   const setAppUser = useCallback(async (userData: Partial<User>) => {
-    const currentUser = auth.currentUser;
-    if (!currentUser && !userData.userId) {
-      throw new Error("User not authenticated and no userId provided.");
+    const currentUser = auth.currentUser; 
+    const userId = userData.userId || currentUser?.uid;
+
+    if (!userId) {
+      const errorMsg = "Could not save user data because no user is logged in.";
+      console.error("setAppUser failed:", errorMsg);
+      toast({ title: 'Save Failed', description: errorMsg, variant: 'destructive' });
+      throw new Error(errorMsg);
     }
 
-    const userId = currentUser ? currentUser.uid : userData.userId!;
     const userRef = doc(firestore, 'users', userId);
     
-    const docSnap = await getDoc(userRef);
-
-    if (docSnap.exists()) {
-      await updateDoc(userRef, userData);
-      setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
-    } else {
-      await setDoc(userRef, userData as User);
-      setLocalAppUser(userData as User);
+    try {
+      const docSnap = await getDoc(userRef);
+      if (docSnap.exists()) {
+        await updateDoc(userRef, userData);
+        setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
+      } else {
+        await setDoc(userRef, userData as User);
+        setLocalAppUser(userData as User);
+      }
+    } catch (error) {
+      console.error("Firestore operation failed in setAppUser:", error);
+      toast({ title: 'Save Failed', description: "There was a problem saving your data to the cloud.", variant: 'destructive' });
+      throw error;
     }
-  }, []);
+  }, [toast]);
   
   const addChatMessage = useCallback(async (message: ChatMessage) => {
     if (appUser) {
