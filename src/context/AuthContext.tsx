@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             petName: 'Buddy',
             petType: 'dog',
             petEnabled: true,
+            parentalPin: null,
           };
           setLocalAppUser(newUser);
           localStorage.setItem(`energysync_user_${user.uid}`, JSON.stringify(newUser));

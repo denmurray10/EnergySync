@@ -60,6 +60,7 @@ export interface User {
   petName: string;
   petType: 'cat' | 'dog' | 'horse' | 'chicken';
   petEnabled: boolean;
+  parentalPin?: string | null;
 }
 
 export interface Goal {

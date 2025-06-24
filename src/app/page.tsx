@@ -38,6 +38,7 @@ import { AgeGateModal } from "@/components/age-gate-modal";
 import { QRCodeModal } from "@/components/qr-code-modal";
 import { OnboardingScreen } from "@/components/onboarding-screen";
 import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
+import { ParentalControlModal } from "@/components/parental-control-modal";
 
 
 const locations = ['Home', 'Office', 'Park', 'Cafe'];
@@ -70,6 +71,7 @@ export default function HomePage() {
     petSettings: false,
     qrCode: false,
     readinessSurvey: false,
+    parentalControls: false,
   });
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -98,6 +100,7 @@ export default function HomePage() {
   const [isForecastLoading, setIsForecastLoading] = useState(false);
   const [energyHotspots, setEnergyHotspots] = useState<EnergyHotspotAnalysis | null>(null);
   const [isHotspotsLoading, setIsHotspotsLoading] = useState(false);
+  const [isParentModeUnlocked, setIsParentModeUnlocked] = useState(false);
 
   // Pet feature state
   const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
@@ -117,14 +120,16 @@ export default function HomePage() {
   }, [toast]);
 
   const unlockAchievement = useCallback((name: string) => {
-    const achievement = achievements.find((a) => a.name === name);
-    if (!achievement || achievement.unlocked) return;
+    setAchievements(prevAchievements => {
+        const achievement = prevAchievements.find((a) => a.name === name);
+        if (achievement && !achievement.unlocked) {
+            showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
+            return prevAchievements.map(a => (a.name === name ? { ...a, unlocked: true } : a));
+        }
+        return prevAchievements;
+    });
+  }, [showToast]);
 
-    setAchievements(prevAchievements =>
-      prevAchievements.map(a => (a.name === name ? { ...a, unlocked: true } : a))
-    );
-    showToast(`Achievement Unlocked!`, `You've earned: ${achievement.name}`, achievement.icon);
-  }, [achievements, showToast]);
 
   // REDIRECT AND ONBOARDING LOGIC
   useEffect(() => {
@@ -687,6 +692,21 @@ export default function HomePage() {
         closeModal('petSettings');
     }
   };
+  
+  const handlePinSet = (pin: string) => {
+    if (appUser) {
+      handleUpdateUser({ parentalPin: pin });
+      setIsParentModeUnlocked(true); // Unlock automatically after setting
+      toast({ title: "Parental PIN Set!", description: "Sensitive settings are now protected." });
+    }
+  };
+
+  const handlePinVerified = () => {
+    setIsParentModeUnlocked(true);
+    closeModal('parentalControls');
+    toast({ title: "Controls Unlocked", description: "You can now access parent settings." });
+  };
+
 
   if (authLoading) {
     return (
@@ -801,6 +821,7 @@ export default function HomePage() {
               onAgeGroupChange={handleAgeGroupChange}
               onUpdateUser={handleUpdateUser}
               openModal={openModal}
+              isParentModeUnlocked={isParentModeUnlocked}
             />
           )}
         </div>
@@ -907,6 +928,22 @@ export default function HomePage() {
             onComplete={handleReadinessSurveyComplete}
             isProMember={isProMember}
          />
+         {appUser && (
+            <ParentalControlModal
+                open={modals.parentalControls}
+                onOpenChange={(isOpen) => {
+                    if (!isOpen && !isParentModeUnlocked) {
+                        // Don't close if they failed to verify, just let them try again or cancel
+                    } else {
+                         closeModal('parentalControls');
+                    }
+                }}
+                mode={appUser.parentalPin ? 'verify' : 'set'}
+                correctPin={appUser.parentalPin}
+                onPinSet={handlePinSet}
+                onPinVerified={handlePinVerified}
+            />
+         )}
       </div>
     </main>
   );

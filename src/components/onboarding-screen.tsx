@@ -62,6 +62,7 @@ export function OnboardingScreen() {
             petName: 'Buddy',
             petType: 'dog',
             petEnabled: true,
+            parentalPin: null,
         };
         // The setAppUser function in context will handle creating/saving this to localStorage
         setAppUser(initialUser);

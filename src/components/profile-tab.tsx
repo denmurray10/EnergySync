@@ -3,10 +3,10 @@
 
 import { useRef, ChangeEvent } from "react";
 import type { User } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera, QrCode, LogOut } from "lucide-react";
+import { Film, Star, BookOpen, Crown, PawPrint, Users, Camera, QrCode, LogOut, ShieldCheck, LockKeyhole } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -24,9 +24,10 @@ type ProfileTabProps = {
   onAgeGroupChange: (group: 'under14' | 'over14') => void;
   onUpdateUser: (updatedData: Partial<User>) => void;
   openModal: (modalName: string) => void;
+  isParentModeUnlocked: boolean;
 };
 
-export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser, openModal }: ProfileTabProps) {
+export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShowDebrief, onTierChange, onTogglePet, onAgeGroupChange, onUpdateUser, openModal, isParentModeUnlocked }: ProfileTabProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { signOut } = useAuth();
 
@@ -43,6 +44,8 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
   };
 
   if (!user) return null;
+  
+  const areSettingsLocked = !!user.parentalPin && !isParentModeUnlocked;
 
   return (
     <div className="space-y-6">
@@ -75,31 +78,53 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
         )}
       </div>
 
+       <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center text-xl">
+            <ShieldCheck className="text-green-500 mr-3" />
+            Parental Controls
+          </CardTitle>
+          <CardDescription>
+            {user.parentalPin ? "PIN is set. Settings are locked." : "Set a PIN to lock sensitive settings."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Button onClick={() => openModal('parentalControls')} className="w-full">
+                {user.parentalPin ? (areSettingsLocked ? "Unlock Settings" : "Manage PIN") : "Set PIN"}
+            </Button>
+        </CardContent>
+      </Card>
+
+
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="flex items-center text-xl">
             <Crown className="text-yellow-500 mr-3" />
             Membership
           </CardTitle>
+          {areSettingsLocked && <CardDescription>Enter Parent PIN to change membership.</CardDescription>}
         </CardHeader>
         <CardContent>
-          <RadioGroup 
-            value={user.membershipTier} 
-            onValueChange={(value: 'free' | 'pro') => onTierChange(value)}
-            className="space-y-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="free" id="free" />
-              <Label htmlFor="free">Free</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="pro" id="pro" />
-              <Label htmlFor="pro">Pro</Label>
-            </div>
-          </RadioGroup>
-          <p className="text-sm text-muted-foreground mt-4">
-            {isProMember ? "You have access to all AI features!" : "Upgrade to Pro to unlock all smart features."}
-          </p>
+            {areSettingsLocked ? (
+                <div className="flex items-center justify-center p-4 bg-muted rounded-lg text-muted-foreground">
+                    <LockKeyhole className="mr-2 h-4 w-4"/> Locked
+                </div>
+            ) : (
+                <RadioGroup 
+                    value={user.membershipTier} 
+                    onValueChange={(value: 'free' | 'pro') => onTierChange(value)}
+                    className="space-y-2"
+                >
+                    <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="free" id="free" />
+                    <Label htmlFor="free">Free</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pro" id="pro" />
+                    <Label htmlFor="pro">Pro</Label>
+                    </div>
+                </RadioGroup>
+            )}
         </CardContent>
       </Card>
 
@@ -130,20 +155,26 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
                         Select your age group for a tailored experience.
                     </p>
                 </div>
-                <RadioGroup 
-                    value={ageGroup ?? 'over14'} 
-                    onValueChange={(value) => onAgeGroupChange(value as 'under14' | 'over14')}
-                    className="space-y-2 pt-2"
-                >
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="under14" id="under14" />
-                        <Label htmlFor="under14" className="font-normal">Under 14</Label>
+                 {areSettingsLocked ? (
+                    <div className="flex items-center justify-center p-4 bg-muted rounded-lg text-muted-foreground">
+                        <LockKeyhole className="mr-2 h-4 w-4"/> Locked
                     </div>
-                    <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="over14" id="over14" />
-                        <Label htmlFor="over14" className="font-normal">14 or Over</Label>
-                    </div>
-                </RadioGroup>
+                ) : (
+                    <RadioGroup 
+                        value={ageGroup ?? 'over14'} 
+                        onValueChange={(value) => onAgeGroupChange(value as 'under14' | 'over14')}
+                        className="space-y-2 pt-2"
+                    >
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="under14" id="under14" />
+                            <Label htmlFor="under14" className="font-normal">Under 14</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="over14" id="over14" />
+                            <Label htmlFor="over14" className="font-normal">14 or Over</Label>
+                        </div>
+                    </RadioGroup>
+                )}
             </div>
              <Button onClick={() => openModal('qrCode')} variant="outline" className="w-full justify-start">
                 <QrCode className="mr-2 h-4 w-4" />
