@@ -69,6 +69,7 @@ export interface User {
     friends: boolean;
     communityMode: boolean;
   };
+  howDidYouHear?: string;
 }
 
 export interface Goal {
