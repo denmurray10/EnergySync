@@ -11,7 +11,7 @@ import { INITIAL_FRIENDS } from '@/lib/data';
 interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   appUser: User | null;
-  setAppUser: (user: Partial<User>) => void;
+  setAppUser: (user: Partial<User>) => Promise<void>;
   loading: boolean;
   signOut: () => Promise<void>;
   friends: Friend[];
@@ -37,8 +37,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (userSnap.exists()) {
           setLocalAppUser(userSnap.data() as User);
         } else {
-          // Doc doesn't exist. This happens during signup.
-          // The signup flow will call setAppUser which will create the doc.
+          // Doc doesn't exist. This happens during signup, right before setAppUser is called.
+          // We set it to null so the app knows the profile is not yet loaded.
           setLocalAppUser(null);
         }
       } else {
@@ -54,29 +54,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const setAppUser = useCallback(async (updatedData: Partial<User>) => {
     const currentUser = auth.currentUser;
     if (!currentUser) {
-        console.error("Cannot set user data, no firebase user is available in `auth.currentUser`.");
+        console.error("Cannot set user data, no firebase user is available.");
         return;
     }
     
     const userRef = doc(firestore, 'users', currentUser.uid);
+    const userSnap = await getDoc(userRef);
 
-    setLocalAppUser(prevUser => {
-        const newUser = prevUser ? { ...prevUser, ...updatedData } : updatedData as User;
-        
-        // This is an async operation, but we don't wait for it to complete
-        // to keep the UI responsive. This is "fire and forget".
-        const saveToFirestore = async () => {
-             if (prevUser) {
-                 await updateDoc(userRef, updatedData);
-            } else {
-                await setDoc(userRef, newUser);
-            }
-        };
-        saveToFirestore().catch(console.error);
-        
-        return newUser;
-    });
-
+    if (userSnap.exists()) {
+        // Update existing document
+        await updateDoc(userRef, updatedData);
+        setLocalAppUser(prevUser => ({ ...(prevUser as User), ...updatedData }));
+    } else {
+        // Create new document
+        const newUser = updatedData as User;
+        await setDoc(userRef, newUser);
+        setLocalAppUser(newUser);
+    }
   }, []);
   
   const addChatMessage = useCallback((message: ChatMessage) => {

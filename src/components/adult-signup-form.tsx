@@ -176,7 +176,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                 friends: INITIAL_FRIENDS,
             };
 
-            setAppUser(initialUser);
+            await setAppUser(initialUser);
             router.push('/');
 
         } catch (error: any) {

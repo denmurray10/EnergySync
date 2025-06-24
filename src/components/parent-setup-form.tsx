@@ -167,8 +167,7 @@ export function ParentSetupForm() {
                 friends: INITIAL_FRIENDS,
             };
             
-            setAppUser(initialUser);
-            // localStorage is no longer needed, AuthContext handles persistence
+            await setAppUser(initialUser);
             
             setStep(s => s + 1);
 
