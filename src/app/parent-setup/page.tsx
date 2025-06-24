@@ -82,6 +82,8 @@ export default function ParentSetupPage() {
         if (isValid) {
             if (step === 1 && ageGroup === 'over18') {
                  setStep(3); // Skip feature visibility for over 18
+            } else if (step === 3 && ageGroup === 'over18') {
+                 setStep(step + 2); // Skip trial for over 18 and go to success
             } else {
                 setStep(s => s + 1);
             }
@@ -140,7 +142,7 @@ export default function ParentSetupPage() {
             localStorage.setItem('energysync_age_group', data.ageGroup);
 
             
-            setStep(s => s + 1); // Go to success screen
+            setStep(totalSteps); // Go to success screen
 
         } catch (error: any) {
             console.error("Account creation error:", error);
@@ -209,10 +211,10 @@ export default function ParentSetupPage() {
              case 3: return (
                  <CardContent className="space-y-4">
                     <FormField control={form.control} name="childName" render={({ field }) => (
-                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} autoComplete="off" /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="childUsername" render={({ field }) => (
-                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} autoComplete="off" /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </CardContent>
             );
@@ -292,7 +294,7 @@ export default function ParentSetupPage() {
                                     Create Account & Finish
                                 </Button>
                             )}
-                            {step < totalSteps && (
+                             {step < totalSteps && (
                                 <Button type="button" variant="outline" onClick={handleBack} className="w-full">
                                     <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                 </Button>
