@@ -70,6 +70,7 @@ export interface User {
     communityMode: boolean;
   };
   howDidYouHear?: string;
+  whatDoYouExpect?: string;
 }
 
 export interface Goal {

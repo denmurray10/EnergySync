@@ -31,6 +31,15 @@ const hearOptions = [
     { value: "other", label: "Other" },
 ];
 
+const whatToGetOptions = [
+    { value: "track_energy", label: "Track my energy levels" },
+    { value: "mental_wellbeing", label: "Improve my wellbeing" },
+    { value: "understand_routine", label: "Understand my daily routine" },
+    { value: "get_suggestions", label: "Get activity suggestions" },
+    { value: "other", label: "Other" },
+];
+
+
 // --- Parent Setup Form Component ---
 
 const parentSetupSchema = z.object({
@@ -46,6 +55,9 @@ const parentSetupSchema = z.object({
   childName: z.string().min(2, "Child's name must be at least 2 characters."),
   childUsername: z.string().min(3, "Username must be at least 3 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
   howDidYouHear: z.enum(["social", "friend", "app_store", "advertisement", "other"], {
+    errorMap: () => ({ message: "Please select an option." }),
+  }),
+  whatDoYouExpect: z.enum(["track_energy", "mental_wellbeing", "understand_routine", "get_suggestions", "other"], {
     errorMap: () => ({ message: "Please select an option." }),
   }),
   acceptTrial: z.boolean().default(false),
@@ -74,12 +86,13 @@ function ParentSetupForm() {
             childName: '',
             childUsername: '',
             howDidYouHear: undefined,
+            whatDoYouExpect: undefined,
             acceptTrial: false,
         },
         mode: 'onTouched',
     });
 
-    const totalSteps = 6;
+    const totalSteps = 7;
     const progress = ((step + 1) / (totalSteps + 1)) * 100;
 
     const handleNext = async () => {
@@ -90,6 +103,7 @@ function ParentSetupForm() {
             case 2: fieldsToValidate = ['featureVisibility']; break;
             case 3: fieldsToValidate = ['childName', 'childUsername']; break;
             case 4: fieldsToValidate = ['howDidYouHear']; break;
+            case 5: fieldsToValidate = ['whatDoYouExpect']; break;
         }
 
         const isValid = await form.trigger(fieldsToValidate as any);
@@ -142,6 +156,7 @@ function ParentSetupForm() {
                 parentEmail: data.parentEmail,
                 featureVisibility: data.featureVisibility,
                 howDidYouHear: data.howDidYouHear,
+                whatDoYouExpect: data.whatDoYouExpect,
             };
             
             setAppUser(initialUser);
@@ -178,10 +193,10 @@ function ParentSetupForm() {
                         <FormItem><FormLabel>Your Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="parentalPin" render={({ field }) => (
-                         <FormItem><FormLabel>Create a 4-Digit PIN</FormLabel><FormControl><Input type="password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
+                         <FormItem><FormLabel>Create a 4-Digit PIN</FormLabel><FormControl><Input type="password" autoComplete="new-password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="confirmPin" render={({ field }) => (
-                        <FormItem><FormLabel>Confirm PIN</FormLabel><FormControl><Input type="password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Confirm PIN</FormLabel><FormControl><Input type="password" autoComplete="new-password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </CardContent>
             );
@@ -224,10 +239,10 @@ function ParentSetupForm() {
              case 3: return (
                  <CardContent className="space-y-4" key="step-3-parent">
                     <FormField control={form.control} name="childName" render={({ field }) => (
-                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" autoComplete="new-password" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="childUsername" render={({ field }) => (
-                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" autoComplete="new-password" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </CardContent>
             );
@@ -251,7 +266,26 @@ function ParentSetupForm() {
                  </CardContent>
             );
             case 5: return (
-                <CardContent className="text-center" key="step-5-parent">
+                 <CardContent key="step-5-parent">
+                     <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
+                         <FormItem>
+                            <FormControl>
+                                <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
+                                    {whatToGetOptions.map(opt => (
+                                         <Label key={opt.value} htmlFor={`expect-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                            <p>{opt.label}</p>
+                                            <RadioGroupItem value={opt.value} id={`expect-${opt.value}`} />
+                                        </Label>
+                                    ))}
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage className="pt-2" />
+                         </FormItem>
+                     )}/>
+                 </CardContent>
+            );
+            case 6: return (
+                <CardContent className="text-center" key="step-6-parent">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features for your child?</p>
                      <FormField control={form.control} name="acceptTrial" render={({ field }) => (
                         <div className="flex items-center justify-center gap-4 mt-6">
@@ -279,6 +313,7 @@ function ParentSetupForm() {
             "Select Visible Features",
             "Child's Account Details",
             "How did you hear about us?",
+            "What do you expect from the app?",
             "Free Pro Trial",
             "All Done!",
         ];
@@ -292,6 +327,7 @@ function ParentSetupForm() {
             "Choose which major features your child can access. You can change these later from the Parent Dashboard.",
             "This creates the login for your child. The username must be unique. A temporary password will be generated.",
             "This helps us understand how people find EnergySync.",
+            "This helps us improve the app based on your needs.",
             "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
             "Your child's account is ready. Please share their login details with them.",
         ];
@@ -349,6 +385,10 @@ const adultSignupSchema = z.object({
   howDidYouHear: z.enum(["social", "friend", "app_store", "advertisement", "other"], {
     errorMap: () => ({ message: "Please select an option." }),
   }),
+   whatDoYouExpect: z.enum(["track_energy", "mental_wellbeing", "understand_routine", "get_suggestions", "other"], {
+    errorMap: () => ({ message: "Please select an option." }),
+  }),
+  acceptTrial: z.boolean().default(false),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match.",
   path: ["confirmPassword"],
@@ -365,17 +405,32 @@ function AdultSignupForm() {
 
     const form = useForm<AdultSignupFormValues>({
         resolver: zodResolver(adultSignupSchema),
-        defaultValues: { name: '', email: '', password: '', confirmPassword: '', howDidYouHear: undefined },
+        defaultValues: { 
+            name: '', 
+            email: '', 
+            password: '', 
+            confirmPassword: '', 
+            howDidYouHear: undefined,
+            whatDoYouExpect: undefined,
+            acceptTrial: false
+        },
         mode: 'onTouched',
     });
 
-    const totalSteps = 2;
-    const progress = ((step + 1) / (totalSteps + 1)) * 100;
+    const totalSteps = 4;
+    const progress = ((step + 1) / totalSteps) * 100;
     
     const handleNext = async () => {
-        const isValid = await form.trigger(['name', 'email', 'password', 'confirmPassword']);
+        let fieldsToValidate: (keyof AdultSignupFormValues)[] = [];
+        switch(step) {
+            case 0: fieldsToValidate = ['name', 'email', 'password', 'confirmPassword']; break;
+            case 1: fieldsToValidate = ['howDidYouHear']; break;
+            case 2: fieldsToValidate = ['whatDoYouExpect']; break;
+        }
+
+        const isValid = await form.trigger(fieldsToValidate as any);
         if (isValid) {
-            setStep(1);
+            setStep(s => s + 1);
         }
     };
 
@@ -383,7 +438,7 @@ function AdultSignupForm() {
         if (step === 0) {
             router.push('/welcome');
         } else {
-            setStep(0);
+            setStep(s => s - 1);
         }
     };
 
@@ -393,13 +448,16 @@ function AdultSignupForm() {
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
             await updateProfile(user, { displayName: data.name });
+            
+            const trialEndDate = data.acceptTrial ? formatISO(addDays(new Date(), 3)) : null;
 
             const initialUser: User = {
                 userId: user.uid,
                 name: data.name,
                 username: data.email.split('@')[0], // Use email part as username
                 avatar: `https://placehold.co/100x100.png`,
-                membershipTier: 'free',
+                membershipTier: data.acceptTrial ? 'pro' : 'free',
+                proTrialEndDate: trialEndDate,
                 petCustomization: {
                     color: '#a8a29e', outlineColor: '#4c51bf', accessory: 'none', background: 'default',
                     unlockedColors: ['#a8a29e'], unlockedOutlineColors: ['#4c51bf'], unlockedAccessories: ['none'], unlockedBackgrounds: ['default'],
@@ -409,6 +467,7 @@ function AdultSignupForm() {
                 parentEmail: null,
                 featureVisibility: { insights: true, friends: true, communityMode: true },
                 howDidYouHear: data.howDidYouHear,
+                whatDoYouExpect: data.whatDoYouExpect,
             };
 
             setAppUser(initialUser);
@@ -429,6 +488,98 @@ function AdultSignupForm() {
         }
     }
 
+    const getStepTitle = () => {
+        const titles = [
+            "Create Your Account",
+            "How did you hear about us?",
+            "What do you expect from the app?",
+            "Free Pro Trial",
+        ];
+        return titles[step] || '';
+    };
+
+     const getStepDescription = () => {
+        const descriptions = [
+            "Let's get you set up with your own account.",
+            "This helps us understand our community.",
+            "This helps us improve the app based on your needs.",
+            "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
+        ];
+        return descriptions[step] || '';
+    };
+
+    const getStepContent = () => {
+         switch (step) {
+            case 0: return (
+                <CardContent className="space-y-4" key="step-0-adult">
+                    <FormField control={form.control} name="name" render={({ field }) => (
+                        <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Alex Smith" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="email" render={({ field }) => (
+                        <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="password" render={({ field }) => (
+                        <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                        <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                        <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}/>
+                </CardContent>
+            );
+            case 1: return (
+                <CardContent key="step-1-adult">
+                    <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
+                                    {hearOptions.map(opt => (
+                                        <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                            <p>{opt.label}</p>
+                                            <RadioGroupItem value={opt.value} id={`hear-${opt.value}`} />
+                                        </Label>
+                                    ))}
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage className="pt-2" />
+                        </FormItem>
+                    )}/>
+                </CardContent>
+            );
+            case 2: return (
+                 <CardContent key="step-2-adult">
+                     <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
+                         <FormItem>
+                            <FormControl>
+                                <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
+                                    {whatToGetOptions.map(opt => (
+                                         <Label key={opt.value} htmlFor={`expect-adult-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                            <p>{opt.label}</p>
+                                            <RadioGroupItem value={opt.value} id={`expect-adult-${opt.value}`} />
+                                        </Label>
+                                    ))}
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage className="pt-2" />
+                         </FormItem>
+                     )}/>
+                 </CardContent>
+            );
+            case 3: return (
+                <CardContent className="text-center" key="step-3-adult">
+                    <p className="text-lg">Would you like to start a free 3-day trial of our Pro features?</p>
+                     <FormField control={form.control} name="acceptTrial" render={({ field }) => (
+                        <div className="flex items-center justify-center gap-4 mt-6">
+                            <Button type="button" variant={field.value ? "default" : "outline"} onClick={() => field.onChange(true)}>Yes, start trial</Button>
+                            <Button type="button" variant={!field.value ? "default" : "outline"} onClick={() => field.onChange(false)}>No, thanks</Button>
+                        </div>
+                    )}/>
+                </CardContent>
+            );
+            default: return null;
+         }
+    };
+
+
     return (
         <main className="min-h-dvh bg-background flex items-center justify-center p-4">
             <Card className="w-full max-w-md shadow-2xl relative">
@@ -436,52 +587,17 @@ function AdultSignupForm() {
                     <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
                         <UserIcon className="h-8 w-8 text-primary" />
                     </div>
-                    <CardTitle className="text-2xl">{step === 0 ? "Create Your Account" : "One Last Question"}</CardTitle>
-                    <CardDescription>{step === 0 ? "Let's get you set up with your own account." : "This helps us understand our community."}</CardDescription>
+                    <CardTitle className="text-2xl">{getStepTitle()}</CardTitle>
+                    <CardDescription>{getStepDescription()}</CardDescription>
                 </CardHeader>
 
                 <Progress value={progress} className="w-[90%] mx-auto mb-4" />
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        {step === 0 && (
-                             <CardContent className="space-y-4" key="step-0-adult">
-                                <FormField control={form.control} name="name" render={({ field }) => (
-                                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Alex Smith" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="email" render={({ field }) => (
-                                    <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name="password" render={({ field }) => (
-                                    <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                 <FormField control={form.control} name="confirmPassword" render={({ field }) => (
-                                    <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                                )}/>
-                            </CardContent>
-                        )}
-                        {step === 1 && (
-                            <CardContent key="step-1-adult">
-                                <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
-                                                {hearOptions.map(opt => (
-                                                    <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                                        <p>{opt.label}</p>
-                                                        <RadioGroupItem value={opt.value} id={`hear-${opt.value}`} />
-                                                    </Label>
-                                                ))}
-                                            </RadioGroup>
-                                        </FormControl>
-                                        <FormMessage className="pt-2" />
-                                    </FormItem>
-                                )}/>
-                            </CardContent>
-                        )}
-
+                        {getStepContent()}
                         <CardContent className="flex flex-col gap-2">
-                             {step === 0 ? (
+                             {step < totalSteps - 1 ? (
                                 <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                             ) : (
                                 <Button type="submit" className="w-full" disabled={loading}>
