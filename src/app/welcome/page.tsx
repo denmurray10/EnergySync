@@ -40,7 +40,19 @@ export default function WelcomePage() {
                 </div>
             </div>
           </Button>
-          <Button onClick={() => router.push('/login')} variant="link" className="font-semibold">
+
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Or
+              </span>
+            </div>
+          </div>
+          
+          <Button onClick={() => router.push('/login')} variant="outline" className="w-full font-semibold">
             I already have an account
           </Button>
         </CardContent>
