@@ -70,23 +70,31 @@ export default function LoginPage() {
         router.push('/'); // Will be redirected to setup if display name is missing
       }
     } catch (error: any) {
+      console.error(`${activeTab} error:`, error);
       let description = "An unexpected error occurred. Please try again.";
-      const isApiKeyError = (error.code && String(error.code).includes('api-key')) || (error.message && String(error.message).includes('api-key'));
 
-      if (isApiKeyError) {
-        description = "Authentication failed. This can happen if the app's domain is not authorized in your Firebase project. Please check your Firebase console settings.";
-      } else {
-        console.error(`${activeTab} error:`, error);
-         switch (error.code) {
-          case 'auth/invalid-credential':
-            description = "Invalid email or password. Please try again.";
+      switch (error.code) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/user-not-found':
+          description = "Invalid email or password. Please check your credentials and try again.";
+          break;
+        case 'auth/email-already-in-use':
+          description = "This email address is already in use. Please sign in or use a different email.";
+          break;
+        case 'auth/operation-not-allowed':
+          description = "Email/Password sign-in is not enabled for this project. Please enable it in your Firebase console under Authentication > Sign-in method.";
+          break;
+        case 'auth/network-request-failed':
+            description = "A network error occurred. Please check your internet connection.";
             break;
-          case 'auth/email-already-in-use':
-            description = "This email address is already in use. Please sign in or use a different email.";
-            break;
-          default:
-            description = error.message || description;
-        }
+        default:
+          if (error.message && (error.message.includes('auth/unauthorized-domain') || error.message.includes('authorized-domain'))) {
+              description = "This app's domain is not authorized for authentication. Please add it to the 'Authorized domains' list in your Firebase Authentication settings.";
+          } else {
+              description = "An unknown error occurred. Please check your Firebase project configuration and ensure it's set up correctly.";
+          }
+          break;
       }
 
       toast({
