@@ -17,10 +17,16 @@ export default function WelcomePage() {
   const handleAgeSelect = (group: 'under14' | '14to17' | 'over18') => {
     setShowAgeGate(false);
     if (group === 'over18') {
+      localStorage.setItem('energysync_signup_mode', 'adult');
       router.push('/parent-setup');
     } else {
       setShowGuardianMessage(true);
     }
+  };
+
+  const handleParentSetupClick = () => {
+    localStorage.setItem('energysync_signup_mode', 'parent');
+    router.push('/parent-setup');
   };
 
 
@@ -37,7 +43,7 @@ export default function WelcomePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Button onClick={() => router.push('/parent-setup')} size="lg" className="w-full h-auto py-4">
+          <Button onClick={handleParentSetupClick} size="lg" className="w-full h-auto py-4">
             <div className="flex items-center">
                 <Shield className="mr-3 h-6 w-6"/>
                 <div>

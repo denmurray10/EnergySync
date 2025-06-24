@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -20,14 +20,24 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { LoaderCircle, Shield, User as UserIcon, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper, X } from 'lucide-react';
+import { LoaderCircle, Shield, User as UserIcon, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
-const setupSchema = z.object({
+const hearOptions = [
+    { value: "social", label: "Social Media" },
+    { value: "friend", label: "Friend or Family" },
+    { value: "app_store", label: "App Store" },
+    { value: "advertisement", label: "Advertisement" },
+    { value: "other", label: "Other" },
+];
+
+// --- Parent Setup Form Component ---
+
+const parentSetupSchema = z.object({
   parentEmail: z.string().email("Please enter a valid parent email address."),
   parentalPin: z.string().length(4, "PIN must be 4 digits."),
   confirmPin: z.string().length(4, "PIN must be 4 digits."),
-  ageGroup: z.enum(['under14', '14to17', 'over18']),
+  ageGroup: z.enum(['under14', '14to17']),
   featureVisibility: z.object({
     insights: z.boolean().default(true),
     friends: z.boolean().default(true),
@@ -44,26 +54,17 @@ const setupSchema = z.object({
   path: ["confirmPin"],
 });
 
-type SetupFormValues = z.infer<typeof setupSchema>;
+type ParentSetupFormValues = z.infer<typeof parentSetupSchema>;
 
-const hearOptions = [
-    { value: "social", label: "Social Media" },
-    { value: "friend", label: "Friend or Family" },
-    { value: "app_store", label: "App Store" },
-    { value: "advertisement", label: "Advertisement" },
-    { value: "other", label: "Other" },
-];
-
-export default function ParentSetupPage() {
+function ParentSetupForm() {
     const router = useRouter();
     const { toast } = useToast();
     const { setAppUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [step, setStep] = useState(0);
-    const [tempPassword, setTempPassword] = useState('');
 
-    const form = useForm<SetupFormValues>({
-        resolver: zodResolver(setupSchema),
+    const form = useForm<ParentSetupFormValues>({
+        resolver: zodResolver(parentSetupSchema),
         defaultValues: {
             parentEmail: '',
             parentalPin: '',
@@ -78,14 +79,11 @@ export default function ParentSetupPage() {
         mode: 'onTouched',
     });
 
-    const ageGroup = useWatch({ control: form.control, name: 'ageGroup' });
-    const isAdultSetup = ageGroup === 'over18';
-
-    const totalSteps = isAdultSetup ? 5 : 6;
+    const totalSteps = 6;
     const progress = ((step + 1) / (totalSteps + 1)) * 100;
 
     const handleNext = async () => {
-        let fieldsToValidate: (keyof SetupFormValues)[] = [];
+        let fieldsToValidate: (keyof ParentSetupFormValues)[] = [];
         switch (step) {
             case 0: fieldsToValidate = ['parentEmail', 'parentalPin', 'confirmPin']; break;
             case 1: fieldsToValidate = ['ageGroup']; break;
@@ -96,28 +94,21 @@ export default function ParentSetupPage() {
 
         const isValid = await form.trigger(fieldsToValidate as any);
         if (isValid) {
-            if (step === 1 && isAdultSetup) {
-                 setStep(3); // Skip feature visibility for over 18
-            } else {
-                setStep(s => s + 1);
-            }
+            setStep(s => s + 1);
         }
     };
     
     const handleBack = () => {
         if (step === 0) {
             router.push('/welcome');
-        } else if (step === 3 && isAdultSetup) {
-             setStep(1); // Skip back over feature visibility
         } else {
              setStep(s => s - 1)
         }
     };
 
-    async function onSubmit(data: SetupFormValues) {
+    async function onSubmit(data: ParentSetupFormValues) {
         setLoading(true);
         const randomPassword = Math.random().toString(36).slice(-8);
-        setTempPassword(randomPassword);
 
         const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
         if (!projectId) {
@@ -133,30 +124,30 @@ export default function ParentSetupPage() {
 
             await updateProfile(user, { displayName: data.childName });
             
-            const trialEndDate = data.acceptTrial && !isAdultSetup ? formatISO(addDays(new Date(), 3)) : null;
+            const trialEndDate = data.acceptTrial ? formatISO(addDays(new Date(), 3)) : null;
 
             const initialUser: User = {
                 userId: user.uid,
                 name: data.childName,
                 username: data.childUsername,
                 avatar: `https://placehold.co/100x100.png`,
-                membershipTier: data.acceptTrial && !isAdultSetup ? 'pro' : 'free',
+                membershipTier: data.acceptTrial ? 'pro' : 'free',
                 proTrialEndDate: trialEndDate,
                 petCustomization: {
                     color: '#a8a29e', outlineColor: '#4c51bf', accessory: 'none', background: 'default',
                     unlockedColors: ['#a8a29e'], unlockedOutlineColors: ['#4c51bf'], unlockedAccessories: ['none'], unlockedBackgrounds: ['default'],
                 },
                 petLevel: 1, petExp: 0, petName: 'Buddy', petType: 'dog', petEnabled: true,
-                parentalPin: !isAdultSetup ? data.parentalPin : null,
-                parentEmail: !isAdultSetup ? data.parentEmail : null,
-                featureVisibility: !isAdultSetup ? data.featureVisibility : { insights: true, friends: true, communityMode: true },
+                parentalPin: data.parentalPin,
+                parentEmail: data.parentEmail,
+                featureVisibility: data.featureVisibility,
                 howDidYouHear: data.howDidYouHear,
             };
             
             setAppUser(initialUser);
             localStorage.setItem('energysync_age_group', data.ageGroup);
             
-            setStep(totalSteps); // Go to success screen
+            router.push('/');
 
         } catch (error: any) {
              if (error.code === 'auth/email-already-in-use') {
@@ -165,6 +156,7 @@ export default function ParentSetupPage() {
                     message: 'This username is already taken. Please choose another one.'
                 });
                 setStep(3); // Go back to the username step
+                toast({ title: 'Username Taken', description: 'That username is unavailable. Please try another.', variant: 'destructive' });
             } else {
                 console.error("Account creation error:", error);
                 toast({ 
@@ -178,10 +170,10 @@ export default function ParentSetupPage() {
         }
     }
     
-    const renderStep = () => {
+    const getStepContent = () => {
          switch (step) {
             case 0: return (
-                <CardContent className="space-y-4" key="step-0">
+                <CardContent className="space-y-4" key="step-0-parent">
                     <FormField control={form.control} name="parentEmail" render={({ field }) => (
                         <FormItem><FormLabel>Your Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -194,14 +186,13 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
             case 1: return (
-                 <CardContent key="step-1">
+                 <CardContent key="step-1-parent">
                      <FormField control={form.control} name="ageGroup" render={({ field }) => (
                          <FormItem>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
                                      <Label htmlFor="under14" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>Under 14</p><RadioGroupItem value="under14" id="under14" /></Label>
                                      <Label htmlFor="14to17" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>14 - 17</p><RadioGroupItem value="14to17" id="14to17" /></Label>
-                                     <Label htmlFor="over18" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>18 or Over</p><RadioGroupItem value="over18" id="over18" /></Label>
                                 </RadioGroup>
                             </FormControl>
                          </FormItem>
@@ -209,7 +200,7 @@ export default function ParentSetupPage() {
                  </CardContent>
             );
             case 2: return (
-                <CardContent className="space-y-4" key="step-2">
+                <CardContent className="space-y-4" key="step-2-parent">
                     <FormField control={form.control} name="featureVisibility.insights" render={({ field }) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="insights-toggle" className="flex items-center gap-2 font-normal"><BrainCircuit /> Insights Tab</Label>
@@ -231,17 +222,17 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
              case 3: return (
-                 <CardContent className="space-y-4" key="step-3">
+                 <CardContent className="space-y-4" key="step-3-parent">
                     <FormField control={form.control} name="childName" render={({ field }) => (
-                        <FormItem><FormLabel>{isAdultSetup ? "What's your name?" : "What's your child's name?"}</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} autoComplete="new-password" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                     <FormField control={form.control} name="childUsername" render={({ field }) => (
-                        <FormItem><FormLabel>{isAdultSetup ? "Create a username" : "Create a username for your child"}</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} autoComplete="new-password" /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
                 </CardContent>
             );
             case 4: return (
-                 <CardContent key="step-4">
+                 <CardContent key="step-4-parent">
                      <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -260,7 +251,7 @@ export default function ParentSetupPage() {
                  </CardContent>
             );
             case 5: return (
-                <CardContent className="text-center" key="step-5">
+                <CardContent className="text-center" key="step-5-parent">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features for your child?</p>
                      <FormField control={form.control} name="acceptTrial" render={({ field }) => (
                         <div className="flex items-center justify-center gap-4 mt-6">
@@ -271,14 +262,10 @@ export default function ParentSetupPage() {
                 </CardContent>
             );
             case totalSteps: return (
-                <CardContent className="text-center space-y-4" key="step-final">
+                 <CardContent className="text-center space-y-4" key="step-final-parent">
                     <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
-                    <div className="p-4 bg-muted rounded-lg text-left space-y-2">
-                        <p><strong>Username:</strong> {form.getValues('childUsername')}</p>
-                        <p><strong>Temporary Password:</strong> {tempPassword}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Please save these login details {isAdultSetup ? "." : "for your child."} You can now start using the app.</p>
+                    <p className="text-sm text-muted-foreground">You can now start using the app.</p>
                 </CardContent>
             )
             default: return null;
@@ -286,29 +273,29 @@ export default function ParentSetupPage() {
     };
     
     const getStepTitle = () => {
-        switch (step) {
-            case 0: return 'Set Up Parental Controls';
-            case 1: return isAdultSetup ? "What's your age group?" : "What is your child's age group?";
-            case 2: return 'Select Visible Features';
-            case 3: return isAdultSetup ? "Your Account Details" : "Child's Account Details";
-            case 4: return 'How did you hear about us?';
-            case 5: return 'Free Pro Trial';
-            case totalSteps: return "All Done!";
-            default: return '';
-        }
+        const titles = [
+            "Set Up Parental Controls",
+            "What is your child's age group?",
+            "Select Visible Features",
+            "Child's Account Details",
+            "How did you hear about us?",
+            "Free Pro Trial",
+            "All Done!",
+        ];
+        return titles[step] || '';
     };
 
     const getStepDescription = () => {
-        switch (step) {
-            case 0: return "Your email is for receiving important updates. The PIN protects access to sensitive settings and the Parent Dashboard.";
-            case 1: return "This helps us tailor the app experience. Selecting '18 or Over' will disable all parental controls.";
-            case 2: return "Choose which major features your child can access. You can change these later from the Parent Dashboard.";
-            case 3: return isAdultSetup ? "This creates your login. Your username must be unique. A temporary password will be generated." : "This creates the login for your child. The username must be unique. A temporary password will be generated.";
-            case 4: return "This helps us understand how people find EnergySync.";
-            case 5: return "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.";
-            case totalSteps: return "Your account is ready. Please share these login details with your child. They will be prompted to change their password on first login.";
-            default: return '';
-        }
+         const descriptions = [
+            "Your email is for receiving important updates. The PIN protects access to sensitive settings and the Parent Dashboard.",
+            "This helps us tailor the app experience.",
+            "Choose which major features your child can access. You can change these later from the Parent Dashboard.",
+            "This creates the login for your child. The username must be unique. A temporary password will be generated.",
+            "This helps us understand how people find EnergySync.",
+            "Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.",
+            "Your child's account is ready. Please share their login details with them.",
+        ];
+        return descriptions[step] || '';
     };
 
     return (
@@ -326,14 +313,14 @@ export default function ParentSetupPage() {
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
-                        {renderStep()}
+                        {getStepContent()}
 
                         <CardContent className="flex flex-col gap-2">
                              {step < totalSteps && (
                                 <>
                                     {step === totalSteps - 1 ? (
                                          <Button type="submit" className="w-full" disabled={loading}>
-                                            {loading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                            {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                                             Create Account & Finish
                                         </Button>
                                     ) : (
@@ -344,15 +331,197 @@ export default function ParentSetupPage() {
                                     </Button>
                                 </>
                              )}
-                             {step === totalSteps && (
-                                <Button type="button" onClick={() => router.push('/')} className="w-full">
-                                    Start Using App
-                                </Button>
-                            )}
                         </CardContent>
                     </form>
                 </Form>
             </Card>
         </main>
     );
+}
+
+// --- Adult Signup Form Component ---
+
+const adultSignupSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Please enter a valid email address." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  confirmPassword: z.string(),
+  howDidYouHear: z.enum(["social", "friend", "app_store", "advertisement", "other"], {
+    errorMap: () => ({ message: "Please select an option." }),
+  }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"],
+});
+
+type AdultSignupFormValues = z.infer<typeof adultSignupSchema>;
+
+function AdultSignupForm() {
+    const router = useRouter();
+    const { toast } = useToast();
+    const { setAppUser } = useAuth();
+    const [loading, setLoading] = useState(false);
+    const [step, setStep] = useState(0);
+
+    const form = useForm<AdultSignupFormValues>({
+        resolver: zodResolver(adultSignupSchema),
+        defaultValues: { name: '', email: '', password: '', confirmPassword: '', howDidYouHear: undefined },
+        mode: 'onTouched',
+    });
+
+    const totalSteps = 2;
+    const progress = ((step + 1) / (totalSteps + 1)) * 100;
+    
+    const handleNext = async () => {
+        const isValid = await form.trigger(['name', 'email', 'password', 'confirmPassword']);
+        if (isValid) {
+            setStep(1);
+        }
+    };
+
+    const handleBack = () => {
+        if (step === 0) {
+            router.push('/welcome');
+        } else {
+            setStep(0);
+        }
+    };
+
+    async function onSubmit(data: AdultSignupFormValues) {
+        setLoading(true);
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+            const user = userCredential.user;
+            await updateProfile(user, { displayName: data.name });
+
+            const initialUser: User = {
+                userId: user.uid,
+                name: data.name,
+                username: data.email.split('@')[0], // Use email part as username
+                avatar: `https://placehold.co/100x100.png`,
+                membershipTier: 'free',
+                petCustomization: {
+                    color: '#a8a29e', outlineColor: '#4c51bf', accessory: 'none', background: 'default',
+                    unlockedColors: ['#a8a29e'], unlockedOutlineColors: ['#4c51bf'], unlockedAccessories: ['none'], unlockedBackgrounds: ['default'],
+                },
+                petLevel: 1, petExp: 0, petName: 'Buddy', petType: 'dog', petEnabled: true,
+                parentalPin: null,
+                parentEmail: null,
+                featureVisibility: { insights: true, friends: true, communityMode: true },
+                howDidYouHear: data.howDidYouHear,
+            };
+
+            setAppUser(initialUser);
+            localStorage.setItem('energysync_age_group', 'over18');
+            router.push('/');
+
+        } catch (error: any) {
+            if (error.code === 'auth/email-already-in-use') {
+                form.setError('email', { type: 'manual', message: 'This email is already in use.' });
+                setStep(0); // Go back to the email step
+                toast({ title: 'Email in Use', description: 'This email is already registered. Please log in or use a different email.', variant: 'destructive' });
+            } else {
+                console.error("Account creation error:", error);
+                toast({ title: 'Account Creation Failed', description: "An unexpected error occurred.", variant: 'destructive' });
+            }
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <main className="min-h-dvh bg-background flex items-center justify-center p-4">
+            <Card className="w-full max-w-md shadow-2xl relative">
+                <CardHeader className="text-center items-center">
+                    <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4">
+                        <UserIcon className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl">{step === 0 ? "Create Your Account" : "One Last Question"}</CardTitle>
+                    <CardDescription>{step === 0 ? "Let's get you set up with your own account." : "This helps us understand our community."}</CardDescription>
+                </CardHeader>
+
+                <Progress value={progress} className="w-[90%] mx-auto mb-4" />
+
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                        {step === 0 && (
+                             <CardContent className="space-y-4" key="step-0-adult">
+                                <FormField control={form.control} name="name" render={({ field }) => (
+                                    <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Alex Smith" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="email" render={({ field }) => (
+                                    <FormItem><FormLabel>Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                <FormField control={form.control} name="password" render={({ field }) => (
+                                    <FormItem><FormLabel>Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                                 <FormField control={form.control} name="confirmPassword" render={({ field }) => (
+                                    <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                                )}/>
+                            </CardContent>
+                        )}
+                        {step === 1 && (
+                            <CardContent key="step-1-adult">
+                                <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
+                                    <FormItem>
+                                        <FormControl>
+                                            <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
+                                                {hearOptions.map(opt => (
+                                                    <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                                                        <p>{opt.label}</p>
+                                                        <RadioGroupItem value={opt.value} id={`hear-${opt.value}`} />
+                                                    </Label>
+                                                ))}
+                                            </RadioGroup>
+                                        </FormControl>
+                                        <FormMessage className="pt-2" />
+                                    </FormItem>
+                                )}/>
+                            </CardContent>
+                        )}
+
+                        <CardContent className="flex flex-col gap-2">
+                             {step === 0 ? (
+                                <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                            ) : (
+                                <Button type="submit" className="w-full" disabled={loading}>
+                                    {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                    Create Account & Finish
+                                </Button>
+                            )}
+                             <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                            </Button>
+                        </CardContent>
+                    </form>
+                </Form>
+            </Card>
+        </main>
+    );
+}
+
+// --- Main Page Component ---
+export default function SetupPage() {
+    const [mode, setMode] = useState<'parent' | 'adult' | null>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        const setupMode = localStorage.getItem('energysync_signup_mode');
+        if (setupMode === 'parent' || setupMode === 'adult') {
+            setMode(setupMode);
+        } else {
+            // If no mode is set, default to welcome to prevent errors.
+            router.push('/welcome');
+        }
+    }, [router]);
+
+    if (!mode) {
+        return (
+            <main className="min-h-dvh bg-background flex items-center justify-center">
+                <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+            </main>
+        );
+    }
+
+    return mode === 'adult' ? <AdultSignupForm /> : <ParentSetupForm />;
 }
