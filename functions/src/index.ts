@@ -5,17 +5,17 @@ import { Resend } from "resend";
 
 admin.initializeApp();
 
-// This function requires the RESEND_API_KEY secret to be set in Firebase:
-// firebase functions:secrets:set RESEND_API_KEY
-// You must also verify a domain with Resend to use in the `from` field.
-const resend = new Resend(process.env.RESEND_API_KEY);
+// WARNING: Hardcoding API keys is not a good practice for production applications.
+// This is a temporary measure for prototyping. In a real app, use Firebase secrets.
+const RESEND_API_KEY = "re_8h4ubuf6_FQ9ZBz8acDKgbaeMxjAPP2wX";
+const resend = new Resend(RESEND_API_KEY);
 
 interface ApprovalEmailData {
     parentEmail: string;
     childName: string;
 }
 
-export const sendApprovalEmail = functions.runWith({ secrets: ["RESEND_API_KEY"] }).https.onCall(
+export const sendApprovalEmail = functions.https.onCall(
     async (data: ApprovalEmailData, context) => {
         const {parentEmail, childName} = data;
 
@@ -40,7 +40,7 @@ export const sendApprovalEmail = functions.runWith({ secrets: ["RESEND_API_KEY"]
         try {
             await resend.emails.send({
                 from: "YOUR_VERIFIED_EMAIL@your-domain.com", // This must be a verified domain in your Resend account.
-                to: parentEmail,
+                to: "dennis.murray10@gmail.com",
                 subject: subject,
                 html: body,
             });
