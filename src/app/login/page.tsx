@@ -148,7 +148,7 @@ export default function LoginPage() {
             Please sign in to continue.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-4">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="child">Child</TabsTrigger>
@@ -218,7 +218,7 @@ export default function LoginPage() {
             </TabsContent>
           </Tabs>
         </CardContent>
-        <CardFooter className="pt-4">
+        <CardFooter className="pt-0">
             <Button variant="outline" onClick={() => router.back()} className="w-full">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back
