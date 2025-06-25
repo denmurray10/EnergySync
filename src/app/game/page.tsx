@@ -50,10 +50,10 @@ const DayNightBackground = () => {
             <div className="absolute top-[30%] -left-1/3 w-1/2 h-20 rounded-full animate-pan-slow bg-white/50" style={{ animationDelay: '-15s' }}/>
 
             {/* Hills */}
-            <svg className="absolute bottom-0 w-full h-1/2 text-transparent" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M-5,100 Q25,20 50,40 T105,60 L105,100 L-5,100 Z" className="fill-sky-600 opacity-60" />
-                <path d="M-5,100 Q15,30 40,50 T85,40 L105,100 L-5,100 Z" className="fill-cyan-500 opacity-80" />
-                <path d="M-5,80 Q25,40 45,60 T90,50 L105,100 L-5,100 Z" className="fill-teal-400 opacity-80" />
+            <svg className="absolute bottom-0 w-full h-3/4 text-transparent" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M-5,100 Q30,25 55,45 T105,35 L105,100 L-5,100 Z" className="fill-sky-600 opacity-60" />
+                <path d="M-5,100 Q15,45 40,65 T85,55 L105,100 L-5,100 Z" className="fill-cyan-500 opacity-80" />
+                <path d="M-5,100 Q25,35 50,55 T100,45 L105,100 L-5,100 Z" className="fill-teal-400 opacity-80" />
             </svg>
         </div>
     );
