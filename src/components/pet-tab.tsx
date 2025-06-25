@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import dynamic from 'next/dynamic';
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+
+const DynamicDotLottie = dynamic(
+  () => import('@lottiefiles/dotlottie-react').then(mod => mod.DotLottieReact),
+  { ssr: false }
+);
+
 
 type PetType = 'cat' | 'dog' | 'horse' | 'chicken';
 
@@ -128,7 +134,7 @@ const VirtualPet = ({ petType, happiness, isInteracting, customization, level, s
     const petContent = (
       <div className={cn("relative transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
           {petType === 'dog' ? (
-                <DotLottieReact
+                <DynamicDotLottie
                     src="https://lottie.host/09487b01-8ddf-44ee-9132-312a993d0950/OwLvmZQ781.lottie"
                     loop
                     autoplay
@@ -344,4 +350,5 @@ export function PetTab({
             </Card>
         </div>
     );
-}
+
+    
