@@ -79,12 +79,12 @@
 }
 
 @keyframes pan {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(calc(100vw + 50%)); }
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100vw); }
 }
 @keyframes pan-slow {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(calc(100vw + 33%)); }
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100vw); }
 }
 
 .animate-breathe {
