@@ -15,37 +15,27 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { PetCustomization, PetTask, JourneyEntry } from '@/lib/types';
+import dynamic from 'next/dynamic';
 
-
-// --- Pet Avatar Component ---
-const PetFace = ({ happiness }: { happiness: number }) => {
-    const strokeColor = "hsl(var(--foreground))";
-    if (happiness >= 80) return <path d="M 40 63 Q 50 73, 60 63" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />;
-    if (happiness >= 40) return <line x1="45" y1="65" x2="55" y2="65" stroke={strokeColor} strokeWidth="2.5" strokeLinecap="round" />;
-    return <path d="M 40 70 Q 50 60, 60 70" stroke={strokeColor} strokeWidth="2.5" fill="none" strokeLinecap="round" />;
-};
-
-const PetBody = ({ color, outlineColor }: { color: string, outlineColor: string }) => (
-    <path d="M 50,95 C 25,95 20,70 20,55 C 20,30 30,20 50,20 C 70,20 80,30 80,55 C 80,70 75,95 50,95 Z" fill={color} stroke={outlineColor} strokeWidth="3" strokeLinejoin="round" />
+const DynamicDotLottie = dynamic(
+  () => import('@lottiefiles/dotlottie-react').then((mod) => mod.DotLottieReact),
+  { ssr: false }
 );
 
-const GamePet = ({ happiness, customization, isInteracting }: { happiness: number, customization: PetCustomization, isInteracting: boolean }) => {
+// --- Pet Avatar Component ---
+const GamePet = ({ happiness, customization, isInteracting }: { happiness: number; customization: PetCustomization; isInteracting: boolean }) => {
     return (
         <div className={cn("relative transition-transform drop-shadow-lg", isInteracting && "animate-jump")}>
-            <svg viewBox="0 0 100 100" className="w-32 h-32">
-                <g className="animate-breathe">
-                    <PetBody color={customization.color} outlineColor={customization.outlineColor} />
-                    <circle cx="40" cy="48" r="3" fill="hsl(var(--foreground))" />
-                    <circle cx="60" cy="48" r="3" fill="hsl(var(--foreground))" />
-                    <PetFace happiness={happiness} />
-                    {customization.accessory === 'bowtie' && (
-                        <path d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z" fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
-                    )}
-                </g>
-            </svg>
+            <DynamicDotLottie
+                src="https://lottie.host/09487b01-8ddf-44ee-9132-312a993d0950/OwLvmZQ781.lottie"
+                loop
+                autoplay
+                className="w-32 h-32"
+            />
         </div>
     );
 };
+
 
 // --- Background Component ---
 const DayNightBackground = () => {
