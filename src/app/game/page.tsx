@@ -39,8 +39,8 @@ const GameBackground = () => {
     <div className="absolute inset-0 z-0 overflow-hidden">
       <Image
         src="https://i.imgur.com/gA3CfI1.png"
-        layout="fill"
-        objectFit="cover"
+        fill
+        style={{ objectFit: "cover" }}
         alt="Scenic background of hills and a sky"
         priority
       />
