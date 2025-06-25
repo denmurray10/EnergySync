@@ -30,6 +30,7 @@ const GamePet = ({ happiness, customization, isInteracting }: { happiness: numbe
                 src="https://lottie.host/09487b01-8ddf-44ee-9132-312a993d0950/OwLvmZQ781.lottie"
                 loop
                 autoplay
+                speed={0.33}
                 className="w-32 h-32"
             />
         </div>
