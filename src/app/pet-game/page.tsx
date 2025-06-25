@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef, FC } from 'react';
@@ -7,12 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import { doc, onSnapshot, setDoc, collection, addDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { Zap, Plus, Feather, CheckCircle, Circle, BookOpen, ClipboardList, ChevronDown, Sparkles, Gem, Heart, Volume2, VolumeX, Gamepad2 } from 'lucide-react';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
 import type { DocumentData } from 'firebase/firestore';
 
-// Forward declaration for Tone.js types to avoid build errors
-declare const Tone: any;
+const DotLottieReact = dynamic(
+  () => import('@lottiefiles/dotlottie-react').then((mod) => mod.DotLottieReact),
+  { ssr: false }
+);
 
 // Type definitions
 interface PetData {
@@ -134,12 +135,11 @@ export default function PetGamePage() {
     useEffect(() => {
         let soundInstances: Sounds = {};
         import('tone').then(ToneModule => {
-            const Tone = ToneModule;
             soundInstances = {
-                complete: new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
-                adventure: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
-                pet: new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(),
-                gem: new Tone.Synth({ oscillator: { type: 'fmtriangle', modulationType: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 } }).toDestination(),
+                complete: new ToneModule.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.2 } }).toDestination(),
+                adventure: new ToneModule.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0 } }).toDestination(),
+                pet: new ToneModule.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(),
+                gem: new ToneModule.Synth({ oscillator: { type: 'fmtriangle', modulationType: 'sine' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.2 } }).toDestination(),
             };
             sounds.current = soundInstances;
         });
@@ -166,8 +166,8 @@ export default function PetGamePage() {
     };
     
     const handleMuteToggle = async () => {
-        const Tone = await import('tone');
-        await Tone.start();
+        const ToneModule = await import('tone');
+        await ToneModule.start();
         setIsMuted(m => !m);
     };
 
