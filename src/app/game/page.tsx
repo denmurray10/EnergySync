@@ -37,6 +37,17 @@ const GamePet = ({ happiness, customization, isInteracting }: { happiness: numbe
     );
 };
 
+// --- Cloud Component ---
+const Cloud = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 101 40"
+    className={cn("absolute opacity-80 fill-white/80", className)}
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M 95.8,20.8 C 95.2,9.6 86.4,1 75.3,1 68.2,1 62.1,4.7 58.4,9.9 55.4,4 49.3,0.1 42.2,0.1 32,0.1 23.4,8.5 23.4,18.8 c 0,0.7 0,1.3 0.1,2 -8.5,1.9 -14.8,9.7 -14.8,18.8 0,10.6 8.6,19.2 19.2,19.2 H 76 c 10.6,0 19.2,-8.6 19.2,-19.2 0.1,-8.9 -6.1,-16.5 -14.2,-18.8 z" />
+  </svg>
+);
+
 
 // --- Background Component ---
 const GameBackground = () => {
@@ -46,10 +57,10 @@ const GameBackground = () => {
       <div className="absolute top-8 left-8 w-20 h-20 bg-yellow-300/90 rounded-full" />
       
       {/* Clouds */}
-      <div className="absolute top-[8%] left-[10%] w-28 h-8 bg-white/80 rounded-full animate-pan" style={{animationDuration: '180s'}} />
-      <div className="absolute top-[15%] left-[30%] w-32 h-10 bg-white/80 rounded-full animate-pan-slow" style={{animationDuration: '220s'}} />
-      <div className="absolute top-[10%] left-[65%] w-40 h-12 bg-white/80 rounded-full animate-pan" style={{animationDuration: '160s'}} />
-      <div className="absolute top-[18%] left-[85%] w-24 h-8 bg-white/80 rounded-full animate-pan-slow" style={{animationDuration: '240s'}} />
+      <Cloud className="top-[8%] left-[10%] w-28 h-14 animate-pan" style={{animationDuration: '180s'}} />
+      <Cloud className="top-[15%] left-[30%] w-32 h-16 animate-pan-slow" style={{animationDuration: '220s'}} />
+      <Cloud className="top-[10%] left-[65%] w-40 h-20 animate-pan" style={{animationDuration: '160s'}} />
+      <Cloud className="top-[18%] left-[85%] w-24 h-12 animate-pan-slow" style={{animationDuration: '240s'}} />
 
       {/* Landscape SVG */}
       <div className="absolute bottom-0 left-0 w-full h-full">
