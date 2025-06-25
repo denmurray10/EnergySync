@@ -1,15 +1,15 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings } from "lucide-react";
+import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DynamicDotLottie = dynamic(
@@ -224,6 +224,7 @@ export function PetTab({
     lastTaskCompletionTime
 }: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
+    const router = useRouter();
     const expToNextLevel = 100 * level;
     const expPercentage = (exp / expToNextLevel) * 100;
 
@@ -270,6 +271,10 @@ export function PetTab({
                     {petName}
                 </h2>
                 <div className="flex items-center gap-1">
+                    <Button onClick={() => router.push('/game')} size="icon" variant="ghost" className="text-primary">
+                        <Gamepad2 className="h-6 w-6"/>
+                        <span className="sr-only">Play Game</span>
+                    </Button>
                     <Button onClick={openCustomization} size="icon" variant="ghost" className="text-primary">
                         <Paintbrush className="h-6 w-6"/>
                         <span className="sr-only">Customize Pet</span>
@@ -351,4 +356,4 @@ export function PetTab({
         </div>
     );
 
-    
+}
