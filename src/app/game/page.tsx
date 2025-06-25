@@ -60,9 +60,9 @@ const DayNightBackground = () => {
 
             {/* Hills */}
             <svg className="absolute bottom-0 w-full h-1/2 text-transparent" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M-5,100 Q25,40 50,60 T105,80 L105,100 L-5,100 Z" className="fill-sky-600/60" />
-                <path d="M-5,100 Q15,50 40,70 T85,60 L105,100 L-5,100 Z" className="fill-cyan-500/80" />
-                <path d="M-5,80 Q25,60 45,80 T90,70 L105,100 L-5,100 Z" className="fill-teal-400/80" />
+                <path d="M-5,100 Q25,40 50,60 T105,80 L105,100 L-5,100 Z" className="fill-sky-600 opacity-60" />
+                <path d="M-5,100 Q15,50 40,70 T85,60 L105,100 L-5,100 Z" className="fill-cyan-500 opacity-80" />
+                <path d="M-5,80 Q25,60 45,80 T90,70 L105,100 L-5,100 Z" className="fill-teal-400 opacity-80" />
             </svg>
         </div>
     );
@@ -107,7 +107,7 @@ export default function GamePage() {
     const expToNextLevel = 100 * appUser.petLevel;
 
     return (
-        <main className="min-h-dvh bg-background flex flex-col items-center justify-center p-4 font-body overflow-hidden relative">
+        <main className="min-h-dvh flex flex-col items-center justify-center p-4 font-body overflow-hidden relative">
             {/* Background */}
             <DayNightBackground />
             
