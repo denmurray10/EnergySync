@@ -1,7 +1,1 @@
-
-'use client';
-
-// This page has been removed.
-export default function PetGamePage() {
-    return null;
-}
+// This component is not used and has been emptied to avoid build issues.

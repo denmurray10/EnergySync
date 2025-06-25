@@ -83,6 +83,7 @@ export interface User {
   chatHistory: ChatMessage[];
   friends: Friend[];
   journeys: JourneyEntry[];
+  petTasks: PetTask[];
 }
 
 export interface Goal {

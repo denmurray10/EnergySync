@@ -109,7 +109,8 @@ export default function GamePage() {
     const handleTaskComplete = (taskId: number) => {
         const task = petTasks.find(t => t.id === taskId);
         if (task && !task.completed) {
-            setPetTasks(petTasks.map(t => t.id === taskId ? { ...t, completed: true } : t));
+            const newTasks = petTasks.map(t => t.id === taskId ? { ...t, completed: true } : t);
+            setPetTasks(newTasks);
             gainPetExp(10);
             addJourneyEntry(`Completed goal: "${task.name}"`, task.icon);
             setIsInteracting(true);
