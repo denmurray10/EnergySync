@@ -1,10 +1,11 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import type { Activity, UpcomingEvent, Achievement, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
-import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES, INITIAL_PET_TASKS } from "@/lib/data";
+import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
@@ -46,7 +47,7 @@ const locations = ['Home', 'Office', 'Park', 'Cafe'];
 export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage, signOut } = useAuth();
+  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage, signOut, petTasks, setPetTasks, gainPetExp, addJourneyEntry } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   
@@ -101,7 +102,6 @@ export default function HomePage() {
   const [isParentModeUnlocked, setIsParentModeUnlocked] = useState(false);
 
   // Pet feature state
-  const [petTasks, setPetTasks] = useState<PetTask[]>(INITIAL_PET_TASKS);
   const [petInteractions, setPetInteractions] = useState<number>(0);
   
   const petHappiness = currentEnergy;
@@ -150,26 +150,6 @@ export default function HomePage() {
     }
   }, [firebaseUser, authLoading, router]);
   
-  const gainPetExp = useCallback((amount: number) => {
-    if (!appUser || !appUser.petEnabled) return;
-    
-    const newExp = appUser.petExp + amount;
-    const expToNextLevel = 100 * appUser.petLevel;
-    
-    if (newExp >= expToNextLevel) {
-        const newLevel = appUser.petLevel + 1;
-        const remainingExp = newExp - expToNextLevel;
-        toast({
-            title: '🎉 Pet Level Up! 🎉',
-            description: `Your energy companion grew to Level ${newLevel}!`,
-        });
-        unlockAchievement('Pet Trainer');
-        setAppUser({ petLevel: newLevel, petExp: remainingExp });
-    } else {
-        setAppUser({ petExp: newExp });
-    }
-  }, [appUser, setAppUser, toast, unlockAchievement]);
-
   useEffect(() => {
     if (appUser && !appUser.tutorialSeen) {
         setShowTutorial(true);
@@ -597,11 +577,13 @@ export default function HomePage() {
 
     const wasCompleted = task.completed;
     
-    setPetTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, completed: !wasCompleted } : t));
+    const newTasks = petTasks.map(t => t.id === taskId ? { ...t, completed: !wasCompleted } : t)
+    setPetTasks(newTasks);
 
     if (!wasCompleted) {
         setPetInteractions(prev => prev + 5);
         gainPetExp(10);
+        addJourneyEntry(`Completed task: "${task.name}"`, task.icon);
         toast({ title: "Task Complete!", description: "You've earned 5 interactions & 10 pet XP! 🎉" });
         setAppUser({ lastTaskCompletionTime: Date.now() });
     } else {

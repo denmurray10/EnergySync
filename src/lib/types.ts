@@ -49,6 +49,12 @@ export interface PetCustomization {
   unlockedBackgrounds: string[];
 }
 
+export interface JourneyEntry {
+    text: string;
+    icon: string;
+    timestamp: string;
+}
+
 export interface User {
   userId: string;
   name: string;
@@ -76,6 +82,7 @@ export interface User {
   lastTaskCompletionTime: number | null;
   chatHistory: ChatMessage[];
   friends: Friend[];
+  journeys: JourneyEntry[];
 }
 
 export interface Goal {

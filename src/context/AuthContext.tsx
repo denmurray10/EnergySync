@@ -6,8 +6,8 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
-import type { User, Friend, ChatMessage } from '@/lib/types';
-import { INITIAL_FRIENDS } from '@/lib/data';
+import type { User, Friend, ChatMessage, PetTask, JourneyEntry } from '@/lib/types';
+import { INITIAL_FRIENDS, INITIAL_PET_TASKS } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -20,6 +20,10 @@ interface AuthContextType {
   setFriends: (friends: Friend[]) => void;
   chatHistory: ChatMessage[];
   addChatMessage: (message: ChatMessage) => void;
+  petTasks: PetTask[];
+  setPetTasks: (tasks: PetTask[]) => void;
+  gainPetExp: (amount: number) => void;
+  addJourneyEntry: (text: string, icon: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -106,8 +110,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await updateDoc(userRef, userData);
         setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
       } else {
-        await setDoc(userRef, userData as User);
-        setLocalAppUser(userData as User);
+        await setDoc(userRef, { ...userData, journeys: [] } as User);
+        setLocalAppUser({ ...userData, journeys: [] } as User);
       }
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
@@ -145,7 +149,43 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLocalAppUser(prev => prev ? ({ ...prev, friends }) : null);
       }
   }, [appUser]);
+  
+  const setPetTasks = useCallback(async (tasks: PetTask[]) => {
+      if(appUser) {
+          const userRef = doc(firestore, 'users', appUser.userId);
+          await updateDoc(userRef, { petTasks: tasks });
+          setLocalAppUser(prev => prev ? ({ ...prev, petTasks }) : null);
+      }
+  }, [appUser]);
 
+  const addJourneyEntry = useCallback(async (text: string, icon: string) => {
+    if (appUser) {
+        const newEntry: JourneyEntry = {
+            text, icon, timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+        };
+        const newJourneys = [newEntry, ...(appUser.journeys || [])].slice(0, 50); // Keep last 50
+        await setAppUser({ journeys: newJourneys });
+    }
+  }, [appUser, setAppUser]);
+  
+  const gainPetExp = useCallback((amount: number) => {
+    if (!appUser || !appUser.petEnabled) return;
+    
+    const newExp = (appUser.petExp || 0) + amount;
+    const expToNextLevel = 100 * (appUser.petLevel || 1);
+    
+    if (newExp >= expToNextLevel) {
+        const newLevel = appUser.petLevel + 1;
+        const remainingExp = newExp - expToNextLevel;
+        toast({
+            title: '🎉 Pet Level Up! 🎉',
+            description: `Your energy companion grew to Level ${newLevel}!`,
+        });
+        setAppUser({ petLevel: newLevel, petExp: remainingExp });
+    } else {
+        setAppUser({ petExp: newExp });
+    }
+  }, [appUser, setAppUser, toast]);
 
   const signOut = async () => {
     await auth.signOut();
@@ -155,8 +195,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const friends = appUser?.friends ?? INITIAL_FRIENDS;
   const chatHistory = appUser?.chatHistory ?? [];
+  const petTasks = appUser?.petTasks ?? INITIAL_PET_TASKS;
 
-  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage };
+  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
