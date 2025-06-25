@@ -26,7 +26,7 @@ const GamePet = ({ isInteracting }: { isInteracting: boolean }) => {
                 loop
                 autoplay
                 speed={0.5}
-                className="w-40 h-40"
+                className="w-32 h-32"
             />
         </div>
     );
