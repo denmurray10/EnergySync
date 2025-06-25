@@ -77,16 +77,6 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
 }
-
-@keyframes pan {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100vw); }
-}
-@keyframes pan-slow {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100vw); }
-}
-
 .animate-breathe {
   animation: breathe 5s ease-in-out infinite;
   transform-origin: bottom center;
@@ -95,6 +85,3 @@
 .animate-jump {
   animation: jump 0.5s ease-in-out;
 }
-
-.animate-pan { animation: pan 120s linear infinite; }
-.animate-pan-slow { animation: pan-slow 180s linear infinite; }
