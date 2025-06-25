@@ -47,6 +47,27 @@ const GamePet = ({ happiness, customization, isInteracting }: { happiness: numbe
     );
 };
 
+// --- Background Component ---
+const DayNightBackground = () => {
+    return (
+        <div className="absolute inset-0 -z-10 overflow-hidden bg-gradient-to-b from-sky-400 to-cyan-400">
+            {/* Sun */}
+            <div className="absolute top-16 left-16 w-20 h-20 rounded-full bg-yellow-300 shadow-lg" />
+
+            {/* Clouds */}
+            <div className="absolute top-[20%] -left-1/4 w-1/2 h-16 rounded-full animate-pan bg-white/60" />
+            <div className="absolute top-[30%] -left-1/3 w-1/2 h-20 rounded-full animate-pan-slow bg-white/50" style={{ animationDelay: '-15s' }}/>
+
+            {/* Hills */}
+            <svg className="absolute bottom-0 w-full h-1/2 text-transparent" viewBox="0 0 100 100" preserveAspectRatio="none">
+                <path d="M-5,100 Q25,40 50,60 T105,80 L105,100 L-5,100 Z" className="fill-sky-600/60" />
+                <path d="M-5,100 Q15,50 40,70 T85,60 L105,100 L-5,100 Z" className="fill-cyan-500/80" />
+                <path d="M-5,80 Q25,60 45,80 T90,70 L105,100 L-5,100 Z" className="fill-teal-400/80" />
+            </svg>
+        </div>
+    );
+};
+
 
 // --- Main Game Page Component ---
 export default function GamePage() {
@@ -88,10 +109,7 @@ export default function GamePage() {
     return (
         <main className="min-h-dvh bg-background flex flex-col items-center justify-center p-4 font-body overflow-hidden relative">
             {/* Background */}
-            <div className="absolute inset-0 z-0">
-                <Image src="https://placehold.co/600x1200.png" data-ai-hint="serene landscape" alt="Serene Landscape" layout="fill" objectFit="cover" className="opacity-30" />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
-            </div>
+            <DayNightBackground />
             
             {/* Back Button */}
             <Button onClick={() => router.back()} variant="ghost" size="icon" className="absolute top-6 left-6 z-20 bg-background/50 backdrop-blur-sm rounded-full">
