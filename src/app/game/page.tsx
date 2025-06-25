@@ -39,24 +39,59 @@ const GamePet = ({ happiness, customization, isInteracting }: { happiness: numbe
 
 
 // --- Background Component ---
-const DayNightBackground = () => {
-    return (
-        <div className="absolute inset-0 -z-10 overflow-hidden bg-gradient-to-b from-sky-400 to-cyan-400">
-            {/* Sun */}
-            <div className="absolute top-16 left-16 w-20 h-20 rounded-full bg-yellow-300 shadow-lg" />
+const GameBackground = () => {
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden bg-[#78D2F0]"> {/* Sky */}
+      {/* Sun */}
+      <div className="absolute top-8 left-8 w-20 h-20 bg-yellow-300/90 rounded-full" />
+      
+      {/* Clouds */}
+      <div className="absolute top-[8%] left-[10%] w-28 h-8 bg-white/80 rounded-full animate-pan" style={{animationDuration: '180s'}} />
+      <div className="absolute top-[15%] left-[30%] w-32 h-10 bg-white/80 rounded-full animate-pan-slow" style={{animationDuration: '220s'}} />
+      <div className="absolute top-[10%] left-[65%] w-40 h-12 bg-white/80 rounded-full animate-pan" style={{animationDuration: '160s'}} />
+      <div className="absolute top-[18%] left-[85%] w-24 h-8 bg-white/80 rounded-full animate-pan-slow" style={{animationDuration: '240s'}} />
 
-            {/* Clouds */}
-            <div className="absolute top-[20%] -left-1/4 w-1/2 h-16 rounded-full animate-pan bg-white/60" />
-            <div className="absolute top-[30%] -left-1/3 w-1/2 h-20 rounded-full animate-pan-slow bg-white/50" style={{ animationDelay: '-15s' }}/>
+      {/* Landscape SVG */}
+      <div className="absolute bottom-0 left-0 w-full h-full">
+        <svg
+          width="100%"
+          height="100%"
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute bottom-0"
+        >
+          {/* Dark Hills */}
+          <path
+            d="M -5 100 L -5 45 C 10 35, 30 55, 50 45 C 70 35, 90 55, 105 45 L 105 100 Z"
+            fill="#1A5D2B"
+          />
+          {/* Light Grass */}
+          <path
+            d="M -5 100 L -5 55 C 15 50, 35 60, 50 55 C 65 50, 85 60, 105 55 L 105 100 Z"
+            fill="#4CAF50"
+          />
+        </svg>
+      </div>
 
-            {/* Hills */}
-            <svg className="absolute bottom-0 w-full h-3/4 text-transparent" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <path d="M-5,100 Q30,25 55,45 T105,35 L105,100 L-5,100 Z" className="fill-sky-600 opacity-60" />
-                <path d="M-5,100 Q15,45 40,65 T85,55 L105,100 L-5,100 Z" className="fill-cyan-500 opacity-80" />
-                <path d="M-5,100 Q25,35 50,55 T100,45 L105,100 L-5,100 Z" className="fill-teal-400 opacity-80" />
-            </svg>
+       {/* Trees - positioned absolutely on top of the SVG container */}
+        <div className="absolute bottom-[42%] left-[40%] w-10 h-12 opacity-80">
+            <div className="absolute bottom-0 w-2 h-6 bg-[#A1662F] left-1/2 -translate-x-1/2 rounded-t-sm" />
+            <div className="absolute top-0 w-full h-10 bg-[#388E3C] rounded-full" />
         </div>
-    );
+        <div className="absolute bottom-[44%] left-[65%] w-8 h-10 opacity-80">
+            <div className="absolute bottom-0 w-2 h-5 bg-[#A1662F] left-1/2 -translate-x-1/2 rounded-t-sm" />
+            <div className="absolute top-0 w-full h-8 bg-[#388E3C] rounded-full" />
+        </div>
+       <div className="absolute bottom-[33%] left-[15%] w-16 h-20">
+            <div className="absolute bottom-0 w-4 h-10 bg-[#A1662F] left-1/2 -translate-x-1/2 rounded-t-sm" />
+            <div className="absolute top-0 w-full h-16 bg-[#388E3C] rounded-full" />
+        </div>
+        <div className="absolute bottom-[35%] left-[80%] w-12 h-16">
+            <div className="absolute bottom-0 w-3 h-8 bg-[#A1662F] left-1/2 -translate-x-1/2 rounded-t-sm" />
+            <div className="absolute top-0 w-full h-12 bg-[#388E3C] rounded-full" />
+        </div>
+    </div>
+  );
 };
 
 
@@ -100,7 +135,7 @@ export default function GamePage() {
     return (
         <main className="min-h-dvh flex flex-col items-center justify-center p-4 font-body overflow-hidden relative">
             {/* Background */}
-            <DayNightBackground />
+            <GameBackground />
             
             {/* Back Button */}
             <Button onClick={() => router.back()} variant="ghost" size="icon" className="absolute top-6 left-6 z-20 bg-background/50 backdrop-blur-sm rounded-full">
