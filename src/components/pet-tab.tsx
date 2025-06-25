@@ -2,14 +2,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import type { PetTask, PetCustomization } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings, Gamepad2 } from "lucide-react";
+import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
@@ -219,7 +218,6 @@ export function PetTab({
     lastTaskCompletionTime
 }: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
-    const router = useRouter();
     const expToNextLevel = 100 * level;
     const expPercentage = (exp / expToNextLevel) * 100;
 
@@ -302,19 +300,6 @@ export function PetTab({
                         </div>
                         <Progress value={expPercentage} indicatorClassName="bg-yellow-500" />
                     </div>
-                </CardContent>
-            </Card>
-
-            <Card className="bg-card/80 backdrop-blur-sm">
-                <CardHeader>
-                    <CardTitle>Game Mode</CardTitle>
-                    <CardDescription>Enter a fully immersive game mode with your pet.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Button onClick={() => router.push('/pet-game')} className="w-full">
-                        <Gamepad2 className="mr-2 h-4 w-4" />
-                        Play Fullscreen Game
-                    </Button>
                 </CardContent>
             </Card>
 
