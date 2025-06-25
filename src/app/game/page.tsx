@@ -31,7 +31,7 @@ const GamePet = ({ happiness, customization, isInteracting }: { happiness: numbe
                 loop
                 autoplay
                 speed={0.5}
-                className="w-32 h-32"
+                className="w-28 h-28"
             />
         </div>
     );
@@ -69,7 +69,7 @@ const GameBackground = () => {
       <Cloud className="top-[18%] left-[85%] w-24 h-12 animate-pan-slow" style={{animationDuration: '240s'}} />
 
       {/* Landscape SVG */}
-      <div className="absolute bottom-0 left-0 w-full">
+      <div className="absolute bottom-0 left-0 w-full h-40">
         <svg
           width="100%"
           viewBox="0 0 393 124"
