@@ -13,21 +13,47 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// This check provides a clear error message if the environment variables are missing.
+let app: FirebaseApp;
+let auth: Auth;
+let functions: Functions;
+let firestore: Firestore;
+
+// This safeguard prevents the app from crashing if Firebase credentials are not set or are invalid.
+// It will log a clear error to the console and allow the app to run in a disconnected state.
 if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
     console.error(
-        '🔴 Firebase API Key or Project ID is missing from your environment variables. The application will not connect to Firebase. Please ensure your .env file is configured correctly.'
+        '🔴 Firebase API Key or Project ID is missing. The application will not connect to Firebase. Please ensure your .env.local file is configured correctly.'
     );
+    // Create mock objects to prevent the app from crashing.
+    app = {} as FirebaseApp;
+    auth = {
+        onAuthStateChanged: (callback) => {
+            setTimeout(() => callback(null), 0); // Ensures AuthProvider doesn't hang in loading state
+            return () => {}; // Return an empty unsubscribe function
+        }
+    } as any;
+    functions = {} as any;
+    firestore = {} as any;
 } else {
-    // Log the project ID to help with debugging.
-    console.log(`⚪️ Connecting to Firebase project: ${firebaseConfig.projectId}`);
+    try {
+        app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+        auth = getAuth(app);
+        functions = getFunctions(app);
+        firestore = getFirestore(app);
+        console.log(`⚪️ Connected to Firebase project: ${firebaseConfig.projectId}`);
+    } catch (error) {
+        console.error("Failed to initialize Firebase, please check your credentials:", error);
+        // Create mock objects to prevent the app from crashing.
+        app = {} as FirebaseApp;
+        auth = {
+            onAuthStateChanged: (callback) => {
+                setTimeout(() => callback(null), 0);
+                return () => {};
+            }
+        } as any;
+        functions = {} as any;
+        firestore = {} as any;
+    }
 }
-
-// Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth: Auth = getAuth(app);
-const functions: Functions = getFunctions(app);
-const firestore: Firestore = getFirestore(app);
-
 
 export { app, auth, functions, firestore };
