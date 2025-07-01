@@ -1,10 +1,11 @@
 
 "use client";
 
-import { Home, ListChecks, LineChart, User, PawPrint } from "lucide-react";
+import { Home, ListChecks, LineChart, User, Gamepad2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import type { User as AppUser } from "@/lib/types";
+import { useRouter } from 'next/navigation';
 
 type BottomNavProps = {
   activeTab: string;
@@ -16,12 +17,14 @@ type BottomNavProps = {
 const allNavItems = [
   { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
-  { id: "pet", icon: PawPrint, label: "Pet" },
+  { id: "pet", icon: Gamepad2, label: "Game" },
   { id: "insights", icon: LineChart, label: "Insights" },
   { id: "profile", icon: User, label: "Profile" },
 ];
 
 export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibility }: BottomNavProps) {
+  const router = useRouter();
+
   const navItems = useMemo(() => {
     let items = [...allNavItems];
     
@@ -34,6 +37,14 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
     return items;
   }, [petEnabled, featureVisibility]);
 
+  const handleNavClick = (item: typeof allNavItems[0]) => {
+      if (item.id === 'pet') {
+          router.push('/game');
+      } else {
+          setActiveTab(item.id);
+      }
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40">
       <div className="bg-white/90 backdrop-blur-lg border-t m-4 rounded-3xl shadow-2xl">
@@ -41,7 +52,7 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => handleNavClick(item)}
               className={cn(
                 "flex flex-col items-center space-y-1 w-16 h-16 justify-center rounded-2xl transition-all duration-300",
                 activeTab === item.id

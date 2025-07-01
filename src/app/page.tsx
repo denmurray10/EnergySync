@@ -21,7 +21,6 @@ import { HomeTab } from "@/components/home-tab";
 import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
 import { ProfileTab } from "@/components/profile-tab";
-import { PetTab } from "@/components/pet-tab";
 import { BottomNav } from "@/components/bottom-nav";
 import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
@@ -740,23 +739,6 @@ export default function HomePage() {
               isProMember={isProMember}
               onDeleteActivity={handleDeleteActivity}
               ageGroup={appUser.ageGroup}
-            />
-          )}
-          {activeTab === "pet" && appUser && appUser.petEnabled && (
-            <PetTab
-              tasks={petTasks}
-              onTaskComplete={handleTaskComplete}
-              interactions={petInteractions}
-              petHappiness={petHappiness}
-              onPetInteraction={handlePetInteraction}
-              customization={appUser.petCustomization}
-              openCustomization={() => openModal('petCustomization')}
-              openSettings={() => openModal('petSettings')}
-              level={appUser.petLevel}
-              exp={appUser.petExp}
-              petName={appUser.petName}
-              petType={appUser.petType}
-              lastTaskCompletionTime={appUser.lastTaskCompletionTime}
             />
           )}
           {activeTab === "insights" && appUser.featureVisibility?.insights && (
