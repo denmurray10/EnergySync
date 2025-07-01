@@ -1,14 +1,9 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { ArrowLeft, GripVertical, CheckIcon, Zap } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 
@@ -36,7 +31,7 @@ const GamePet = ({ isInteracting }: { isInteracting: boolean }) => {
 const GameBackground = () => {
   return (
     <div className="absolute inset-0 z-0 overflow-hidden bg-white">
-       <svg width="100%" height="100%" viewBox="0 0 393 1722" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+       <svg width="100%" height="100%" viewBox="0 0 393 1722" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
         <g clipPath="url(#clip0_20_769)">
             <rect width="393" height="1722" fill="white"></rect>
             <path d="M0 0H393V262H0V0Z" fill="url(#paint0_linear_20_769)"></path>
@@ -66,42 +61,14 @@ const GameBackground = () => {
             <path d="M370.042 293.05L374.362 286.233C374.704 285.694 374.601 284.986 374.119 284.567C373.604 284.119 372.831 284.148 372.352 284.633L369.17 287.855C368.748 288.282 368.025 287.927 368.106 287.332L369.041 280.4C369.141 279.659 368.594 278.988 367.848 278.938L366.971 278.879C366.313 278.834 365.727 279.293 365.612 279.944L363.942 289.432C363.849 289.96 363.179 290.134 362.841 289.718L357.611 283.286C357.249 282.841 356.637 282.687 356.108 282.91L355.192 283.295C354.467 283.599 354.18 284.476 354.585 285.15L359.96 294.109C360.738 295.406 361.059 296.928 360.864 298.429C360.168 303.801 359.303 308.868 355.762 312.995H374.238C370.448 308.577 369.513 303.082 369.011 297.289C368.883 295.801 369.243 294.311 370.042 293.05Z" fill="#BF6101"/>
             <path d="M374.362 286.233C374.704 285.694 374.601 284.986 374.119 284.567C373.605 284.119 372.831 284.148 372.352 284.633L370.931 286.072L369.17 287.854C368.748 288.282 368.025 287.926 368.106 287.331L369.041 280.4C369.139 279.678 368.62 279.024 367.904 278.945L365.273 295.296C365.229 295.507 365.194 295.72 365.17 295.935C365.12 296.382 365.113 296.835 365.152 297.288C365.654 303.082 366.589 308.577 370.38 312.995H374.238C370.448 308.577 369.513 303.082 369.011 297.288C368.882 295.801 369.243 294.311 370.042 293.05L374.362 286.233Z" fill="#9A4D01"/>
             <path d="M363.081 253.916C360.252 253.916 357.817 255.595 356.713 258.011C355.572 257.205 354.181 256.73 352.678 256.73C348.812 256.73 345.678 259.864 345.678 263.73C345.678 265.006 346.021 266.201 346.617 267.231C343.26 267.747 340.689 270.648 340.689 274.149C340.689 278.015 343.823 281.15 347.689 281.15C351.556 281.15 370.081 264.783 370.081 260.917C370.081 257.051 366.947 253.916 363.081 253.916Z" fill="#28A528"/>
-        </g>
-        <defs>
-        <linearGradient id="paint0_linear_20_769" x1="196.5" y1="0" x2="196.5" y2="262" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#58E3F9"></stop>
-        <stop offset="0.884615" stopColor="#58E3F9" stopOpacity="0.3"></stop>
-        </linearGradient>
-        <clipPath id="clip0_20_769">
-        <rect width="393" height="1722" fill="white"></rect>
-        </clipPath>
-        </defs>
-    </svg>
-    </div>
-  );
-};
-
-
-export default function AllFriendsPage() {
-    const { friends, setFriends } = useAuth();
-    const router = useRouter();
-
-    return (
-        <main className="min-h-dvh bg-background">
-            <div className="max-w-md mx-auto min-h-dvh shadow-2xl relative">
-                <GameBackground />
-                 <div className="absolute inset-0 z-10 p-6 h-dvh overflow-y-auto pb-24 custom-scrollbar">
-                   <div className="flex justify-center items-end h-full pb-16">
-                     <GamePet isInteracting={false} />
-                   </div>
-                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
-                    <Button onClick={() => router.back()} className="w-full bg-primary hover:bg-primary/90">
-                        <ArrowLeft className="mr-2 h-4 w-4"/>
-                        Back
-                    </Button>
-                </div>
-            </div>
-        </main>
-    );
-}
+</g>
+<defs>
+<linearGradient id="paint0_linear_20_769" x1="196.5" y1="0" x2="196.5" y2="262" gradientUnits="userSpaceOnUse">
+<stop stop-color="#58E3F9"/>
+<stop offset="0.884615" stop-color="#58E3F9" stop-opacity="0.3"/>
+</linearGradient>
+<clipPath id="clip0_20_769">
+<rect width="393" height="1722" fill="white"/>
+</clipPath>
+</defs>
+</svg>
