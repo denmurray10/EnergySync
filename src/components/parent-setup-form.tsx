@@ -274,10 +274,7 @@ export function ParentSetupForm() {
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
                                     {hearOptions.map(opt => (
-                                         <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                            <p>{opt.label}</p>
-                                            <RadioGroupItem value={opt.value} id={`hear-${opt.value}`} />
-                                        </Label>
+                                         <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>{opt.label}</p><RadioGroupItem value={opt.value} id={`hear-${opt.value}`} /></Label>
                                     ))}
                                 </RadioGroup>
                             </FormControl>
@@ -293,10 +290,7 @@ export function ParentSetupForm() {
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
                                     {parentWhatToGetOptions.map(opt => (
-                                         <Label key={opt.value} htmlFor={`expect-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                                            <p>{opt.label}</p>
-                                            <RadioGroupItem value={opt.value} id={`expect-${opt.value}`} />
-                                        </Label>
+                                         <Label key={opt.value} htmlFor={`expect-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>{opt.label}</p><RadioGroupItem value={opt.value} id={`expect-${opt.value}`} /></Label>
                                     ))}
                                 </RadioGroup>
                             </FormControl>
