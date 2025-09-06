@@ -2,9 +2,9 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useRouter } from 'next/navigation';
-import type { Activity, UpcomingEvent, Achievement, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
+import type { Activity, UpcomingEvent, Achievement, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend, Reminder } from "@/lib/types";
 import { INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
@@ -118,6 +118,11 @@ export default function HomePage() {
         });
     }, 0);
   }, [toast]);
+  
+  const remindersRef = useRef(reminders);
+  useEffect(() => {
+    remindersRef.current = reminders;
+  }, [reminders]);
 
   // Event Reminders Logic
   useEffect(() => {
@@ -144,10 +149,10 @@ export default function HomePage() {
         
         // Check if the event is happening now (within the same minute)
         if (eventTime.getHours() === now.getHours() && eventTime.getMinutes() === now.getMinutes()) {
-            const hasBeenTriggered = reminders.some(r => r.eventId === event.id && r.triggeredAt.toDateString() === now.toDateString());
+            const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
             if (!hasBeenTriggered) {
                 showToast("Reminder!", `Your event "${event.name}" is starting now.`, "⏰");
-                setReminders([...reminders, { eventId: event.id, triggeredAt: now }]);
+                setReminders([...remindersRef.current, { eventId: event.id, triggeredAt: new Date() }]);
             }
         }
       });
@@ -158,7 +163,7 @@ export default function HomePage() {
     checkEvents(); // Run once on load
 
     return () => clearInterval(intervalId);
-  }, [upcomingEvents, showToast, reminders, setReminders]);
+  }, [upcomingEvents, showToast, setReminders]);
 
   const unlockAchievement = useCallback((name: string) => {
     let achievementAlreadyUnlocked = false;
