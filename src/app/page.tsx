@@ -217,21 +217,13 @@ export default function HomePage() {
   // Test Event Creation
   useEffect(() => {
     if (appUser && upcomingEvents && !upcomingEvents.find(e => e.name === "Reminder Test")) {
-        const now = new Date();
-        now.setMinutes(now.getMinutes() + 6); // Set event for ~6 mins from now
-        
-        const hours = now.getHours();
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const displayHours = ((hours + 11) % 12 + 1);
-
         const testEvent: UpcomingEvent = {
             id: Date.now(),
             name: "Reminder Test",
             type: "personal",
             estimatedImpact: 0,
             date: "Today",
-            time: `${displayHours}:${minutes} ${ampm}`,
+            time: "5:50 PM",
             emoji: "🧪",
             conflictRisk: 'low',
             bufferSuggested: 0
