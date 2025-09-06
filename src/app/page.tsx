@@ -704,7 +704,7 @@ export default function HomePage() {
   return (
     <main className="min-h-dvh bg-background">
       <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative">
-        <div className="p-6 h-dvh overflow-y-auto pb-32 custom-scrollbar">
+        <div className="p-4 h-dvh overflow-y-auto pb-32 custom-scrollbar">
 
           {activeTab === "home" && (
             <HomeTab
