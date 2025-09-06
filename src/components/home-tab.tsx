@@ -223,10 +223,10 @@ export function HomeTab({
             </div>
           </div>
           
-           <div className="grid grid-cols-2 gap-4">
+           <div className="grid grid-cols-1 gap-3">
             <Button
                 onClick={() => openModal("recharge")}
-                className="group h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
+                className="group w-full h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-3"
             >
                 <Zap className="w-5 h-5 mr-2" />
                 <span className="font-semibold">Start Recharge</span>
@@ -234,7 +234,7 @@ export function HomeTab({
              <ProFeatureWrapper isPro={isProMember}>
                 <Button
                     onClick={() => openModal("voiceCheckIn")}
-                    className="group w-full h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-4"
+                    className="group w-full h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-3"
                 >
                     <Mic className="w-5 h-5 mr-2" />
                     <span className="font-semibold">Voice Check-in</span>
