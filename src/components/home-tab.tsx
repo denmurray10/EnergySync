@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { UpcomingEvent, User, ActionableSuggestion, ReadinessReport, EnergyForecastData } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -79,6 +79,23 @@ const getEnergyEmoji = (energy: number) => {
   return "🔋";
 };
 
+const parseTime = (timeStr: string) => {
+    const isPM = timeStr.toUpperCase().includes('PM');
+    const [time] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+
+    if (isNaN(hours) || isNaN(minutes)) {
+        return 2400; // Put invalid times at the end
+    }
+    
+    if (isPM && hours !== 12) {
+        hours += 12;
+    } else if (!isPM && hours === 12) { // Midnight case
+        hours = 0;
+    }
+    return hours * 100 + minutes;
+};
+
 export function HomeTab({
   user,
   isProMember,
@@ -114,6 +131,14 @@ export function HomeTab({
   };
   
   const showPetFeatures = user?.petEnabled;
+  
+  const sortedEvents = useMemo(() => {
+    return [...upcomingEvents].sort((a, b) => {
+        const timeA = parseTime(a.time);
+        const timeB = parseTime(b.time);
+        return timeA - timeB;
+    });
+  }, [upcomingEvents]);
 
   return (
     <div className="space-y-6">
@@ -202,7 +227,7 @@ export function HomeTab({
       )}
 
       <Card className="bg-card/80 backdrop-blur-sm text-center">
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="text-6xl mb-4">{getEnergyEmoji(currentEnergy)}</div>
           <h2 className="text-2xl font-bold text-card-foreground mb-4">
             Current Energy
@@ -327,7 +352,7 @@ export function HomeTab({
             </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {upcomingEvents.map((event) => (
+          {sortedEvents.map((event) => (
             <div
               key={event.id}
               className={`p-4 rounded-2xl border-2 ${
