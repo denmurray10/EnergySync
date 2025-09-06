@@ -5,7 +5,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from 'next/navigation';
 import type { Activity, UpcomingEvent, Achievement, User, Goal, Challenge, ReadinessReport, ChatMessage, ActionableSuggestion, EnergyForecastData, PetTask, PetCustomization, EnergyHotspotAnalysis, Friend } from "@/lib/types";
-import { INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
+import { INITIAL_ACHIEVEMENTS, INITIAL_GOALS, INITIAL_CHALLENGES } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { getProactiveSuggestion } from "@/ai/flows/proactive-suggestion-flow";
 import { getReadinessScore } from "@/ai/flows/readiness-score-flow";
@@ -47,15 +47,18 @@ const locations = ['Home', 'School'];
 export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { firebaseUser, appUser, setAppUser, loading: authLoading, friends, setFriends, chatHistory, addChatMessage, signOut, petTasks, setPetTasks, gainPetExp, addJourneyEntry } = useAuth();
+  const { 
+      firebaseUser, appUser, setAppUser, loading: authLoading, 
+      friends, setFriends, chatHistory, addChatMessage, signOut, 
+      petTasks, setPetTasks, gainPetExp, addJourneyEntry,
+      activities, setActivities, upcomingEvents, setUpcomingEvents
+  } = useAuth();
   
   const [showTutorial, setShowTutorial] = useState(false);
   
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
   const [activeTab, setActiveTab] = useState("home");
-  const [activities, setActivities] = useState<Activity[]>(INITIAL_ACTIVITIES);
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>(INITIAL_UPCOMING_EVENTS);
 
   const [modals, setModals] = useState({
     recharge: false,
@@ -300,7 +303,9 @@ export default function HomePage() {
       autoDetected: false,
       recoveryTime: 0,
     };
-    setActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    const newActivities = [newActivity, ...activities].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setActivities(newActivities);
+    
     showToast('Activity Logged!', `Great job logging '${newActivity.name}'!`, '📝');
     unlockAchievement('Mindful Logger');
 
@@ -313,7 +318,8 @@ export default function HomePage() {
   };
 
   const handleDeleteActivity = (activityId: number) => {
-    setActivities(prev => prev.filter(activity => activity.id !== activityId));
+    const newActivities = activities.filter(activity => activity.id !== activityId);
+    setActivities(newActivities);
     toast({
       title: "Activity Deleted",
       description: "The activity has been removed from your history.",
@@ -327,7 +333,8 @@ export default function HomePage() {
         conflictRisk: 'low', // Default value
         bufferSuggested: 0 // Default value
     };
-    setUpcomingEvents(prev => [...prev, newEvent]);
+    const newEvents = [...upcomingEvents, newEvent];
+    setUpcomingEvents(newEvents);
     toast({
         title: "Event Added!",
         description: `"${newEvent.name}" is now on your schedule.`,
@@ -336,7 +343,8 @@ export default function HomePage() {
   };
 
   const handleDeleteEvent = (eventId: number) => {
-    setUpcomingEvents(prev => prev.filter(event => event.id !== eventId));
+    const newEvents = upcomingEvents.filter(event => event.id !== eventId);
+    setUpcomingEvents(newEvents);
     toast({
       title: "Event Deleted",
       description: "The event has been removed from your schedule.",
@@ -365,7 +373,8 @@ export default function HomePage() {
         autoDetected: false,
         recoveryTime: 0,
     };
-    setActivities(prev => [newActivity, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    const newActivities = [newActivity, ...activities].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    setActivities(newActivities);
     handleRecharge(newActivity.impact, newActivity.impact);
     closeModal('recharge');
   };
@@ -438,7 +447,7 @@ export default function HomePage() {
         conflictRisk: 'low',
         bufferSuggested: 0
     };
-    setUpcomingEvents(prev => [...prev, newEvent]);
+    setUpcomingEvents([...upcomingEvents, newEvent]);
     toast({
         title: "Action Scheduled!",
         description: `We've added "${eventName}" to your smart schedule.`,

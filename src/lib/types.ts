@@ -84,6 +84,8 @@ export interface User {
   friends: Friend[];
   journeys: JourneyEntry[];
   petTasks: PetTask[];
+  activities: Activity[];
+  upcomingEvents: UpcomingEvent[];
 }
 
 export interface Goal {

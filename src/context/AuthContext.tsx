@@ -6,8 +6,8 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
-import type { User, Friend, ChatMessage, PetTask, JourneyEntry } from '@/lib/types';
-import { INITIAL_FRIENDS, INITIAL_PET_TASKS } from '@/lib/data';
+import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent } from '@/lib/types';
+import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -24,6 +24,10 @@ interface AuthContextType {
   setPetTasks: (tasks: PetTask[]) => void;
   gainPetExp: (amount: number) => void;
   addJourneyEntry: (text: string, icon: string) => void;
+  activities: Activity[];
+  setActivities: (activities: Activity[]) => void;
+  upcomingEvents: UpcomingEvent[];
+  setUpcomingEvents: (events: UpcomingEvent[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -157,6 +161,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setLocalAppUser(prev => prev ? ({ ...prev, petTasks }) : null);
       }
   }, [appUser]);
+  
+  const setActivities = useCallback(async (activities: Activity[]) => {
+      if(appUser) {
+          const userRef = doc(firestore, 'users', appUser.userId);
+          await updateDoc(userRef, { activities });
+          setLocalAppUser(prev => prev ? ({ ...prev, activities }) : null);
+      }
+  }, [appUser]);
+  
+  const setUpcomingEvents = useCallback(async (events: UpcomingEvent[]) => {
+      if(appUser) {
+          const userRef = doc(firestore, 'users', appUser.userId);
+          await updateDoc(userRef, { upcomingEvents: events });
+          setLocalAppUser(prev => prev ? ({ ...prev, upcomingEvents: events }) : null);
+      }
+  }, [appUser]);
 
   const addJourneyEntry = useCallback(async (text: string, icon: string) => {
     if (appUser) {
@@ -196,8 +216,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const friends = appUser?.friends ?? INITIAL_FRIENDS;
   const chatHistory = appUser?.chatHistory ?? [];
   const petTasks = appUser?.petTasks ?? INITIAL_PET_TASKS;
+  const activities = appUser?.activities ?? INITIAL_ACTIVITIES;
+  const upcomingEvents = appUser?.upcomingEvents ?? INITIAL_UPCOMING_EVENTS;
 
-  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry };
+  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry, activities, setActivities, upcomingEvents, setUpcomingEvents };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
