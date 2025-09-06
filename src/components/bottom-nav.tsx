@@ -48,13 +48,13 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
               key={item.id}
               onClick={() => handleNavClick(item)}
               className={cn(
-                "flex flex-col items-center space-y-1 w-16 h-16 justify-center rounded-2xl transition-all duration-300",
+                "flex flex-col items-center space-y-1 w-14 h-14 justify-center rounded-2xl transition-all duration-300",
                 activeTab === item.id
                   ? "bg-gradient-to-r from-primary to-pink-500 text-primary-foreground shadow-lg"
                   : "text-muted-foreground hover:text-primary"
               )}
             >
-              <item.icon className="w-6 h-6" />
+              <item.icon className="w-5 h-5" />
               <span className="text-xs font-medium capitalize">{item.label}</span>
             </button>
           ))}
