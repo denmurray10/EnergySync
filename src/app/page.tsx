@@ -153,12 +153,15 @@ export default function HomePage() {
             const eventTime = parseTime(event.time);
             if (!eventTime) return;
 
-            // Check if it's time for the event
-            if (eventTime.getHours() === now.getHours() && eventTime.getMinutes() === now.getMinutes()) {
+            // Set reminder time for 5 minutes before the event
+            const reminderTime = new Date(eventTime.getTime() - 5 * 60 * 1000);
+
+            // Check if it's time for the reminder
+            if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
                 const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
 
                 if (!hasBeenTriggered) {
-                    showToast("Reminder!", `Your event "${event.name}" is starting now.`, "⏰");
+                    showToast("Reminder!", `Your event "${event.name}" is starting in 5 minutes.`, "⏰");
                     setReminders([...remindersRef.current, { eventId: event.id, triggeredAt: new Date() }]);
                 }
             }
@@ -849,7 +852,7 @@ export default function HomePage() {
               isProMember={isProMember}
               ageGroup={appUser.ageGroup}
               onTierChange={handleTierChange}
-              onTogglePet={handleTogglePet}
+              onTogglePet={onTogglePet}
               onUpdateUser={handleUpdateUser}
               openModal={openModal}
               isParentModeUnlocked={isParentModeUnlocked}
