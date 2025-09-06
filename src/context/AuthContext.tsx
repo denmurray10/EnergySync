@@ -114,8 +114,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await updateDoc(userRef, userData);
         setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
       } else {
-        await setDoc(userRef, { ...userData, journeys: [] } as User);
-        setLocalAppUser({ ...userData, journeys: [] } as User);
+        await setDoc(userRef, { ...userData } as User);
+        setLocalAppUser({ ...userData } as User);
       }
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
@@ -140,43 +140,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const addChatMessage = useCallback(async (message: ChatMessage) => {
     if (appUser) {
         const newHistory = [...(appUser.chatHistory || []), message];
-        const userRef = doc(firestore, 'users', appUser.userId);
-        await updateDoc(userRef, { chatHistory: newHistory });
-        setLocalAppUser(prev => prev ? ({ ...prev, chatHistory: newHistory }) : null);
+        await setAppUser({ chatHistory: newHistory });
     }
-  }, [appUser]);
+  }, [appUser, setAppUser]);
   
   const setFriends = useCallback(async (friends: Friend[]) => {
       if(appUser) {
-          const userRef = doc(firestore, 'users', appUser.userId);
-          await updateDoc(userRef, { friends });
-          setLocalAppUser(prev => prev ? ({ ...prev, friends }) : null);
+          await setAppUser({ friends });
       }
-  }, [appUser]);
+  }, [appUser, setAppUser]);
   
   const setPetTasks = useCallback(async (tasks: PetTask[]) => {
       if(appUser) {
-          const userRef = doc(firestore, 'users', appUser.userId);
-          await updateDoc(userRef, { petTasks: tasks });
-          setLocalAppUser(prev => prev ? ({ ...prev, petTasks }) : null);
+          await setAppUser({ petTasks: tasks });
       }
-  }, [appUser]);
+  }, [appUser, setAppUser]);
   
   const setActivities = useCallback(async (activities: Activity[]) => {
       if(appUser) {
-          const userRef = doc(firestore, 'users', appUser.userId);
-          await updateDoc(userRef, { activities });
-          setLocalAppUser(prev => prev ? ({ ...prev, activities }) : null);
+          await setAppUser({ activities });
       }
-  }, [appUser]);
+  }, [appUser, setAppUser]);
   
   const setUpcomingEvents = useCallback(async (events: UpcomingEvent[]) => {
       if(appUser) {
-          const userRef = doc(firestore, 'users', appUser.userId);
-          await updateDoc(userRef, { upcomingEvents: events });
-          setLocalAppUser(prev => prev ? ({ ...prev, upcomingEvents: events }) : null);
+         await setAppUser({ upcomingEvents: events });
       }
-  }, [appUser]);
+  }, [appUser, setAppUser]);
 
   const addJourneyEntry = useCallback(async (text: string, icon: string) => {
     if (appUser) {
