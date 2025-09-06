@@ -1,11 +1,10 @@
 
 "use client";
 
-import { Home, ListChecks, LineChart, User, Gamepad2 } from "lucide-react";
+import { Home, ListChecks, LineChart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import type { User as AppUser } from "@/lib/types";
-import { useRouter } from 'next/navigation';
 
 type BottomNavProps = {
   activeTab: string;
@@ -17,32 +16,23 @@ type BottomNavProps = {
 const allNavItems = [
   { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
-  { id: "pet", icon: Gamepad2, label: "Game" },
   { id: "insights", icon: LineChart, label: "Insights" },
   { id: "profile", icon: User, label: "Profile" },
 ];
 
 export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibility }: BottomNavProps) {
-  const router = useRouter();
 
   const navItems = useMemo(() => {
     let items = [...allNavItems];
     
-    if (!petEnabled) {
-      items = items.filter(item => item.id !== 'pet');
-    }
     if (!featureVisibility?.insights) {
       items = items.filter(item => item.id !== 'insights');
     }
     return items;
-  }, [petEnabled, featureVisibility]);
+  }, [featureVisibility]);
 
   const handleNavClick = (item: typeof allNavItems[0]) => {
-      if (item.id === 'pet') {
-          router.push('/game');
-      } else {
-          setActiveTab(item.id);
-      }
+      setActiveTab(item.id);
   };
 
   return (
