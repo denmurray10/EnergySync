@@ -40,6 +40,7 @@ import { QRCodeModal } from "@/components/qr-code-modal";
 import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
 import { ParentalControlModal } from "@/components/parental-control-modal";
 import { MembershipModal } from "@/components/membership-modal";
+import { ReminderModal } from "@/components/reminder-modal";
 
 
 const locations = ['Home', 'School'];
@@ -75,7 +76,10 @@ export default function HomePage() {
     readinessSurvey: false,
     parentalControls: false,
     membership: false,
+    reminder: false,
   });
+  
+  const [eventForReminder, setEventForReminder] = useState<UpcomingEvent | null>(null);
 
   const [communityMode, setCommunityMode] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
@@ -161,7 +165,8 @@ export default function HomePage() {
                 const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
 
                 if (!hasBeenTriggered) {
-                    showToast("Reminder!", `Your event "${event.name}" is starting in 5 minutes.`, "⏰");
+                    setEventForReminder(event);
+                    openModal('reminder');
                     setReminders([...remindersRef.current, { eventId: event.id, triggeredAt: new Date() }]);
                 }
             }
@@ -172,7 +177,7 @@ export default function HomePage() {
     checkEvents(); // Run once on load
 
     return () => clearInterval(intervalId);
-  }, [upcomingEvents, showToast, setReminders]);
+  }, [upcomingEvents, setReminders]);
 
   const unlockAchievement = useCallback((name: string) => {
     let achievementAlreadyUnlocked = false;
@@ -1017,6 +1022,11 @@ export default function HomePage() {
                 currentTier={appUser.membershipTier}
             />
          )}
+         <ReminderModal 
+            open={modals.reminder}
+            onOpenChange={() => closeModal('reminder')}
+            event={eventForReminder}
+         />
       </div>
     </main>
   );
