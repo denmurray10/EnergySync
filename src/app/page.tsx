@@ -42,7 +42,7 @@ import { ParentalControlModal } from "@/components/parental-control-modal";
 import { MembershipModal } from "@/components/membership-modal";
 
 
-const locations = ['Home', 'Office', 'Park', 'Cafe'];
+const locations = ['Home', 'School'];
 
 export default function HomePage() {
   const router = useRouter();
