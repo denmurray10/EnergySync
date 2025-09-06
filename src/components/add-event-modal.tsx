@@ -31,17 +31,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, LoaderCircle, Star } from "lucide-react";
+import { ScrollArea } from "./ui/scroll-area";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   type: z.enum(["social", "work", "personal"]),
   estimatedImpact: z.number().min(-50).max(50),
   date: z.string().min(1, "Please enter a date."),
-  time: z.string().min(1, "Please enter a time."),
+  time: z.string().min(1, "Please select a time."),
   emoji: z.string().min(1, "Please add an emoji.").max(2, "Please use only one emoji."),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
+
+const timeOptions: string[] = [];
+for (let h = 1; h <= 12; h++) {
+    for (let m = 0; m < 60; m += 30) {
+        const hour = h;
+        const minute = m.toString().padStart(2, '0');
+        const ampm = h < 12 ? 'AM' : 'PM';
+        timeOptions.push(`${hour}:${minute} AM`);
+        timeOptions.push(`${hour}:${minute} PM`);
+    }
+}
+// Adjust for 12 AM/PM ordering
+const sortedTimeOptions = [
+    ...timeOptions.filter(t => t.includes('AM')).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })),
+    ...timeOptions.filter(t => t.includes('PM')).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })),
+].filter(t => !t.startsWith("12:00 PM")); // Remove duplicate noon
+sortedTimeOptions.push('12:00 PM'); // Add noon at the end of PM section
+sortedTimeOptions.unshift(...sortedTimeOptions.splice(sortedTimeOptions.findIndex(v => v.startsWith("12:") && v.endsWith("AM")), 2))
+
 
 type AddEventModalProps = {
   open: boolean;
@@ -229,9 +249,20 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Time</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., 1:00 PM" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                       <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a time" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <ScrollArea className="h-48">
+                            {sortedTimeOptions.map(time => (
+                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                            ))}
+                            </ScrollArea>
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                     </FormItem>
                 )}

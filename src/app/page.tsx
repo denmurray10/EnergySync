@@ -126,42 +126,46 @@ export default function HomePage() {
 
   // Event Reminders Logic
   useEffect(() => {
-    const checkEvents = () => {
-      const now = new Date();
-      upcomingEvents.forEach(event => {
-        if (event.date.toLowerCase() !== 'today') return;
+    const parseTime = (timeStr: string): Date | null => {
+        const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
+        if (!match) return null;
 
-        const timeString = event.time.toUpperCase();
-        const timeParts = timeString.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/);
-        if (!timeParts) return;
-
-        let [_, hours, minutes, ampm] = timeParts;
+        let [_, hours, minutes, ampm] = match;
         let eventHours = parseInt(hours, 10);
-        let eventMinutes = minutes ? parseInt(minutes, 10) : 0;
-
-        if (ampm === 'PM' && eventHours !== 12) {
-          eventHours += 12;
-        }
-        if (ampm === 'AM' && eventHours === 12) {
-          eventHours = 0;
-        }
-
-        const eventTime = new Date();
-        eventTime.setHours(eventHours, eventMinutes, 0, 0);
         
-        // Check if the event is happening now (within the same minute)
-        if (eventTime.getHours() === now.getHours() && eventTime.getMinutes() === now.getMinutes()) {
-            const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
-            if (!hasBeenTriggered) {
-                showToast("Reminder!", `Your event "${event.name}" is starting now.`, "⏰");
-                setReminders([...remindersRef.current, { eventId: event.id, triggeredAt: new Date() }]);
-            }
+        if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
+            eventHours += 12;
         }
-      });
+        if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
+            eventHours = 0; // Midnight case
+        }
+        
+        const eventTime = new Date();
+        eventTime.setHours(eventHours, parseInt(minutes, 10), 0, 0);
+        return eventTime;
     };
 
-    // Check every minute
-    const intervalId = setInterval(checkEvents, 60000);
+    const checkEvents = () => {
+        const now = new Date();
+        upcomingEvents.forEach(event => {
+            if (event.date.toLowerCase() !== 'today') return;
+            
+            const eventTime = parseTime(event.time);
+            if (!eventTime) return;
+
+            // Check if it's time for the event
+            if (eventTime.getHours() === now.getHours() && eventTime.getMinutes() === now.getMinutes()) {
+                const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
+
+                if (!hasBeenTriggered) {
+                    showToast("Reminder!", `Your event "${event.name}" is starting now.`, "⏰");
+                    setReminders([...remindersRef.current, { eventId: event.id, triggeredAt: new Date() }]);
+                }
+            }
+        });
+    };
+
+    const intervalId = setInterval(checkEvents, 60000); // Check every minute
     checkEvents(); // Run once on load
 
     return () => clearInterval(intervalId);

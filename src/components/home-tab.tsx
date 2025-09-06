@@ -79,24 +79,21 @@ const getEnergyEmoji = (energy: number) => {
   return "🔋";
 };
 
-const parseTime = (timeStr: string): number => {
-    const time = timeStr.toUpperCase();
-    const parts = time.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/);
-    if (!parts) {
-      return 2400; // Invalid format, sort to end
+const parseTimeForSorting = (timeStr: string): number => {
+    const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
+    if (!match) return 2400; // Invalid format, sort to end
+
+    let [_, hours, minutes, ampm] = match;
+    let eventHours = parseInt(hours, 10);
+    
+    if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
+        eventHours += 12;
+    }
+    if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
+        eventHours = 0; // Midnight case
     }
 
-    let [_, hoursStr, minutesStr, ampm] = parts;
-    let hours = parseInt(hoursStr, 10);
-    let minutes = minutesStr ? parseInt(minutesStr, 10) : 0;
-
-    if (ampm === 'PM' && hours !== 12) {
-      hours += 12;
-    }
-    if (ampm === 'AM' && hours === 12) {
-      hours = 0; // Midnight case
-    }
-    return hours * 100 + minutes;
+    return eventHours * 100 + parseInt(minutes, 10);
 };
 
 export function HomeTab({
@@ -137,8 +134,8 @@ export function HomeTab({
   
   const sortedEvents = useMemo(() => {
     return [...upcomingEvents].sort((a, b) => {
-        const timeA = parseTime(a.time);
-        const timeB = parseTime(b.time);
+        const timeA = parseTimeForSorting(a.time);
+        const timeB = parseTimeForSorting(b.time);
         return timeA - timeB;
     });
   }, [upcomingEvents]);
