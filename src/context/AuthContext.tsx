@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback 
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
-import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent } from '@/lib/types';
+import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder } from '@/lib/types';
 import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,6 +28,8 @@ interface AuthContextType {
   setActivities: (activities: Activity[]) => void;
   upcomingEvents: UpcomingEvent[];
   setUpcomingEvents: (events: UpcomingEvent[]) => void;
+  reminders: Reminder[];
+  setReminders: (reminders: Reminder[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -167,6 +169,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
          await setAppUser({ upcomingEvents: events });
       }
   }, [appUser, setAppUser]);
+  
+  const setReminders = useCallback(async (reminders: Reminder[]) => {
+      if(appUser) {
+         await setAppUser({ reminders });
+      }
+  }, [appUser, setAppUser]);
+
 
   const addJourneyEntry = useCallback(async (text: string, icon: string) => {
     if (appUser) {
@@ -208,8 +217,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const petTasks = appUser?.petTasks ?? INITIAL_PET_TASKS;
   const activities = appUser?.activities ?? INITIAL_ACTIVITIES;
   const upcomingEvents = appUser?.upcomingEvents ?? INITIAL_UPCOMING_EVENTS;
+  const reminders = appUser?.reminders ?? [];
 
-  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry, activities, setActivities, upcomingEvents, setUpcomingEvents };
+  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry, activities, setActivities, upcomingEvents, setUpcomingEvents, reminders, setReminders };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -178,6 +178,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                 petTasks: INITIAL_PET_TASKS,
                 activities: INITIAL_ACTIVITIES,
                 upcomingEvents: INITIAL_UPCOMING_EVENTS,
+                reminders: [],
             };
 
             await setAppUser(initialUser);
@@ -266,7 +267,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                                          <Label key={opt.value} htmlFor={`expect-adult-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
                                             <p>{opt.label}</p>
                                             <RadioGroupItem value={opt.value} id={`expect-adult-${opt.value}`} />
-                                        </Label>
+                                         </Label>
                                     ))}
                                 </RadioGroup>
                             </FormControl>

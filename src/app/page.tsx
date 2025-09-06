@@ -49,7 +49,7 @@ export default function HomePage() {
   const { toast } = useToast();
   const { 
       firebaseUser, appUser, setAppUser, loading: authLoading, 
-      friends, setFriends, chatHistory, addChatMessage, signOut, 
+      friends, setFriends, chatHistory, addChatMessage, signOut, reminders, setReminders,
       petTasks, setPetTasks, gainPetExp, addJourneyEntry,
       activities, setActivities, upcomingEvents, setUpcomingEvents
   } = useAuth();
@@ -118,6 +118,47 @@ export default function HomePage() {
         });
     }, 0);
   }, [toast]);
+
+  // Event Reminders Logic
+  useEffect(() => {
+    const checkEvents = () => {
+      const now = new Date();
+      upcomingEvents.forEach(event => {
+        if (event.date.toLowerCase() !== 'today') return;
+
+        const timeParts = event.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (!timeParts) return;
+
+        let [_, hours, minutes, ampm] = timeParts;
+        let eventHours = parseInt(hours, 10);
+
+        if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
+          eventHours += 12;
+        }
+        if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
+          eventHours = 0;
+        }
+
+        const eventTime = new Date();
+        eventTime.setHours(eventHours, parseInt(minutes, 10), 0, 0);
+        
+        // Check if the event is happening now (within the same minute)
+        if (eventTime.getHours() === now.getHours() && eventTime.getMinutes() === now.getMinutes()) {
+            const hasBeenTriggered = reminders.some(r => r.eventId === event.id && r.triggeredAt.toDateString() === now.toDateString());
+            if (!hasBeenTriggered) {
+                showToast("Reminder!", `Your event "${event.name}" is starting now.`, "⏰");
+                setReminders([...reminders, { eventId: event.id, triggeredAt: now }]);
+            }
+        }
+      });
+    };
+
+    // Check every minute
+    const intervalId = setInterval(checkEvents, 60000);
+    checkEvents(); // Run once on load
+
+    return () => clearInterval(intervalId);
+  }, [upcomingEvents, showToast, reminders, setReminders]);
 
   const unlockAchievement = useCallback((name: string) => {
     let achievementAlreadyUnlocked = false;

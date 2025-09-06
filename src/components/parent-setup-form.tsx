@@ -175,6 +175,7 @@ export function ParentSetupForm() {
                 petTasks: INITIAL_PET_TASKS,
                 activities: INITIAL_ACTIVITIES,
                 upcomingEvents: INITIAL_UPCOMING_EVENTS,
+                reminders: [],
             };
             
             await setAppUser(initialUser);

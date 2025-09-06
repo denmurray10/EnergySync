@@ -55,6 +55,11 @@ export interface JourneyEntry {
     timestamp: string;
 }
 
+export interface Reminder {
+    eventId: number;
+    triggeredAt: Date;
+}
+
 export interface User {
   userId: string;
   name: string;
@@ -86,6 +91,7 @@ export interface User {
   petTasks: PetTask[];
   activities: Activity[];
   upcomingEvents: UpcomingEvent[];
+  reminders: Reminder[];
 }
 
 export interface Goal {
