@@ -216,19 +216,33 @@ export default function HomePage() {
 
   // Test Event Creation
   useEffect(() => {
-    if (appUser && upcomingEvents && !upcomingEvents.find(e => e.name === "Reminder Test")) {
-        const testEvent: UpcomingEvent = {
-            id: Date.now(),
-            name: "Reminder Test",
-            type: "personal",
-            estimatedImpact: 0,
-            date: "Today",
-            time: "5:50 PM",
-            emoji: "🧪",
-            conflictRisk: 'low',
-            bufferSuggested: 0
-        };
-        setUpcomingEvents([...upcomingEvents, testEvent]);
+    if (appUser && upcomingEvents && !upcomingEvents.find(e => e.name.startsWith("Reminder Test Min"))) {
+      const now = new Date();
+      const testEvents: UpcomingEvent[] = [];
+      
+      for (let i = 1; i <= 10; i++) {
+          const eventTime = new Date(now.getTime() + (i + 5) * 60 * 1000); // Start 5 mins from now, one per minute
+          let hours = eventTime.getHours();
+          const minutes = eventTime.getMinutes();
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+          hours = hours % 12;
+          hours = hours ? hours : 12; // the hour '0' should be '12'
+          const timeString = `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+
+          testEvents.push({
+              id: Date.now() + i,
+              name: `Reminder Test Min ${i}`,
+              type: "personal",
+              estimatedImpact: 0,
+              date: "Today",
+              time: timeString,
+              emoji: "🧪",
+              conflictRisk: 'low',
+              bufferSuggested: 0
+          });
+      }
+
+      setUpcomingEvents([...upcomingEvents, ...testEvents]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appUser]);
