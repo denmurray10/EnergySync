@@ -79,19 +79,22 @@ const getEnergyEmoji = (energy: number) => {
   return "🔋";
 };
 
-const parseTime = (timeStr: string) => {
-    const isPM = timeStr.toUpperCase().includes('PM');
-    const [time] = timeStr.split(' ');
-    let [hours, minutes] = time.split(':').map(Number);
-
-    if (isNaN(hours) || isNaN(minutes)) {
-        return 2400; // Put invalid times at the end
+const parseTime = (timeStr: string): number => {
+    const time = timeStr.toUpperCase();
+    const parts = time.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/);
+    if (!parts) {
+      return 2400; // Invalid format, sort to end
     }
-    
-    if (isPM && hours !== 12) {
-        hours += 12;
-    } else if (!isPM && hours === 12) { // Midnight case
-        hours = 0;
+
+    let [_, hoursStr, minutesStr, ampm] = parts;
+    let hours = parseInt(hoursStr, 10);
+    let minutes = minutesStr ? parseInt(minutesStr, 10) : 0;
+
+    if (ampm === 'PM' && hours !== 12) {
+      hours += 12;
+    }
+    if (ampm === 'AM' && hours === 12) {
+      hours = 0; // Midnight case
     }
     return hours * 100 + minutes;
 };

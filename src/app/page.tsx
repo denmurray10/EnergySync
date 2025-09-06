@@ -131,21 +131,23 @@ export default function HomePage() {
       upcomingEvents.forEach(event => {
         if (event.date.toLowerCase() !== 'today') return;
 
-        const timeParts = event.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        const timeString = event.time.toUpperCase();
+        const timeParts = timeString.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)/);
         if (!timeParts) return;
 
         let [_, hours, minutes, ampm] = timeParts;
         let eventHours = parseInt(hours, 10);
+        let eventMinutes = minutes ? parseInt(minutes, 10) : 0;
 
-        if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
+        if (ampm === 'PM' && eventHours !== 12) {
           eventHours += 12;
         }
-        if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
+        if (ampm === 'AM' && eventHours === 12) {
           eventHours = 0;
         }
 
         const eventTime = new Date();
-        eventTime.setHours(eventHours, parseInt(minutes, 10), 0, 0);
+        eventTime.setHours(eventHours, eventMinutes, 0, 0);
         
         // Check if the event is happening now (within the same minute)
         if (eventTime.getHours() === now.getHours() && eventTime.getMinutes() === now.getMinutes()) {
