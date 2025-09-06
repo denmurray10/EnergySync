@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Home, ListChecks, LineChart, User } from "lucide-react";
+import { Home, ListChecks, LineChart, User, PawPrint } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import type { User as AppUser } from "@/lib/types";
@@ -16,6 +16,7 @@ type BottomNavProps = {
 const allNavItems = [
   { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
+  { id: "pet", icon: PawPrint, label: "Pet" },
   { id: "insights", icon: LineChart, label: "Insights" },
   { id: "profile", icon: User, label: "Profile" },
 ];
@@ -24,12 +25,15 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
 
   const navItems = useMemo(() => {
     let items = [...allNavItems];
+    if (!petEnabled) {
+      items = items.filter(item => item.id !== 'pet');
+    }
     
     if (!featureVisibility?.insights) {
       items = items.filter(item => item.id !== 'insights');
     }
     return items;
-  }, [featureVisibility]);
+  }, [petEnabled, featureVisibility]);
 
   const handleNavClick = (item: typeof allNavItems[0]) => {
       setActiveTab(item.id);
