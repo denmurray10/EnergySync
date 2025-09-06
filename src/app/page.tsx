@@ -879,7 +879,7 @@ export default function HomePage() {
               isProMember={isProMember}
               ageGroup={appUser.ageGroup}
               onTierChange={handleTierChange}
-              onTogglePet={onTogglePet}
+              onTogglePet={handleTogglePet}
               onUpdateUser={handleUpdateUser}
               openModal={openModal}
               isParentModeUnlocked={isParentModeUnlocked}
