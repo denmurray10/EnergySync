@@ -219,39 +219,6 @@ export default function HomePage() {
     }
   }, [appUser]);
 
-  // Test Event Creation
-  useEffect(() => {
-    if (appUser && upcomingEvents && !upcomingEvents.find(e => e.name.startsWith("Reminder Test"))) {
-      const now = new Date();
-      const testEvents: UpcomingEvent[] = [];
-      
-      const eventTime = new Date();
-      eventTime.setHours(17, 50, 0, 0);
-
-      let hours = eventTime.getHours();
-      const minutes = eventTime.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // the hour '0' should be '12'
-      const timeString = `${hours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-
-      testEvents.push({
-          id: Date.now(),
-          name: `Reminder Test`,
-          type: "personal",
-          estimatedImpact: 0,
-          date: "Today",
-          time: timeString,
-          emoji: "🧪",
-          conflictRisk: 'low',
-          bufferSuggested: 0
-      });
-
-      setUpcomingEvents([...upcomingEvents, ...testEvents]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appUser]);
-
 
   const isProMember = useMemo(() => {
     if (!appUser) return false;
