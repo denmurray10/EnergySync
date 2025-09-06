@@ -216,7 +216,7 @@ export default function HomePage() {
 
   // Test Event Creation
   useEffect(() => {
-    if (upcomingEvents && !upcomingEvents.find(e => e.name === "Reminder Test")) {
+    if (appUser && upcomingEvents && !upcomingEvents.find(e => e.name === "Reminder Test")) {
         const now = new Date();
         now.setMinutes(now.getMinutes() + 6); // Set event for ~6 mins from now
         
