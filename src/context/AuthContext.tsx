@@ -180,9 +180,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const addChatMessage = useCallback(async (message: ChatMessage, callback?: (history: ChatMessage[]) => void) => {
     if (localAppUser) {
         const newHistory = [...(localAppUser.chatHistory || []), message];
-        // Optimistically update local state first for instant UI feedback
+        
+        // Update local state first for instant UI feedback, then persist.
         setLocalAppUser(prev => prev ? { ...prev, chatHistory: newHistory } : null);
 
+        // Execute the callback with the most up-to-date history
         if (callback) {
             callback(newHistory);
         }
