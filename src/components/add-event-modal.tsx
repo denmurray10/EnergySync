@@ -392,7 +392,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                 )}
               </div>
               <div>
-                {step < 2 ? (
+                {step < totalSteps - 1 ? (
                     <Button type="button" onClick={handleNext}>
                         Next <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -409,5 +409,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
-
-    

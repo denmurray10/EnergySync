@@ -245,5 +245,3 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
     </Dialog>
   );
 }
-
-    
