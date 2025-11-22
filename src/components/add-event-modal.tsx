@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { format } from "date-fns";
 import type { UpcomingEvent } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { suggestEventDetails } from "@/ai/flows/suggest-event-details";
@@ -27,11 +28,14 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, LoaderCircle, Star } from "lucide-react";
+import { Sparkles, LoaderCircle, Star, Calendar as CalendarIcon } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -81,7 +85,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       name: "",
       type: "personal",
       estimatedImpact: -10,
-      date: "Today",
+      date: format(new Date(), "PPP"),
       time: "5:00 PM",
       emoji: "🗓️",
     },
@@ -127,12 +131,26 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
 
   function onSubmit(data: EventFormValues) {
     onLogEvent(data);
-    form.reset();
+    form.reset({
+      name: "",
+      type: "personal",
+      estimatedImpact: -10,
+      date: format(new Date(), "PPP"),
+      time: "5:00 PM",
+      emoji: "🗓️",
+    });
   }
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) form.reset();
+       if (!isOpen) form.reset({
+          name: "",
+          type: "personal",
+          estimatedImpact: -10,
+          date: format(new Date(), "PPP"),
+          time: "5:00 PM",
+          emoji: "🗓️",
+        });
       onOpenChange(isOpen);
     }}>
       <DialogContent className="bg-card/95 backdrop-blur-lg rounded-3xl">
@@ -231,17 +249,42 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
             />
             <div className="grid grid-cols-2 gap-4">
                 <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Date</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., Tomorrow" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Date</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                field.value
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={new Date(field.value)}
+                            onSelect={(date) => field.onChange(date ? format(date, "PPP") : "")}
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
                 <FormField
                 control={form.control}
@@ -278,3 +321,5 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
+
+    
