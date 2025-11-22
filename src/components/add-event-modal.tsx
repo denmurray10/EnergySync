@@ -124,7 +124,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
 
   const handleNext = async () => {
       let fieldsToValidate: (keyof EventFormValues)[] = [];
-      if (step === 0) fieldsToValidate = ['name', 'emoji', 'type'];
+      if (step === 0) fieldsToValidate = ['name', 'type'];
       if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
       
       const isValid = await form.trigger(fieldsToValidate as any);
@@ -207,43 +207,28 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="emoji"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Emoji</FormLabel>
-                    <FormControl>
-                        <Input placeholder="e.g., 🍽️" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="type"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Type</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select event type" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        <SelectItem value="social">Social</SelectItem>
-                        <SelectItem value="work">Work</SelectItem>
-                        <SelectItem value="personal">Personal</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                  <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select event type" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      <SelectItem value="social">Social</SelectItem>
+                      <SelectItem value="work">Work</SelectItem>
+                      <SelectItem value="personal">Personal</SelectItem>
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
+                  </FormItem>
+              )}
+            />
           </div>
         );
       case 1:
@@ -418,5 +403,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
-
-    
