@@ -67,8 +67,8 @@ const textToSpeechFlow = ai.defineFlow(
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            // Using a friendly, standard voice
-            prebuiltVoiceConfig: { voiceName: 'Achernar' },
+            // Using a friendly, standard British English voice
+            prebuiltVoiceConfig: { voiceName: 'Alloy' },
           },
         },
       },
