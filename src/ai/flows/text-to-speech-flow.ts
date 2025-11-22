@@ -2,12 +2,12 @@
 
 /**
  * @fileOverview Converts text to speech using a Genkit flow.
- * - textToSpeech - A function that takes a string and returns a data URI for an audio file.
+ * - textToSpeech - a function that takes a string and returns a data URI for an audio file.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { googleAI } from '@genkit-ai/googleai';
+import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 
 // Define the output schema for the flow
