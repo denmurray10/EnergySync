@@ -34,6 +34,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to remove undefined values from an object
+const removeUndefineds = (obj: any) => {
+  const newObj: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      newObj[key] = obj[key];
+    }
+  }
+  return newObj;
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [appUser, setLocalAppUser] = useState<User | null>(null);
@@ -126,15 +137,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const userRef = doc(firestore, 'users', userId);
-    
+    const cleanedUserData = removeUndefineds(userData); // Clean the data here
+
     try {
       const docSnap = await getDoc(userRef);
       if (docSnap.exists()) {
-        await updateDoc(userRef, userData);
-        setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
+        await updateDoc(userRef, cleanedUserData);
+        setLocalAppUser(prev => prev ? { ...prev, ...cleanedUserData } as User : null);
       } else {
-        await setDoc(userRef, { ...userData } as User);
-        setLocalAppUser({ ...userData } as User);
+        await setDoc(userRef, cleanedUserData as User);
+        setLocalAppUser(cleanedUserData as User);
       }
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
