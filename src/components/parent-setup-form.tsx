@@ -98,7 +98,7 @@ export function ParentSetupForm() {
         mode: 'onTouched',
     });
 
-    const totalSteps = 7;
+    const totalSteps = 6;
     const progress = ((step + 1) / (totalSteps + 1)) * 100;
 
     const handleNext = async () => {
@@ -174,14 +174,13 @@ export function ParentSetupForm() {
                 friends: INITIAL_FRIENDS,
                 journeys: [],
                 petTasks: INITIAL_PET_TASKS,
-                activities: [], // Will be populated by AuthContext
-                upcomingEvents: [], // Will be populated by AuthContext
+                activities: [],
+                upcomingEvents: [],
                 reminders: [],
             };
             
             await setAppUser(initialUser);
-            
-            setStep(s => s + 1);
+            router.push('/');
 
         } catch (error: any) {
              if (error.code === 'auth/email-already-in-use') {
@@ -368,14 +367,18 @@ export function ParentSetupForm() {
                         </CardContent>
 
                         <CardFooter className="flex flex-col gap-2 pt-4">
-                             {step < totalSteps -1 ? (
+                             {step < totalSteps ? (
                                 <>
                                     <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full">
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </>
-                             ) : step === totalSteps - 1 ? (
+                             ) : step === totalSteps ? (
+                                <Button type="button" onClick={() => router.push('/')} className="w-full">
+                                    Go to App
+                                </Button>
+                             ) : ( // step === 6, the trial decision
                                 <div className="flex flex-col gap-2 w-full">
                                     <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
                                         {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
@@ -388,10 +391,6 @@ export function ParentSetupForm() {
                                         <ArrowLeft className="mr-2 h-4 w-4"/> Back
                                     </Button>
                                 </div>
-                             ) : (
-                                <Button type="button" onClick={() => router.push('/')} className="w-full">
-                                    Go to App
-                                </Button>
                              )}
                         </CardFooter>
                     </form>
@@ -400,5 +399,3 @@ export function ParentSetupForm() {
         </main>
     );
 }
-
-    

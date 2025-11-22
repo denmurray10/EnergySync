@@ -100,7 +100,11 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
 
         const isValid = await form.trigger(fieldsToValidate as any);
         if (isValid) {
-            setStep(s => s + 1);
+            if (step === totalSteps - 1) { // If it's the last data entry step before trial decision
+                form.handleSubmit(onSubmit)();
+            } else {
+                setStep(s => s + 1);
+            }
         }
     };
 
@@ -177,8 +181,8 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                 friends: INITIAL_FRIENDS,
                 journeys: [],
                 petTasks: INITIAL_PET_TASKS,
-                activities: [], // Will be populated by AuthContext
-                upcomingEvents: [], // Will be populated by AuthContext
+                activities: [], 
+                upcomingEvents: [],
                 reminders: [],
             };
 
@@ -366,5 +370,3 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
         </main>
     );
 }
-
-    
