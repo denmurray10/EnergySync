@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import type { UpcomingEvent, Friend } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { suggestEventDetails } from "@/ai/flows/suggest-event-details";
@@ -93,7 +93,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       name: "",
       type: "personal",
       estimatedImpact: -10,
-      date: format(new Date(), "PPP"),
+      date: format(addDays(new Date(), 1), "PPP"),
       time: "5:00 PM",
       emoji: "🗓️",
       taggedFriendIds: [],
@@ -107,7 +107,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       name: "",
       type: "personal",
       estimatedImpact: -10,
-      date: format(new Date(), "PPP"),
+      date: format(addDays(new Date(), 1), "PPP"),
       time: "5:00 PM",
       emoji: "🗓️",
       taggedFriendIds: [],
@@ -419,4 +419,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
   );
 }
 
-    
