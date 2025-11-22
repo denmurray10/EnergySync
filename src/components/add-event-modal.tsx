@@ -128,7 +128,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
       
       const isValid = await form.trigger(fieldsToValidate as any);
-      if (isValid) {
+      if (isValid && step < totalSteps - 1) {
           setStep(s => s + 1);
       }
   };
@@ -388,7 +388,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                     </Button>
                 )}
                  {step < totalSteps - 1 ? (
-                    <Button type="button" onClick={handleNext} className={cn(step === 0 && "w-full")}>
+                    <Button type="button" onClick={handleNext} className={cn(step === 0 && "ml-auto")}>
                         Next <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                 ) : (
@@ -404,4 +404,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
   );
 }
 
-    

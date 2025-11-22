@@ -158,28 +158,28 @@ export default function HomePage() {
     };
 
     const checkEvents = () => {
-        const now = new Date();
         upcomingEvents.forEach(event => {
-            const isToday = event.date === 'Today' || event.date === 'Tonight' || new Date(event.date).toDateString() === now.toDateString();
+            const isToday = event.date === 'Today' || event.date === 'Tonight' || new Date(event.date).toDateString() === new Date().toDateString();
 
             if (!isToday) return;
             
             const eventTime = parseTime(event.time);
             if (!eventTime) return;
 
-            const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
+            const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === new Date().toDateString());
 
             if (hasBeenTriggered) return;
 
             const thirtyMinutesAfterEvent = new Date(eventTime.getTime() + 30 * 60 * 1000);
 
-            if (now > thirtyMinutesAfterEvent) {
+            if (new Date() > thirtyMinutesAfterEvent) {
                 // This logic seems to be for completing/clearing events, which might be better handled elsewhere.
                 // For now, let's just focus on triggering reminders.
             }
             
             // Set reminder time for 5 minutes before the event
             const reminderTime = new Date(eventTime.getTime() - 5 * 60 * 1000);
+            const now = new Date();
 
             // Check if it's time for the reminder
             if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
@@ -1003,4 +1003,3 @@ export default function HomePage() {
 }
 
     
-
