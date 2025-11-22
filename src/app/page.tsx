@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -151,7 +150,6 @@ export default function HomePage() {
     };
 
     const checkEvents = () => {
-        const now = new Date();
         upcomingEvents.forEach(event => {
             if (event.date.toLowerCase() !== 'today') return;
             
@@ -173,7 +171,7 @@ export default function HomePage() {
             }
         });
     };
-
+    const now = new Date(); // Define now here to be accessible
     const intervalId = setInterval(checkEvents, 60000); // Check every minute
     checkEvents(); // Run once on load
 
@@ -742,28 +740,7 @@ export default function HomePage() {
   };
 
 
-  if (authLoading) {
-    return (
-        <main className="min-h-dvh bg-background flex items-center justify-center">
-            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </main>
-    );
-  }
-  
-  if (!firebaseUser) {
-    // This case is handled by the redirect in the useEffect hook.
-    // This UI will be briefly shown while the redirect happens.
-    return (
-        <main className="min-h-dvh bg-background flex items-center justify-center">
-            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </main>
-    );
-  }
-
-  if (!appUser) {
-    // This state means we are logged in with Firebase, but the app user profile
-    // from Firestore hasn't loaded yet. This is expected during the first login,
-    // so we show a spinner and wait for AuthContext to provide the appUser.
+  if (authLoading || !appUser) {
     return (
         <main className="min-h-dvh bg-background flex items-center justify-center">
             <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -999,3 +976,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+    
