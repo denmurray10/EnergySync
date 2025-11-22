@@ -23,6 +23,7 @@ export interface UpcomingEvent {
   emoji: string;
   conflictRisk: 'high' | 'medium' | 'low';
   bufferSuggested: number;
+  taggedFriendIds?: string[];
 }
 
 export interface Achievement {

@@ -911,6 +911,7 @@ export default function HomePage() {
             onLogEvent={handleLogEvent}
             isProMember={isProMember}
             ageGroup={appUser.ageGroup}
+            friends={friends}
         />
         {appUser && (
             <PetCustomizationModal

@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
-import type { UpcomingEvent } from "@/lib/types";
+import type { UpcomingEvent, Friend } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { suggestEventDetails } from "@/ai/flows/suggest-event-details";
 
@@ -33,9 +33,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, LoaderCircle, Star, Calendar as CalendarIcon } from "lucide-react";
+import { Sparkles, LoaderCircle, Star, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Progress } from "./ui/progress";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Checkbox } from "./ui/checkbox";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -44,6 +47,7 @@ const eventFormSchema = z.object({
   date: z.string().min(1, "Please enter a date."),
   time: z.string().min(1, "Please select a time."),
   emoji: z.string().min(1, "Please add an emoji.").max(2, "Please use only one emoji."),
+  taggedFriendIds: z.array(z.string()).optional(),
 });
 
 type EventFormValues = z.infer<typeof eventFormSchema>;
@@ -53,7 +57,6 @@ for (let h = 1; h <= 12; h++) {
     for (let m = 0; m < 60; m += 30) {
         const hour = h;
         const minute = m.toString().padStart(2, '0');
-        const ampm = h < 12 ? 'AM' : 'PM';
         timeOptions.push(`${hour}:${minute} AM`);
         timeOptions.push(`${hour}:${minute} PM`);
     }
@@ -62,8 +65,8 @@ for (let h = 1; h <= 12; h++) {
 const sortedTimeOptions = [
     ...timeOptions.filter(t => t.includes('AM')).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })),
     ...timeOptions.filter(t => t.includes('PM')).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })),
-].filter(t => !t.startsWith("12:00 PM")); // Remove duplicate noon
-sortedTimeOptions.push('12:00 PM'); // Add noon at the end of PM section
+].filter(t => !t.startsWith("12:00 PM"));
+sortedTimeOptions.push('12:00 PM'); 
 sortedTimeOptions.unshift(...sortedTimeOptions.splice(sortedTimeOptions.findIndex(v => v.startsWith("12:") && v.endsWith("AM")), 2))
 
 
@@ -73,11 +76,16 @@ type AddEventModalProps = {
   onLogEvent: (data: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => void;
   isProMember: boolean;
   ageGroup: 'under14' | '14to17' | 'over18' | null;
+  friends: Friend[];
 };
 
-export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup, friends }: AddEventModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [step, setStep] = useState(0);
+
+  const totalSteps = 3;
+  const progress = ((step + 1) / totalSteps) * 100;
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -88,10 +96,42 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       date: format(new Date(), "PPP"),
       time: "5:00 PM",
       emoji: "🗓️",
+      taggedFriendIds: [],
     },
   });
 
   const autoFillText = ageGroup === 'under14' ? 'Ask Pet' : 'Auto-fill';
+
+  const resetForm = () => {
+    form.reset({
+      name: "",
+      type: "personal",
+      estimatedImpact: -10,
+      date: format(new Date(), "PPP"),
+      time: "5:00 PM",
+      emoji: "🗓️",
+      taggedFriendIds: [],
+    });
+    setStep(0);
+  };
+  
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
+        resetForm();
+    }
+    onOpenChange(isOpen);
+  };
+
+  const handleNext = async () => {
+      let fieldsToValidate: (keyof EventFormValues)[] = [];
+      if (step === 0) fieldsToValidate = ['name', 'emoji', 'type'];
+      if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
+      
+      const isValid = await form.trigger(fieldsToValidate as any);
+      if (isValid) {
+          setStep(s => s + 1);
+      }
+  };
 
   const handleSuggestDetails = async () => {
     const eventName = form.getValues("name");
@@ -128,40 +168,16 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     }
   };
 
-
   function onSubmit(data: EventFormValues) {
     onLogEvent(data);
-    form.reset({
-      name: "",
-      type: "personal",
-      estimatedImpact: -10,
-      date: format(new Date(), "PPP"),
-      time: "5:00 PM",
-      emoji: "🗓️",
-    });
+    handleOpenChange(false);
   }
 
-  return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-       if (!isOpen) form.reset({
-          name: "",
-          type: "personal",
-          estimatedImpact: -10,
-          date: format(new Date(), "PPP"),
-          time: "5:00 PM",
-          emoji: "🗓️",
-        });
-      onOpenChange(isOpen);
-    }}>
-      <DialogContent className="bg-card/95 backdrop-blur-lg rounded-3xl">
-        <DialogHeader>
-          <DialogTitle>Add to Schedule</DialogTitle>
-          <DialogDescription>
-            Add a new event to your Smart Schedule to see its potential impact.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+  const renderStepContent = () => {
+    switch (step) {
+      case 0:
+        return (
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -192,7 +208,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
               )}
             />
             <div className="grid grid-cols-2 gap-4">
-                <FormField
+              <FormField
                 control={form.control}
                 name="emoji"
                 render={({ field }) => (
@@ -204,8 +220,8 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                     <FormMessage />
                     </FormItem>
                 )}
-                />
-                 <FormField
+              />
+              <FormField
                 control={form.control}
                 name="type"
                 render={({ field }) => (
@@ -226,9 +242,14 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                     <FormMessage />
                     </FormItem>
                 )}
-                />
+              />
             </div>
-             <FormField
+          </div>
+        );
+      case 1:
+        return (
+          <div className="space-y-4">
+            <FormField
               control={form.control}
               name="estimatedImpact"
               render={({ field }) => (
@@ -243,7 +264,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                       onValueChange={(value) => field.onChange(value[0])}
                     />
                   </FormControl>
-                   <FormMessage />
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -311,9 +332,85 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                 )}
                 />
             </div>
-            <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Add Event</Button>
+          </div>
+        );
+        case 2:
+            return (
+                <div className="space-y-4">
+                    <FormLabel>Tag Friends (Optional)</FormLabel>
+                     <p className="text-sm text-muted-foreground">Select friends to share this event with.</p>
+                    <ScrollArea className="h-48 w-full rounded-md border p-2">
+                        <FormField
+                            control={form.control}
+                            name="taggedFriendIds"
+                            render={({ field }) => (
+                                <div className="space-y-2">
+                                {friends.filter(f => !f.isMe).map(friend => (
+                                    <FormItem key={friend.id} className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-2 hover:bg-muted">
+                                        <FormControl>
+                                            <Checkbox
+                                                checked={field.value?.includes(friend.id)}
+                                                onCheckedChange={(checked) => {
+                                                    return checked
+                                                    ? field.onChange([...(field.value || []), friend.id])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                            (value) => value !== friend.id
+                                                        )
+                                                        )
+                                                }}
+                                            />
+                                        </FormControl>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
+                                                <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <FormLabel className="font-normal text-sm">{friend.name}</FormLabel>
+                                        </div>
+                                    </FormItem>
+                                ))}
+                                </div>
+                            )}
+                        />
+                    </ScrollArea>
+                </div>
+            )
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="bg-card/95 backdrop-blur-lg rounded-3xl">
+        <DialogHeader>
+          <DialogTitle>Add to Schedule</DialogTitle>
+          <DialogDescription>
+            Add a new event to your Smart Schedule to see its potential impact.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Progress value={progress} className="w-full my-4" />
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 min-h-[260px]">
+            {renderStepContent()}
+            <DialogFooter className="pt-8 gap-2">
+                {step > 0 && (
+                     <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                    </Button>
+                )}
+                 {step < totalSteps - 1 ? (
+                    <Button type="button" onClick={handleNext} className="w-full">
+                        Next <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                ) : (
+                    <Button type="submit" className="w-full">
+                        <Check className="mr-2 h-4 w-4" /> Add Event
+                    </Button>
+                )}
             </DialogFooter>
           </form>
         </Form>
@@ -321,5 +418,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
-
-    
