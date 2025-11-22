@@ -46,7 +46,7 @@ const eventFormSchema = z.object({
   estimatedImpact: z.number().min(-50).max(50),
   date: z.string().min(1, "Please enter a date."),
   time: z.string().min(1, "Please select a time."),
-  emoji: z.string().min(1, "Please add an emoji."),
+  emoji: z.string(),
   taggedFriendIds: z.array(z.string()).optional(),
 });
 
@@ -297,7 +297,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                         <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
-                            selected={new Date(field.value)}
+                            selected={field.value ? new Date(field.value) : undefined}
                             onSelect={(date) => field.onChange(date ? format(date, "PPP") : "")}
                             initialFocus
                           />
@@ -418,4 +418,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
-
