@@ -50,15 +50,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
-             // Ensure essential arrays are initialized if they are missing
-            if (!userData.activities) userData.activities = INITIAL_ACTIVITIES;
-            if (!userData.upcomingEvents) userData.upcomingEvents = INITIAL_UPCOMING_EVENTS;
+            let profileUpdated = false;
+
+            // Ensure essential arrays are initialized if they are missing
+            if (!userData.activities || userData.activities.length === 0) {
+              userData.activities = INITIAL_ACTIVITIES;
+              profileUpdated = true;
+            }
+            if (!userData.upcomingEvents || userData.upcomingEvents.length === 0) {
+              userData.upcomingEvents = INITIAL_UPCOMING_EVENTS;
+               profileUpdated = true;
+            }
             if (!userData.friends) userData.friends = INITIAL_FRIENDS;
             if (!userData.petTasks) userData.petTasks = INITIAL_PET_TASKS;
             if (!userData.chatHistory) userData.chatHistory = [];
             if (!userData.journeys) userData.journeys = [];
             if (!userData.reminders) userData.reminders = [];
+
             setLocalAppUser(userData);
+
+             if (profileUpdated) {
+                // Save the updated data back to Firestore without waiting
+                updateDoc(userRef, {
+                    activities: userData.activities,
+                    upcomingEvents: userData.upcomingEvents,
+                }).catch(e => console.error("Failed to backfill user data:", e));
+            }
+
           } else {
             const creationTime = new Date(user.metadata.creationTime!).getTime();
             const lastSignInTime = new Date(user.metadata.lastSignInTime!).getTime();
@@ -121,12 +139,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       const docSnap = await getDoc(userRef);
+      const dataWithFullArrays = { ...userData };
+       if (!dataWithFullArrays.activities) dataWithFullArrays.activities = INITIAL_ACTIVITIES;
+       if (!dataWithFullArrays.upcomingEvents) dataWithFullArrays.upcomingEvents = INITIAL_UPCOMING_EVENTS;
+
       if (docSnap.exists()) {
         await updateDoc(userRef, userData);
         setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
       } else {
-        await setDoc(userRef, { ...userData } as User);
-        setLocalAppUser({ ...userData } as User);
+        await setDoc(userRef, { ...dataWithFullArrays } as User);
+        setLocalAppUser({ ...dataWithFullArrays } as User);
       }
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
