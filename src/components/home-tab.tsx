@@ -216,7 +216,7 @@ export function HomeTab({
               id="communityToggle"
               checked={communityMode}
               onCheckedChange={setCommunityMode}
-              aria-label="Community Mode Toggle"
+              aria-label="Social Mode Toggle"
             />
             <Label
               htmlFor="communityToggle"
@@ -224,7 +224,7 @@ export function HomeTab({
                 communityMode ? "text-primary" : "text-muted-foreground"
               }`}
             >
-              Community Mode
+              Social Mode
             </Label>
           </CardContent>
         </Card>

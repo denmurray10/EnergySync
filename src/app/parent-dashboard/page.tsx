@@ -150,7 +150,7 @@ export default function ParentDashboardPage() {
                                 />
                             </div>
                              <div className="flex items-center justify-between rounded-lg border p-3">
-                                <Label htmlFor="community-toggle" className="flex items-center gap-2 font-normal"><MessageSquare /> Community Mode</Label>
+                                <Label htmlFor="community-toggle" className="flex items-center gap-2 font-normal"><MessageSquare /> Social Mode</Label>
                                 <Switch
                                     id="community-toggle"
                                     checked={visibility.communityMode}
