@@ -514,6 +514,9 @@ export default function HomePage() {
     if (isOn) {
       unlockAchievement('Community Member');
     }
+    if (appUser) {
+        setAppUser({ featureVisibility: { ...appUser.featureVisibility, communityMode: isOn } });
+    }
   };
   
   const handleScheduleAction = (action: ActionableSuggestion) => {
@@ -561,55 +564,31 @@ export default function HomePage() {
     }
   }, [activities, unlockAchievement, toast, isProMember, closeModal]);
 
-  const handleShowDebrief = useCallback(async () => {
-    if (!isProMember) return;
-    openModal('dailyDebrief');
-    setIsStoryLoading(true);
-    try {
-        const yesterday = startOfDay(subDays(new Date(), 1));
-        const yesterdayActivities = activities.filter(a => startOfDay(new Date(a.date)).getTime() === yesterday.getTime());
-        if (yesterdayActivities.length === 0) {
-            setEnergyStory("You didn't log any activities yesterday. Log some today to get your story tomorrow!");
-            return;
-        }
-        const result = await getEnergyStory({ activities: yesterdayActivities });
-        setEnergyStory(result.story);
-        unlockAchievement('Storyteller');
-    } catch (error) {
-        console.error("Failed to get energy story:", error);
-        setEnergyStory("Could not generate your energy story at this time.");
-    } finally {
-        setIsStoryLoading(false);
-    }
-  }, [activities, unlockAchievement, isProMember, openModal]);
-  
   const handleChatSubmit = useCallback(async (query: string) => {
     if (!isProMember || !appUser) return;
   
-    const userMessage: ChatMessage = { role: 'user', content: query };
-    addChatMessage(userMessage);
     setIsChatting(true);
+    const userMessage: ChatMessage = { role: 'user', content: query };
   
-    // Create an immediate, local snapshot of the history for the API call.
-    const updatedHistory: ChatMessage[] = [...chatHistory, userMessage];
-  
-    try {
-      const result = await chatWithCoach({
-        query,
-        chatHistory: updatedHistory, // Pass the locally updated history.
-        currentEnergy,
-        activities: JSON.stringify(activities.slice(0, 10)),
-        events: JSON.stringify(upcomingEvents),
-      });
-      addChatMessage({ role: 'model', content: result.response });
-      unlockAchievement('Chatterbox');
-    } catch (error) {
-      console.error("Chat error:", error);
-      addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
-    } finally {
-      setIsChatting(false);
-    }
-  }, [isProMember, appUser, addChatMessage, chatHistory, currentEnergy, activities, upcomingEvents, unlockAchievement]);
+    addChatMessage(userMessage, async (updatedHistory) => {
+      try {
+        const result = await chatWithCoach({
+          query,
+          chatHistory: updatedHistory,
+          currentEnergy,
+          activities: JSON.stringify(activities.slice(0, 10)),
+          events: JSON.stringify(upcomingEvents),
+        });
+        addChatMessage({ role: 'model', content: result.response });
+        unlockAchievement('Chatterbox');
+      } catch (error) {
+        console.error("Chat error:", error);
+        addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
+      } finally {
+        setIsChatting(false);
+      }
+    });
+  }, [isProMember, appUser, addChatMessage, currentEnergy, activities, upcomingEvents, unlockAchievement]);
 
 
   const changeLocation = () => {

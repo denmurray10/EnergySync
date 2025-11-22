@@ -1,3 +1,4 @@
+
 // src/context/AuthContext.tsx
 'use client';
 
@@ -18,7 +19,7 @@ interface AuthContextType {
   friends: Friend[];
   setFriends: (friends: Friend[]) => void;
   chatHistory: ChatMessage[];
-  addChatMessage: (message: ChatMessage) => void;
+  addChatMessage: (message: ChatMessage, callback?: (history: ChatMessage[]) => void) => void;
   petTasks: PetTask[];
   setPetTasks: (tasks: PetTask[]) => void;
   gainPetExp: (amount: number) => void;
@@ -176,10 +177,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [toast]);
   
-  const addChatMessage = useCallback(async (message: ChatMessage) => {
+  const addChatMessage = useCallback(async (message: ChatMessage, callback?: (history: ChatMessage[]) => void) => {
     if (localAppUser) {
         const newHistory = [...(localAppUser.chatHistory || []), message];
-        await setAppUser({ chatHistory: newHistory });
+        // Optimistically update local state first for instant UI feedback
+        setLocalAppUser(prev => prev ? { ...prev, chatHistory: newHistory } : null);
+
+        if (callback) {
+            callback(newHistory);
+        }
+
+        try {
+            await setAppUser({ chatHistory: newHistory });
+        } catch (e) {
+            console.error("Failed to persist chat history", e);
+            // Optionally rollback state or show an error
+        }
     }
   }, [localAppUser, setAppUser]);
   
