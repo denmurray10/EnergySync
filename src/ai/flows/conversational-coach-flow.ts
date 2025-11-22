@@ -55,7 +55,6 @@ const prompt = ai.definePrompt({
 
   HERE'S WHAT'S HAPPENING:
   - Our Current Energy: {{{currentEnergy}}}%
-  - Our Recent Activities (for your tool powers): {{{activities}}}
   - Our Upcoming Events: {{{events}}}
 
   OUR CONVERSATION SO FAR:
@@ -77,10 +76,11 @@ const conversationalCoachFlow = ai.defineFlow(
     outputSchema: ChatWithCoachOutputSchema,
   },
   async (input) => {
-    // Pass the activities as a JSON string to the tool, ensuring the prompt also receives it.
+    // The `activities` data is passed to the LLM and is available for the tool to use.
+    // The prompt does not need to render the raw activities JSON.
     const result = await prompt({
       ...input,
-      activitiesJson: input.activities,
+      // The `activities` property from the input schema is now implicitly available to the tools.
     });
 
     return { response: result.output!.response };
