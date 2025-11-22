@@ -128,7 +128,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
       
       const isValid = await form.trigger(fieldsToValidate);
-      if (isValid && step < totalSteps - 1) {
+      if (isValid) {
           setStep(s => s + 1);
       }
   };
@@ -379,8 +379,10 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
         <Progress value={progress} className="w-full my-4" />
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 min-h-[260px]">
-            {renderStepContent()}
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-4 min-h-[260px]">
+              {renderStepContent()}
+            </div>
             <DialogFooter className="pt-8 gap-2 sm:justify-between">
               <div>
                 {step > 0 && (
@@ -390,7 +392,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                 )}
               </div>
               <div>
-                {step < totalSteps - 1 ? (
+                {step < 2 ? (
                     <Button type="button" onClick={handleNext}>
                         Next <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -407,3 +409,5 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
+
+    
