@@ -46,25 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (user) {
         try {
           const userRef = doc(firestore, 'users', user.uid);
-          let userSnap = await getDoc(userRef);
-
-          // Retry mechanism to handle Firestore replication delay after signup
-          if (!userSnap.exists() && user.metadata.creationTime) {
-            const creationTime = new Date(user.metadata.creationTime).getTime();
-            const now = new Date().getTime();
-            // If user was created in the last 15 seconds, it might be a new signup
-            if (now - creationTime < 15000) {
-              console.log("New user detected, retrying to fetch profile...");
-              for (let i = 0; i < 5; i++) { // Retry up to 5 times
-                await new Promise(res => setTimeout(res, 1000)); // Wait 1 second
-                userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                  console.log("Profile found on retry.");
-                  break;
-                }
-              }
-            }
-          }
+          const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
@@ -94,17 +76,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                     upcomingEvents: userData.upcomingEvents,
                 }).catch(e => console.error("Failed to backfill user data:", e));
             }
-
           } else {
-            // This path is now only hit if the user exists in Auth but truly has no profile document.
-            console.error(`Profile document not found for existing user ${user.uid}.`);
-            toast({
-              title: 'Profile Not Found',
-              description: "We couldn't find your user profile. Please try signing up again.",
-              variant: 'destructive',
-            });
-            await auth.signOut();
-            setLocalAppUser(null);
+            // This logic handles the race condition during signup.
+            // If the user document doesn't exist, we check if the user was just created.
+            // If so, we assume the document is still being written and do nothing.
+            // The `setAppUser` call in the signup form will eventually populate the state.
+            const isNewUser = user.metadata.creationTime ?
+              (new Date().getTime() - new Date(user.metadata.creationTime).getTime() < 15000)
+              : false;
+
+            if (!isNewUser) {
+              // This path is now only hit if the user exists in Auth but truly has no profile document.
+              console.error(`Profile document not found for existing user ${user.uid}.`);
+              toast({
+                title: 'Profile Not Found',
+                description: "We couldn't find your user profile. Please try signing up again.",
+                variant: 'destructive',
+              });
+              await auth.signOut();
+              setLocalAppUser(null);
+            }
           }
         } catch (error: any) {
             console.error("Error fetching user document from Firestore:", error);
@@ -270,3 +261,5 @@ export const useAuth = () => {
   }
   return context;
 };
+
+    
