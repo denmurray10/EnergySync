@@ -180,7 +180,7 @@ export function ParentSetupForm() {
             };
             
             await setAppUser(initialUser);
-            router.push('/');
+            router.push('/signup-success');
 
         } catch (error: any) {
              if (error.code === 'auth/email-already-in-use') {
@@ -369,29 +369,29 @@ export function ParentSetupForm() {
                         <CardFooter className="flex flex-col gap-2 pt-4">
                              {step < totalSteps ? (
                                 <>
-                                    <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
-                                    <Button type="button" variant="outline" onClick={handleBack} className="w-full">
-                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                    </Button>
+                                    { step === 6 ? (
+                                        <div className="flex flex-col gap-2 w-full">
+                                            <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
+                                                {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                                Yes, Start Free Trial & Create
+                                            </Button>
+                                            <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
+                                                {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks & Create'}
+                                            </Button>
+                                            <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
+                                                <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                                            <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                                <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                            </Button>
+                                        </>
+                                    )}
                                 </>
-                             ) : step === totalSteps ? (
-                                <Button type="button" onClick={() => router.push('/')} className="w-full">
-                                    Go to App
-                                </Button>
-                             ) : ( // step === 6, the trial decision
-                                <div className="flex flex-col gap-2 w-full">
-                                    <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
-                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                                        Yes, Start Free Trial & Create
-                                    </Button>
-                                    <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
-                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks & Create'}
-                                    </Button>
-                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
-                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                    </Button>
-                                </div>
-                             )}
+                             ) : null}
                         </CardFooter>
                     </form>
                 </Form>

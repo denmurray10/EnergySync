@@ -100,8 +100,8 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
 
         const isValid = await form.trigger(fieldsToValidate as any);
         if (isValid) {
-            if (step === totalSteps - 1) { // If it's the last data entry step before trial decision
-                form.handleSubmit(onSubmit)();
+            if (step === totalSteps - 1 && !isTeen) {
+                setStep(s => s + 1);
             } else {
                 setStep(s => s + 1);
             }
@@ -187,7 +187,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
             };
 
             await setAppUser(initialUser);
-            router.push('/');
+            router.push('/signup-success');
 
         } catch (error: any) {
             if (error.code === 'auth/email-already-in-use') {
@@ -328,7 +328,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             {getStepContent()}
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2 pt-4">
-                             {step < totalSteps -1 ? (
+                             {step < totalSteps - 1 ? (
                                 <>
                                     <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full">
