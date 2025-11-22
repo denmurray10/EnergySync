@@ -78,21 +78,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
           } else {
-            const creationTime = new Date(user.metadata.creationTime!).getTime();
-            const lastSignInTime = new Date(user.metadata.lastSignInTime!).getTime();
-            
-            if (lastSignInTime - creationTime < 5000) {
-              setLocalAppUser(null);
-            } else {
-              console.error(`Profile document not found for existing user ${user.uid}.`);
-              toast({
-                title: 'Profile Not Found',
-                description: "We couldn't find your user profile. Please try signing up again.",
-                variant: 'destructive',
-              });
-              await auth.signOut();
-              setLocalAppUser(null);
-            }
+            // This is likely a new user whose document hasn't been created yet.
+            // The signup form's setAppUser will create it. We just wait.
+            setLocalAppUser(null);
           }
         } catch (error: any) {
             console.error("Error fetching user document from Firestore:", error);
