@@ -100,8 +100,6 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     },
   });
 
-  const autoFillText = ageGroup === 'under14' ? 'Ask Pet' : 'Auto-fill';
-
   const resetForm = () => {
     form.reset({
       name: "",
@@ -128,7 +126,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
       if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
       
       const isValid = await form.trigger(fieldsToValidate);
-      if (isValid) {
+      if (isValid && step < totalSteps - 1) {
           setStep(s => s + 1);
       }
   };
@@ -183,23 +181,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex justify-between items-center">
-                    <FormLabel>Event Name</FormLabel>
-                    <Button type="button" size="sm" variant="ghost" onClick={handleSuggestDetails} disabled={isSuggesting || !isProMember}>
-                      {isSuggesting ? (
-                        <LoaderCircle className="animate-spin" />
-                      ) : (
-                        <Sparkles className="text-yellow-500" />
-                      )}
-                      <span className="ml-2">{autoFillText}</span>
-                      {!isProMember && (
-                        <Badge variant="destructive" className="ml-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none">
-                            <Star className="w-3 h-3 mr-1 fill-white"/>
-                            PRO
-                        </Badge>
-                      )}
-                    </Button>
-                  </div>
+                  <FormLabel>Event Name</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Team Lunch" {...field} />
                   </FormControl>
@@ -409,3 +391,5 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
+
+    
