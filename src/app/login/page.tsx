@@ -76,8 +76,12 @@ export default function LoginPage() {
   useEffect(() => {
     if (!authLoading && firebaseUser) {
       router.push('/');
-    } else if (!authLoading && !firebaseUser) {
-      // Check for auto-login credentials
+    }
+  }, [authLoading, firebaseUser, router]);
+
+  useEffect(() => {
+    // This effect handles the auto-login after signup
+    if (!authLoading && !firebaseUser) {
       const autoLoginEmail = localStorage.getItem('energysync_autologin_email');
       const autoLoginPassword = localStorage.getItem('energysync_autologin_password');
       if (autoLoginEmail && autoLoginPassword) {
@@ -87,13 +91,14 @@ export default function LoginPage() {
             localStorage.removeItem('energysync_autologin_email');
             localStorage.removeItem('energysync_autologin_password');
             toast({ title: 'Welcome!', description: 'You have been successfully signed in.' });
-            router.push('/');
+            // The main useEffect will handle the redirect now
           })
           .catch(handleLoginError)
           .finally(() => setLoading(false));
       }
     }
-  }, [authLoading, firebaseUser, router]);
+  }, [authLoading, firebaseUser]);
+
 
   const handleLoginError = (error: any) => {
       let description = "An unexpected error occurred. Please try again.";
@@ -131,7 +136,6 @@ export default function LoginPage() {
     try {
         await signInWithEmailAndPassword(auth, email, data.password);
         toast({ title: 'Welcome Back!', description: 'You have been successfully signed in.' });
-        router.push('/');
     } catch (error) {
         handleLoginError(error);
     } finally {
@@ -144,7 +148,6 @@ export default function LoginPage() {
     try {
         await signInWithEmailAndPassword(auth, data.email, data.password);
         toast({ title: 'Welcome Back!', description: 'You have been successfully signed in.' });
-        router.push('/');
     } catch (error) {
         handleLoginError(error);
     } finally {
@@ -339,3 +342,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    
