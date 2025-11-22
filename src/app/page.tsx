@@ -584,29 +584,33 @@ export default function HomePage() {
   }, [activities, unlockAchievement, isProMember, openModal]);
   
   const handleChatSubmit = useCallback(async (query: string) => {
-      if (!isProMember) return;
-      
-      const userMessage: ChatMessage = { role: 'user', content: query };
-      addChatMessage(userMessage);
-      setIsChatting(true);
-      
-      try {
-          const result = await chatWithCoach({
-              query,
-              chatHistory: [...chatHistory, userMessage],
-              currentEnergy,
-              activities: JSON.stringify(activities.slice(0, 10)),
-              events: JSON.stringify(upcomingEvents),
-          });
-          addChatMessage({ role: 'model', content: result.response });
-          unlockAchievement('Chatterbox');
-      } catch (error) {
-          console.error("Chat error:", error);
-          addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
-      } finally {
-          setIsChatting(false);
-      }
-  }, [addChatMessage, chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
+    if (!isProMember) return;
+
+    const userMessage: ChatMessage = { role: 'user', content: query };
+    addChatMessage(userMessage);
+    setIsChatting(true);
+    
+    // This is the crucial part: create the history for the API call immediately.
+    const updatedHistory = [...chatHistory, userMessage];
+
+    try {
+        const result = await chatWithCoach({
+            query,
+            chatHistory: updatedHistory, // Use the locally updated history
+            currentEnergy,
+            activities: JSON.stringify(activities.slice(0, 10)),
+            events: JSON.stringify(upcomingEvents),
+        });
+        addChatMessage({ role: 'model', content: result.response });
+        unlockAchievement('Chatterbox');
+    } catch (error) {
+        console.error("Chat error:", error);
+        addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
+    } finally {
+        setIsChatting(false);
+    }
+}, [addChatMessage, chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
+
 
   const changeLocation = () => {
     setLocationIndex((prevIndex) => {
