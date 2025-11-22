@@ -584,32 +584,32 @@ export default function HomePage() {
   }, [activities, unlockAchievement, isProMember, openModal]);
   
   const handleChatSubmit = useCallback(async (query: string) => {
-    if (!isProMember) return;
-
+    if (!isProMember || !appUser) return;
+  
     const userMessage: ChatMessage = { role: 'user', content: query };
     addChatMessage(userMessage);
     setIsChatting(true);
-    
-    // This is the crucial part: create the history for the API call immediately.
-    const updatedHistory = [...(appUser?.chatHistory || []), userMessage];
-
+  
+    // Create an immediate, local snapshot of the history for the API call.
+    const updatedHistory: ChatMessage[] = [...chatHistory, userMessage];
+  
     try {
-        const result = await chatWithCoach({
-            query,
-            chatHistory: updatedHistory, // Use the locally updated history
-            currentEnergy,
-            activities: JSON.stringify(activities.slice(0, 10)),
-            events: JSON.stringify(upcomingEvents),
-        });
-        addChatMessage({ role: 'model', content: result.response });
-        unlockAchievement('Chatterbox');
+      const result = await chatWithCoach({
+        query,
+        chatHistory: updatedHistory, // Pass the locally updated history.
+        currentEnergy,
+        activities: JSON.stringify(activities.slice(0, 10)),
+        events: JSON.stringify(upcomingEvents),
+      });
+      addChatMessage({ role: 'model', content: result.response });
+      unlockAchievement('Chatterbox');
     } catch (error) {
-        console.error("Chat error:", error);
-        addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
+      console.error("Chat error:", error);
+      addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
     } finally {
-        setIsChatting(false);
+      setIsChatting(false);
     }
-  }, [addChatMessage, appUser?.chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
+  }, [isProMember, appUser, addChatMessage, chatHistory, currentEnergy, activities, upcomingEvents, unlockAchievement]);
 
 
   const changeLocation = () => {
@@ -1005,6 +1005,8 @@ export default function HomePage() {
     </main>
   );
 }
+
+    
 
     
 
