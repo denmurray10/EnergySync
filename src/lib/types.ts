@@ -24,6 +24,7 @@ export interface UpcomingEvent {
   conflictRisk: 'high' | 'medium' | 'low';
   bufferSuggested: number;
   taggedFriendIds?: string[];
+  location?: 'Home' | 'School';
 }
 
 export interface Achievement {

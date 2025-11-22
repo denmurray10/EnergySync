@@ -43,7 +43,7 @@ import { ReminderModal } from "@/components/reminder-modal";
 import placeholderImages from '@/app/lib/placeholder-images.json';
 
 
-const locations = ['Home', 'School'];
+const locations = ['Home', 'School', 'Personal'];
 
 export default function HomePage() {
   const router = useRouter();
@@ -78,6 +78,14 @@ export default function HomePage() {
     membership: false,
     reminder: false,
   });
+
+  const openModal = useCallback((modalName: keyof typeof modals) => {
+    setModals(prev => ({ ...prev, [modalName]: true }));
+  }, []);
+
+  const closeModal = useCallback((modalName: keyof typeof modals) => {
+    setModals(prev => ({ ...prev, [modalName]: false }));
+  }, []);
   
   const [eventForReminder, setEventForReminder] = useState<UpcomingEvent | null>(null);
 
@@ -150,33 +158,42 @@ export default function HomePage() {
     };
 
     const checkEvents = () => {
+        const now = new Date();
         upcomingEvents.forEach(event => {
-            if (event.date.toLowerCase() !== 'today') return;
+            const isToday = event.date === 'Today' || event.date === 'Tonight' || new Date(event.date).toDateString() === now.toDateString();
+
+            if (!isToday) return;
             
             const eventTime = parseTime(event.time);
             if (!eventTime) return;
 
+            const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
+
+            if (hasBeenTriggered) return;
+
+            const thirtyMinutesAfterEvent = new Date(eventTime.getTime() + 30 * 60 * 1000);
+
+            if (now > thirtyMinutesAfterEvent) {
+                // This logic seems to be for completing/clearing events, which might be better handled elsewhere.
+                // For now, let's just focus on triggering reminders.
+            }
+            
             // Set reminder time for 5 minutes before the event
             const reminderTime = new Date(eventTime.getTime() - 5 * 60 * 1000);
 
             // Check if it's time for the reminder
             if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
-                const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === now.toDateString());
-
-                if (!hasBeenTriggered) {
-                    setEventForReminder(event);
-                    openModal('reminder');
-                    setReminders(prevReminders => [...prevReminders, { eventId: event.id, triggeredAt: new Date() }]);
-                }
+                 setEventForReminder(event);
+                 openModal('reminder');
+                 setReminders(prevReminders => [...prevReminders, { eventId: event.id, triggeredAt: new Date() }]);
             }
         });
     };
-    const now = new Date(); // Define now here to be accessible
     const intervalId = setInterval(checkEvents, 60000); // Check every minute
     checkEvents(); // Run once on load
 
     return () => clearInterval(intervalId);
-  }, [upcomingEvents, setReminders]);
+  }, [upcomingEvents, setReminders, openModal]);
 
   const unlockAchievement = useCallback((name: string) => {
     let achievementAlreadyUnlocked = false;
@@ -392,7 +409,17 @@ export default function HomePage() {
         conflictRisk: 'low', // Default value
         bufferSuggested: 0 // Default value
     };
-    const newEvents = [...upcomingEvents, newEvent];
+    
+    let location: 'Home' | 'School' | undefined;
+    if (newEventData.type !== 'personal') {
+        const activityCount = activities.filter(a => a.location === 'School').length;
+        // Simple logic to assign location, can be made more robust
+        location = activityCount > activities.length / 2 ? 'School' : 'Home';
+    }
+
+    const eventWithLocation = { ...newEvent, location };
+
+    const newEvents = [...upcomingEvents, eventWithLocation];
     setUpcomingEvents(newEvents);
     toast({
         title: "Event Added!",
@@ -472,9 +499,6 @@ export default function HomePage() {
     }
   };
 
-  const openModal = (modalName: keyof typeof modals) => setModals(prev => ({ ...prev, [modalName]: true }));
-  const closeModal = (modalName: keyof typeof modals) => setModals(prev => ({ ...prev, [modalName]: false }));
-
   const handleVoiceCheckinComplete = (result: { energyImpact: number; summary: string }) => {
     setCurrentEnergy(prev => Math.max(0, Math.min(100, prev + result.energyImpact)));
     const toastMessage = `${result.energyImpact > 0 ? '+' : ''}${result.energyImpact}% - ${result.summary}`;
@@ -535,7 +559,7 @@ export default function HomePage() {
     } finally {
         setIsReadinessLoading(false);
     }
-  }, [activities, unlockAchievement, toast, isProMember]);
+  }, [activities, unlockAchievement, toast, isProMember, closeModal]);
 
   const handleShowDebrief = useCallback(async () => {
     if (!isProMember) return;
@@ -557,7 +581,7 @@ export default function HomePage() {
     } finally {
         setIsStoryLoading(false);
     }
-  }, [activities, unlockAchievement, isProMember]);
+  }, [activities, unlockAchievement, isProMember, openModal]);
   
   const handleChatSubmit = useCallback(async (query: string) => {
       if (!isProMember) return;
@@ -979,3 +1003,4 @@ export default function HomePage() {
 }
 
     
+
