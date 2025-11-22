@@ -23,6 +23,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { LoaderCircle, User as UserIcon, ArrowLeft, ArrowRight, Check, PartyPopper, Mail } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import placeholderImages from '@/app/lib/placeholder-images.json';
 
 const hearOptions = [
     { value: "social", label: "Social Media" },
@@ -156,7 +157,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                 userId: user.uid,
                 name: data.name,
                 username: data.email.split('@')[0],
-                avatar: `https://placehold.co/100x100.png`,
+                avatar: placeholderImages.default_avatar.src,
                 membershipTier: data.acceptTrial ? 'pro' : 'free',
                 proTrialEndDate: trialEndDate,
                 petCustomization: {

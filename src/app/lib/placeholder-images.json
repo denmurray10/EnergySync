@@ -1,0 +1,66 @@
+{
+    "default_avatar": {
+        "src": "https://picsum.photos/seed/1/100/100",
+        "hint": "profile picture"
+    },
+    "tutorial_1": {
+        "src": "https://picsum.photos/seed/2/400/225",
+        "hint": "app dashboard"
+    },
+    "tutorial_2": {
+        "src": "https://picsum.photos/seed/3/400/225",
+        "hint": "activity list"
+    },
+    "tutorial_3": {
+        "src": "https://picsum.photos/seed/4/400/225",
+        "hint": "recharge options"
+    },
+    "tutorial_4": {
+        "src": "https://picsum.photos/seed/5/400/225",
+        "hint": "energy chart"
+    },
+    "tutorial_5": {
+        "src": "https://picsum.photos/seed/6/400/225",
+        "hint": "calendar view"
+    },
+    "friend_1": {
+        "src": "https://picsum.photos/seed/11/100/100",
+        "hint": "man smiling"
+    },
+    "friend_2": {
+        "src": "https://picsum.photos/seed/12/100/100",
+        "hint": "woman face"
+    },
+    "friend_3": {
+        "src": "https://picsum.photos/seed/13/100/100",
+        "hint": "man portrait"
+    },
+    "friend_4": {
+        "src": "https://picsum.photos/seed/14/100/100",
+        "hint": "woman coffee"
+    },
+    "friend_5": {
+        "src": "https://picsum.photos/seed/15/100/100",
+        "hint": "man glasses"
+    },
+    "friend_6": {
+        "src": "https://picsum.photos/seed/16/100/100",
+        "hint": "woman nature"
+    },
+    "friend_7": {
+        "src": "https://picsum.photos/seed/17/100/100",
+        "hint": "man desk"
+    },
+    "friend_8": {
+        "src": "https://picsum.photos/seed/18/100/100",
+        "hint": "woman outdoors"
+    },
+    "friend_9": {
+        "src": "https://picsum.photos/seed/19/100/100",
+        "hint": "man tired"
+    },
+    "friend_10": {
+        "src": "https://picsum.photos/seed/20/100/100",
+        "hint": "woman happy"
+    }
+}

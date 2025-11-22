@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { LoaderCircle, Shield, ArrowLeft, ArrowRight, BrainCircuit, Users, MessageSquare, Check, PartyPopper } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import placeholderImages from '@/app/lib/placeholder-images.json';
 
 const hearOptions = [
     { value: "social", label: "Social Media" },
@@ -153,7 +154,7 @@ export function ParentSetupForm() {
                 userId: user.uid,
                 name: data.childName,
                 username: data.childUsername,
-                avatar: `https://placehold.co/100x100.png`,
+                avatar: placeholderImages.default_avatar.src,
                 membershipTier: data.acceptTrial ? 'pro' : 'free',
                 proTrialEndDate: trialEndDate,
                 petCustomization: {

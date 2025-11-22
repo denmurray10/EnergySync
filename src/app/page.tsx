@@ -41,6 +41,7 @@ import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
 import { ParentalControlModal } from "@/components/parental-control-modal";
 import { MembershipModal } from "@/components/membership-modal";
 import { ReminderModal } from "@/components/reminder-modal";
+import placeholderImages from '@/app/lib/placeholder-images.json';
 
 
 const locations = ['Home', 'School'];
@@ -452,7 +453,7 @@ export default function HomePage() {
     const meFriend: Friend = {
       id: appUser.userId,
       name: appUser.name,
-      avatar: appUser.avatar || 'https://placehold.co/100x100.png',
+      avatar: appUser.avatar || placeholderImages.default_avatar.src,
       avatarHint: 'profile picture',
       energyStatus: getEnergyStatus(currentEnergy),
       currentEnergy: currentEnergy,

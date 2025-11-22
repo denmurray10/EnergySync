@@ -76,7 +76,7 @@ export function ProfileTab({ user, isProMember, ageGroup, onShowTutorial, onShow
       <div className="flex flex-col items-center space-y-4 pt-4">
         <div className="relative group">
             <Avatar className="h-24 w-24 border-4 border-primary">
-                <AvatarImage src={user.avatar || placeholderImages.default_avatar.src} data-ai-hint={placeholderImages.default_avatar.hint} />
+                <AvatarImage src={user.avatar || placeholderImages.default_avatar.src} data-ai-hint="profile picture" />
                 <AvatarFallback className="text-4xl bg-muted">
                 {user.name.charAt(0).toUpperCase()}
                 </AvatarFallback>

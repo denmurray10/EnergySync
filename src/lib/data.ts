@@ -1,6 +1,7 @@
 
 import type { Activity, UpcomingEvent, Achievement, Goal, Challenge, PetTask, Friend } from './types';
 import { subDays, format } from 'date-fns';
+import placeholderImages from '@/app/lib/placeholder-images.json'
 
 const today = new Date();
 
@@ -59,6 +60,7 @@ export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 13, name: 'Pet Pal', unlocked: false, icon: '🐾' },
     { id: 14, name: 'Pet Customizer', unlocked: false, icon: '🎨' },
     { id: 15, name: 'Pet Trainer', unlocked: false, icon: '🏆' },
+    { id: 16, name: 'Upgraded to Pro!', unlocked: false, icon: '🌟' }
 ];
 
 export const INITIAL_GOALS: Goal[] = [
@@ -81,14 +83,14 @@ export const INITIAL_PET_TASKS: PetTask[] = [
 ];
 
 export const INITIAL_FRIENDS: Friend[] = [
-    { id: 'friend-1', name: 'Liam Smith', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man smiling', energyStatus: 'Feeling energized!', currentEnergy: 85, isFavorite: true, hasUpdatedToday: true },
-    { id: 'friend-2', name: 'Olivia Johnson', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman face', energyStatus: 'A bit tired today.', currentEnergy: 45, isFavorite: true, hasUpdatedToday: false },
-    { id: 'friend-3', name: 'Noah Williams', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man portrait', energyStatus: 'Ready to take on the day!', currentEnergy: 92, isFavorite: true, hasUpdatedToday: true },
-    { id: 'friend-4', name: 'Emma Brown', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman coffee', energyStatus: 'Need a coffee break.', currentEnergy: 55, isFavorite: true, hasUpdatedToday: false },
-    { id: 'friend-5', name: 'Oliver Jones', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man glasses', energyStatus: 'Focused and in the zone.', currentEnergy: 78, isFavorite: false, hasUpdatedToday: true },
-    { id: 'friend-6', name: 'Ava Garcia', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman nature', energyStatus: 'Relaxing after a long week.', currentEnergy: 65, isFavorite: false, hasUpdatedToday: false },
-    { id: 'friend-7', name: 'Elijah Miller', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man desk', energyStatus: 'Super productive morning!', currentEnergy: 88, isFavorite: false, hasUpdatedToday: true },
-    { id: 'friend-8', name: 'Sophia Davis', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman outdoors', energyStatus: 'Enjoying the sunshine.', currentEnergy: 72, isFavorite: false, hasUpdatedToday: false },
-    { id: 'friend-9', name: 'James Rodriguez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'man tired', energyStatus: 'Could use a nap.', currentEnergy: 38, isFavorite: false, hasUpdatedToday: true },
-    { id: 'friend-10', name: 'Isabella Martinez', avatar: 'https://placehold.co/100x100.png', avatarHint: 'woman happy', energyStatus: 'Excited for the weekend!', currentEnergy: 95, isFavorite: false, hasUpdatedToday: false },
+    { id: 'friend-1', name: 'Liam Smith', avatar: placeholderImages.friend_1.src, avatarHint: placeholderImages.friend_1.hint, energyStatus: 'Feeling energized!', currentEnergy: 85, isFavorite: true, hasUpdatedToday: true },
+    { id: 'friend-2', name: 'Olivia Johnson', avatar: placeholderImages.friend_2.src, avatarHint: placeholderImages.friend_2.hint, energyStatus: 'A bit tired today.', currentEnergy: 45, isFavorite: true, hasUpdatedToday: false },
+    { id: 'friend-3', name: 'Noah Williams', avatar: placeholderImages.friend_3.src, avatarHint: placeholderImages.friend_3.hint, energyStatus: 'Ready to take on the day!', currentEnergy: 92, isFavorite: true, hasUpdatedToday: true },
+    { id: 'friend-4', name: 'Emma Brown', avatar: placeholderImages.friend_4.src, avatarHint: placeholderImages.friend_4.hint, energyStatus: 'Need a coffee break.', currentEnergy: 55, isFavorite: true, hasUpdatedToday: false },
+    { id: 'friend-5', name: 'Oliver Jones', avatar: placeholderImages.friend_5.src, avatarHint: placeholderImages.friend_5.hint, energyStatus: 'Focused and in the zone.', currentEnergy: 78, isFavorite: false, hasUpdatedToday: true },
+    { id: 'friend-6', name: 'Ava Garcia', avatar: placeholderImages.friend_6.src, avatarHint: placeholderImages.friend_6.hint, energyStatus: 'Relaxing after a long week.', currentEnergy: 65, isFavorite: false, hasUpdatedToday: false },
+    { id: 'friend-7', name: 'Elijah Miller', avatar: placeholderImages.friend_7.src, avatarHint: placeholderImages.friend_7.hint, energyStatus: 'Super productive morning!', currentEnergy: 88, isFavorite: false, hasUpdatedToday: true },
+    { id: 'friend-8', name: 'Sophia Davis', avatar: placeholderImages.friend_8.src, avatarHint: placeholderImages.friend_8.hint, energyStatus: 'Enjoying the sunshine.', currentEnergy: 72, isFavorite: false, hasUpdatedToday: false },
+    { id: 'friend-9', name: 'James Rodriguez', avatar: placeholderImages.friend_9.src, avatarHint: placeholderImages.friend_9.hint, energyStatus: 'Could use a nap.', currentEnergy: 38, isFavorite: false, hasUpdatedToday: true },
+    { id: 'friend-10', name: 'Isabella Martinez', avatar: placeholderImages.friend_10.src, avatarHint: placeholderImages.friend_10.hint, energyStatus: 'Excited for the weekend!', currentEnergy: 95, isFavorite: false, hasUpdatedToday: false },
 ];
