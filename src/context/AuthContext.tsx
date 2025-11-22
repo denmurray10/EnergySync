@@ -1,4 +1,3 @@
-
 // src/context/AuthContext.tsx
 'use client';
 
@@ -46,18 +45,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (user) {
         try {
           const userRef = doc(firestore, 'users', user.uid);
-          const userSnap = await getDoc(userRef);
+          let userSnap = await getDoc(userRef);
+
+          // Retry mechanism to handle Firestore replication delay after signup
+          if (!userSnap.exists() && user.metadata.creationTime) {
+            const creationTime = new Date(user.metadata.creationTime).getTime();
+            const now = new Date().getTime();
+            // If user was created in the last 15 seconds, it might be a new signup
+            if (now - creationTime < 15000) {
+              console.log("New user detected, retrying to fetch profile...");
+              for (let i = 0; i < 5; i++) { // Retry up to 5 times
+                await new Promise(res => setTimeout(res, 1000)); // Wait 1 second
+                userSnap = await getDoc(userRef);
+                if (userSnap.exists()) {
+                  console.log("Profile found on retry.");
+                  break;
+                }
+              }
+            }
+          }
 
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
             let profileUpdated = false;
 
             // Ensure essential arrays are initialized if they are missing
-            if (!userData.activities || userData.activities.length === 0) {
+            if (!userData.activities) {
               userData.activities = INITIAL_ACTIVITIES;
               profileUpdated = true;
             }
-            if (!userData.upcomingEvents || userData.upcomingEvents.length === 0) {
+            if (!userData.upcomingEvents) {
               userData.upcomingEvents = INITIAL_UPCOMING_EVENTS;
                profileUpdated = true;
             }
@@ -78,8 +95,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
           } else {
-            // This is likely a new user whose document hasn't been created yet.
-            // The signup form's setAppUser will create it. We just wait.
+            // This path is now only hit if the user exists in Auth but truly has no profile document.
+            console.error(`Profile document not found for existing user ${user.uid}.`);
+            toast({
+              title: 'Profile Not Found',
+              description: "We couldn't find your user profile. Please try signing up again.",
+              variant: 'destructive',
+            });
+            await auth.signOut();
             setLocalAppUser(null);
           }
         } catch (error: any) {
@@ -127,16 +150,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     try {
       const docSnap = await getDoc(userRef);
-      const dataWithFullArrays = { ...userData };
-       if (!dataWithFullArrays.activities) dataWithFullArrays.activities = INITIAL_ACTIVITIES;
-       if (!dataWithFullArrays.upcomingEvents) dataWithFullArrays.upcomingEvents = INITIAL_UPCOMING_EVENTS;
-
       if (docSnap.exists()) {
         await updateDoc(userRef, userData);
         setLocalAppUser(prev => prev ? { ...prev, ...userData } as User : null);
       } else {
-        await setDoc(userRef, { ...dataWithFullArrays } as User);
-        setLocalAppUser({ ...dataWithFullArrays } as User);
+        await setDoc(userRef, { ...userData } as User);
+        setLocalAppUser({ ...userData } as User);
       }
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
