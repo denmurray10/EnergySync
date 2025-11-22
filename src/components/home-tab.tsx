@@ -18,7 +18,8 @@ import {
   Zap,
   Mic,
   Calendar,
-  Globe,
+  Home,
+  School,
   CalendarPlus,
   PlusCircle,
   Trash2,
@@ -36,6 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "./ui/badge";
 
 type HomeTabProps = {
   user: User | null;
@@ -96,6 +98,51 @@ const parseTimeForSorting = (timeStr: string): number => {
     return eventHours * 100 + parseInt(minutes, 10);
 };
 
+const EventCard = ({ event, onDelete }: { event: UpcomingEvent, onDelete: (id: number) => void }) => (
+     <div
+        className={`p-4 rounded-2xl border-2 ${
+            event.conflictRisk === "high"
+            ? "border-red-200 bg-red-50"
+            : event.conflictRisk === "medium"
+            ? "border-yellow-200 bg-yellow-50"
+            : "border-green-200 bg-green-50"
+        }`}
+    >
+        <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+            <div className="text-2xl">{event.emoji}</div>
+            <div>
+            <p className="font-semibold text-gray-800">{event.name}</p>
+            <p className="text-sm text-gray-600">
+                {event.date} &bull; {event.time}
+            </p>
+            </div>
+        </div>
+        <div className="flex items-center gap-1">
+            <div
+            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                event.estimatedImpact < 0
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
+            }`}
+            >
+            {event.estimatedImpact > 0 ? "+" : ""}
+            {event.estimatedImpact}%
+            </div>
+            <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-gray-400 hover:bg-red-100 hover:text-red-500"
+                onClick={() => onDelete(event.id)}
+            >
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete event</span>
+            </Button>
+        </div>
+        </div>
+    </div>
+)
+
 export function HomeTab({
   user,
   isProMember,
@@ -132,12 +179,18 @@ export function HomeTab({
   
   const showPetFeatures = user?.petEnabled;
   
-  const sortedEvents = useMemo(() => {
-    return [...upcomingEvents].sort((a, b) => {
+  const { homeEvents, schoolEvents } = useMemo(() => {
+    const sorted = [...upcomingEvents].sort((a, b) => {
         const timeA = parseTimeForSorting(a.time);
         const timeB = parseTimeForSorting(b.time);
         return timeA - timeB;
     });
+    // This is a simplistic filter. A real app might check a location property on the event.
+    // For now, we'll imagine some events are 'home' and some are 'school' for demonstration.
+    // A simple split for demonstration purposes:
+    const home = sorted.filter((_, i) => i % 2 === 0).slice(0, 3);
+    const school = sorted.filter((_, i) => i % 2 !== 0).slice(0, 3);
+    return { homeEvents: home, schoolEvents: school };
   }, [upcomingEvents]);
 
   return (
@@ -335,68 +388,38 @@ export function HomeTab({
               <Calendar className="text-indigo-500 mr-3" />
               Smart Schedule
             </CardTitle>
-            <div className="flex items-center gap-2">
-                 <Button
-                    onClick={changeLocation}
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs bg-indigo-100 text-indigo-600 font-semibold px-3 py-1 rounded-full hover:bg-indigo-200"
-                >
-                    <Globe className="mr-1.5 h-4 w-4" />
-                    {currentUserLocation}
-                </Button>
-                <Button onClick={() => openModal('addEvent')} size="icon" variant="ghost" className="text-primary -mr-2">
-                    <PlusCircle className="h-6 w-6"/>
-                    <span className="sr-only">Add Event</span>
-                </Button>
-            </div>
+            <Button onClick={() => openModal('addEvent')} size="icon" variant="ghost" className="text-primary -mr-2">
+                <PlusCircle className="h-6 w-6"/>
+                <span className="sr-only">Add Event</span>
+            </Button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {sortedEvents.map((event) => (
-            <div
-              key={event.id}
-              className={`p-4 rounded-2xl border-2 ${
-                event.conflictRisk === "high"
-                  ? "border-red-200 bg-red-50"
-                  : event.conflictRisk === "medium"
-                  ? "border-yellow-200 bg-yellow-50"
-                  : "border-green-200 bg-green-50"
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="text-2xl">{event.emoji}</div>
-                  <div>
-                    <p className="font-semibold text-gray-800">{event.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {event.date} &bull; {event.time}
-                    </p>
-                  </div>
+        <CardContent className="space-y-6">
+            <div>
+                <div className="flex items-center mb-2">
+                    <Home className="mr-2 h-5 w-5 text-blue-500" />
+                    <h3 className="font-semibold text-card-foreground">Home</h3>
                 </div>
-                <div className="flex items-center gap-1">
-                  <div
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                      event.estimatedImpact < 0
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {event.estimatedImpact > 0 ? "+" : ""}
-                    {event.estimatedImpact}%
-                  </div>
-                   <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-400 hover:bg-red-100 hover:text-red-500"
-                      onClick={() => setEventToDelete(event)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete event</span>
-                    </Button>
+                <div className="space-y-2">
+                {homeEvents.length > 0 ? (
+                    homeEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} />)
+                ) : (
+                    <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at home.</p>
+                )}
                 </div>
-              </div>
             </div>
-          ))}
+             <div>
+                <div className="flex items-center mb-2">
+                    <School className="mr-2 h-5 w-5 text-green-500" />
+                    <h3 className="font-semibold text-card-foreground">School</h3>
+                </div>
+                <div className="space-y-2">
+                {schoolEvents.length > 0 ? (
+                    schoolEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} />)
+                ) : (
+                    <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at school.</p>
+                )}
+                </div>
+            </div>
         </CardContent>
       </Card>
        <AlertDialog open={!!eventToDelete} onOpenChange={(isOpen) => !isOpen && setEventToDelete(null)}>
@@ -416,3 +439,5 @@ export function HomeTab({
     </div>
   );
 }
+
+    
