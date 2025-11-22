@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -20,7 +21,7 @@ const SuggestActivityDetailsOutputSchema = z.object({
     type: z.enum(["social", "work", "recharge", "personal"]).describe('The category of the activity.'),
     impact: z.number().min(-50).max(50).describe('The estimated energy impact percentage, from -50 (draining) to +50 (recharging).'),
     duration: z.coerce.number().min(5).describe('The typical duration for this activity in minutes.'),
-    emoji: z.string().max(2).describe('A single emoji that represents the activity.'),
+    emoji: z.string().min(1).describe('A single emoji that represents the activity.'),
 });
 export type SuggestActivityDetailsOutput = z.infer<typeof SuggestActivityDetailsOutputSchema>;
 
@@ -55,3 +56,5 @@ const suggestDetailsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -19,7 +20,7 @@ export type SuggestRechargeDetailsInput = z.infer<typeof SuggestRechargeDetailsI
 const SuggestRechargeDetailsOutputSchema = z.object({
     impact: z.number().min(5).max(50).describe('The estimated positive energy impact percentage, from 5 (mildly recharging) to 50 (very recharging).'),
     duration: z.coerce.number().min(5).describe('The typical duration for this activity in minutes.'),
-    emoji: z.string().max(2).describe('A single emoji that represents the activity.'),
+    emoji: z.string().min(1).describe('A single emoji that represents the activity.'),
 });
 export type SuggestRechargeDetailsOutput = z.infer<typeof SuggestRechargeDetailsOutputSchema>;
 
@@ -53,3 +54,5 @@ const suggestDetailsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

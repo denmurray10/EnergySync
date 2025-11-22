@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview Analyzes an image to suggest details for an activity log.
@@ -24,7 +25,7 @@ const AnalyzeImageOutputSchema = z.object({
     type: z.enum(["social", "work", "recharge", "personal"]).describe('The category of the activity.'),
     impact: z.number().min(-50).max(50).describe('The estimated energy impact, from -50 (draining) to +50 (recharging).'),
     duration: z.coerce.number().min(5).describe('A typical duration for this activity in minutes.'),
-    emoji: z.string().max(2).describe('A single emoji that represents the activity.'),
+    emoji: z.string().min(1).describe('A single emoji that represents the activity.'),
     location: z.string().describe('The likely location of the activity (e.g., Home, Office, Park, Cafe).'),
 });
 export type AnalyzeImageOutput = z.infer<typeof AnalyzeImageOutputSchema>;
@@ -68,3 +69,5 @@ const imageCheckinFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    

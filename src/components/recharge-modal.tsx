@@ -36,7 +36,7 @@ const customRechargeSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters."),
     impact: z.number().min(5).max(50),
     duration: z.coerce.number().min(5, "Duration must be at least 5 minutes."),
-    emoji: z.string().min(1, "Please add an emoji.").max(2, "Please use only one emoji."),
+    emoji: z.string().min(1, "Please add an emoji."),
 });
 
 type CustomRechargeFormValues = z.infer<typeof customRechargeSchema>;
@@ -344,3 +344,5 @@ export function RechargeModal({
     </Dialog>
   );
 }
+
+    

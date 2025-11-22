@@ -46,7 +46,7 @@ const eventFormSchema = z.object({
   estimatedImpact: z.number().min(-50).max(50),
   date: z.string().min(1, "Please enter a date."),
   time: z.string().min(1, "Please select a time."),
-  emoji: z.string().min(1, "Please add an emoji.").max(2, "Please use only one emoji."),
+  emoji: z.string().min(1, "Please add an emoji."),
   taggedFriendIds: z.array(z.string()).optional(),
 });
 
@@ -418,3 +418,5 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
+
+    

@@ -39,7 +39,7 @@ const activityFormSchema = z.object({
   impact: z.number().min(-50).max(50),
   duration: z.coerce.number().min(1, "Duration must be at least 1 minute."),
   location: z.string().min(2, "Location must be at least 2 characters."),
-  emoji: z.string().min(1, "Please add an emoji.").max(2, "Please use only one emoji."),
+  emoji: z.string().min(1, "Please add an emoji."),
 });
 
 type ActivityFormValues = z.infer<typeof activityFormSchema>;
@@ -247,3 +247,5 @@ export function ImageCheckinModal({ open, onOpenChange, onLogActivity, ageGroup 
     </Dialog>
   );
 }
+
+    

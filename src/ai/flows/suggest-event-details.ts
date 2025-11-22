@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -19,7 +20,7 @@ export type SuggestEventDetailsInput = z.infer<typeof SuggestEventDetailsInputSc
 const SuggestEventDetailsOutputSchema = z.object({
     type: z.enum(["social", "work", "personal"]).describe('The category of the event.'),
     estimatedImpact: z.number().min(-50).max(50).describe('The estimated energy impact percentage, from -50 (draining) to +50 (recharging).'),
-    emoji: z.string().max(2).describe('A single emoji that represents the event.'),
+    emoji: z.string().min(1).describe('A single emoji that represents the event.'),
 });
 export type SuggestEventDetailsOutput = z.infer<typeof SuggestEventDetailsOutputSchema>;
 
@@ -53,3 +54,5 @@ const suggestEventDetailsFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
