@@ -36,6 +36,8 @@ export const INITIAL_ACTIVITIES: Activity[] = [
     // 6 days ago
     { id: 16, name: 'Long Commute', type: 'work', impact: -10, duration: 60, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🚗', location: 'City', autoDetected: true, recoveryTime: 20 },
     { id: 17, name: 'Movie Marathon', type: 'recharge', impact: 10, duration: 240, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🎬', location: 'Home', autoDetected: false, recoveryTime: 0 },
+    { id: 18, name: 'Deep Work Session', 'type': 'work', impact: -20, duration: 180, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '💻', location: 'Office', autoDetected: false, recoveryTime: 60 },
+    { id: 19, name: 'Grocery Shopping', 'type': 'personal', impact: -10, duration: 45, date: format(subDays(today, 6), 'yyyy-MM-dd'), emoji: '🛒', location: 'Supermarket', autoDetected: false, recoveryTime: 15 },
 
 ];
 
