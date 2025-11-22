@@ -50,7 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           // Retry logic to handle race condition on signup
           if (!userSnap.exists()) {
-            // Check if the user was created in the last 10 seconds.
             const isNewUser = user.metadata.creationTime ? 
               (new Date().getTime() - new Date(user.metadata.creationTime).getTime() < 10000)
               : false;
@@ -64,17 +63,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           if (userSnap.exists()) {
             const userData = userSnap.data() as User;
-            let profileUpdated = false;
-
             // Ensure essential arrays are initialized if they are missing
-            if (!userData.activities) {
-              userData.activities = INITIAL_ACTIVITIES;
-              profileUpdated = true;
-            }
-            if (!userData.upcomingEvents) {
-              userData.upcomingEvents = INITIAL_UPCOMING_EVENTS;
-               profileUpdated = true;
-            }
+            if (!userData.activities) userData.activities = INITIAL_ACTIVITIES;
+            if (!userData.upcomingEvents) userData.upcomingEvents = INITIAL_UPCOMING_EVENTS;
             if (!userData.friends) userData.friends = INITIAL_FRIENDS;
             if (!userData.petTasks) userData.petTasks = INITIAL_PET_TASKS;
             if (!userData.chatHistory) userData.chatHistory = [];
@@ -82,14 +73,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!userData.reminders) userData.reminders = [];
 
             setLocalAppUser(userData);
-
-             if (profileUpdated) {
-                // Save the updated data back to Firestore without waiting
-                updateDoc(userRef, {
-                    activities: userData.activities,
-                    upcomingEvents: userData.upcomingEvents,
-                }).catch(e => console.error("Failed to backfill user data:", e));
-            }
           } else {
             // This path is now only hit if the user exists in Auth but truly has no profile document.
             console.error(`Profile document not found for existing user ${user.uid}.`);
