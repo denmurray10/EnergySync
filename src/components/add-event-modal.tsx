@@ -382,20 +382,22 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 min-h-[260px]">
             {renderStepContent()}
             <DialogFooter className="pt-8 gap-2 sm:justify-between">
-                {step > 0 && (
-                     <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                    </Button>
-                )}
-                 {step < totalSteps - 1 ? (
-                    <Button type="button" onClick={handleNext} className={cn(step === 0 && "ml-auto")}>
-                        Next <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                ) : (
-                    <Button type="submit">
-                        <Check className="mr-2 h-4 w-4" /> Add Event
-                    </Button>
-                )}
+                <div className={cn(step === 0 && "ml-auto", "flex gap-2")}>
+                    {step > 0 && (
+                        <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                        </Button>
+                    )}
+                    {step < totalSteps - 1 ? (
+                        <Button type="button" onClick={handleNext}>
+                            Next <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <Button type="submit">
+                            <Check className="mr-2 h-4 w-4" /> Add Event
+                        </Button>
+                    )}
+                </div>
             </DialogFooter>
           </form>
         </Form>
@@ -403,6 +405,5 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     </Dialog>
   );
 }
-
 
     
