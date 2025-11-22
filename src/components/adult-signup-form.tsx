@@ -12,7 +12,7 @@ import { httpsCallable } from 'firebase/functions';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
-import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
+import { INITIAL_FRIENDS, INITIAL_PET_TASKS } from '@/lib/data';
 
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -177,8 +177,8 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                 friends: INITIAL_FRIENDS,
                 journeys: [],
                 petTasks: INITIAL_PET_TASKS,
-                activities: INITIAL_ACTIVITIES,
-                upcomingEvents: INITIAL_UPCOMING_EVENTS,
+                activities: [], // Will be populated by AuthContext
+                upcomingEvents: [], // Will be populated by AuthContext
                 reminders: [],
             };
 

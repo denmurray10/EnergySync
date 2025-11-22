@@ -49,7 +49,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
-            setLocalAppUser(userSnap.data() as User);
+            const userData = userSnap.data() as User;
+             // Ensure essential arrays are initialized if they are missing
+            if (!userData.activities) userData.activities = INITIAL_ACTIVITIES;
+            if (!userData.upcomingEvents) userData.upcomingEvents = INITIAL_UPCOMING_EVENTS;
+            if (!userData.friends) userData.friends = INITIAL_FRIENDS;
+            if (!userData.petTasks) userData.petTasks = INITIAL_PET_TASKS;
+            if (!userData.chatHistory) userData.chatHistory = [];
+            if (!userData.journeys) userData.journeys = [];
+            if (!userData.reminders) userData.reminders = [];
+            setLocalAppUser(userData);
           } else {
             const creationTime = new Date(user.metadata.creationTime!).getTime();
             const lastSignInTime = new Date(user.metadata.lastSignInTime!).getTime();
