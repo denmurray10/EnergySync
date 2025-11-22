@@ -591,7 +591,7 @@ export default function HomePage() {
     setIsChatting(true);
     
     // This is the crucial part: create the history for the API call immediately.
-    const updatedHistory = [...chatHistory, userMessage];
+    const updatedHistory = [...(appUser?.chatHistory || []), userMessage];
 
     try {
         const result = await chatWithCoach({
@@ -609,7 +609,7 @@ export default function HomePage() {
     } finally {
         setIsChatting(false);
     }
-}, [addChatMessage, chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
+  }, [addChatMessage, appUser?.chatHistory, currentEnergy, upcomingEvents, activities, unlockAchievement, isProMember]);
 
 
   const changeLocation = () => {
@@ -1005,5 +1005,7 @@ export default function HomePage() {
     </main>
   );
 }
+
+    
 
     
