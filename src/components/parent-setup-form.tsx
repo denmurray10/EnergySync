@@ -11,7 +11,7 @@ import { auth } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
-import { INITIAL_FRIENDS, INITIAL_PET_TASKS } from '@/lib/data';
+import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
 
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -143,11 +143,6 @@ export function ParentSetupForm() {
         const email = `${data.childUsername.toLowerCase().trim()}@${projectId}.fake-user.com`;
 
         try {
-            // Temporarily sign out any existing user to ensure createUser works
-            if (auth.currentUser) {
-                await auth.signOut();
-            }
-
             const userCredential = await createUserWithEmailAndPassword(auth, email, data.childPassword);
             const user = userCredential.user;
 
@@ -179,14 +174,13 @@ export function ParentSetupForm() {
                 friends: INITIAL_FRIENDS,
                 journeys: [],
                 petTasks: INITIAL_PET_TASKS,
-                activities: [],
-                upcomingEvents: [],
+                activities: INITIAL_ACTIVITIES,
+                upcomingEvents: INITIAL_UPCOMING_EVENTS,
                 reminders: [],
             };
             
             await setAppUser(initialUser);
             
-            // Store credentials for auto-login
             localStorage.setItem('energysync_autologin_email', email);
             localStorage.setItem('energysync_autologin_password', data.childPassword);
             
@@ -216,7 +210,7 @@ export function ParentSetupForm() {
     const getStepContent = () => {
          switch (step) {
             case 0: return (
-                <CardContent className="space-y-4" key="step-0-parent">
+                <div className="space-y-4" key="step-0-parent">
                     <FormField control={form.control} name="parentEmail" render={({ field }) => (
                         <FormItem><FormLabel>Your Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -226,10 +220,10 @@ export function ParentSetupForm() {
                     <FormField control={form.control} name="confirmPin" render={({ field }) => (
                         <FormItem><FormLabel>Confirm PIN</FormLabel><FormControl><Input type="password" autoComplete="new-password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                </CardContent>
+                </div>
             );
             case 1: return (
-                 <CardContent key="step-1-parent">
+                 <div key="step-1-parent">
                      <FormField control={form.control} name="ageGroup" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -240,10 +234,10 @@ export function ParentSetupForm() {
                             </FormControl>
                          </FormItem>
                      )}/>
-                 </CardContent>
+                 </div>
             );
             case 2: return (
-                <CardContent className="space-y-4" key="step-2-parent">
+                <div className="space-y-4" key="step-2-parent">
                     <FormField control={form.control} name="featureVisibility.insights" render={({ field }) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="insights-toggle" className="flex items-center gap-2 font-normal"><BrainCircuit /> Insights Tab</Label>
@@ -262,10 +256,10 @@ export function ParentSetupForm() {
                             <Switch id="community-toggle" checked={field.value} onCheckedChange={field.onChange} />
                         </div>
                     )}/>
-                </CardContent>
+                </div>
             );
              case 3: return (
-                 <CardContent className="space-y-4" key="step-3-parent">
+                 <div className="space-y-4" key="step-3-parent">
                     <FormField control={form.control} name="childName" render={({ field }) => (
                         <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" autoComplete="new-password" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -278,10 +272,10 @@ export function ParentSetupForm() {
                     <FormField control={form.control} name="confirmChildPassword" render={({ field }) => (
                         <FormItem><FormLabel>Confirm child's password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                </CardContent>
+                </div>
             );
             case 4: return (
-                 <CardContent key="step-4-parent">
+                 <div key="step-4-parent">
                      <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -294,10 +288,10 @@ export function ParentSetupForm() {
                             <FormMessage className="pt-2" />
                          </FormItem>
                      )}/>
-                 </CardContent>
+                 </div>
             );
             case 5: return (
-                 <CardContent key="step-5-parent">
+                 <div key="step-5-parent">
                      <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -310,20 +304,20 @@ export function ParentSetupForm() {
                             <FormMessage className="pt-2" />
                          </FormItem>
                      )}/>
-                 </CardContent>
+                 </div>
             );
             case 6: return (
-                <CardContent className="text-center" key="step-6-parent">
+                <div className="text-center" key="step-6-parent">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features for your child?</p>
                     <p className="text-sm text-muted-foreground mt-2">Unlock all features for 3 days, including advanced AI insights and guided audio sessions. No credit card required.</p>
-                </CardContent>
+                </div>
             );
             case totalSteps: return (
-                 <CardContent className="text-center space-y-4" key="step-final-parent">
+                 <div className="text-center space-y-4" key="step-final-parent">
                     <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
                     <p className="text-sm text-muted-foreground">Your child's account is ready. You will be logged in automatically.</p>
-                </CardContent>
+                </div>
             )
             default: return null;
          }
@@ -377,31 +371,33 @@ export function ParentSetupForm() {
                         </CardContent>
 
                         <CardFooter className="flex flex-col gap-2 pt-4">
-                             {step < totalSteps ? (
-                                <>
-                                    { step === 6 ? (
-                                        <div className="flex flex-col gap-2 w-full">
-                                            <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
-                                                {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                                                Yes, Start Free Trial & Create
-                                            </Button>
-                                            <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
-                                                {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks & Create'}
-                                            </Button>
-                                            <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
-                                                <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
-                                            <Button type="button" variant="outline" onClick={handleBack} className="w-full">
-                                                <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                            </Button>
-                                        </>
-                                    )}
-                                </>
-                             ) : null}
+                            {step < totalSteps ? (
+                                <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                            ) : null}
+                            
+                            {step === totalSteps && (
+                                <div className="flex flex-col gap-2 w-full">
+                                    <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
+                                        Yes, Start Free Trial & Create
+                                    </Button>
+                                    <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
+                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks & Create'}
+                                    </Button>
+                                </div>
+                            )}
+
+                            {step > 0 && step <= totalSteps && (
+                                <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
+                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                </Button>
+                            )}
+
+                            {step === 0 && (
+                                 <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back to Welcome
+                                </Button>
+                            )}
                         </CardFooter>
                     </form>
                 </Form>

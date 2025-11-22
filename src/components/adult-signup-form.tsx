@@ -12,7 +12,7 @@ import { httpsCallable } from 'firebase/functions';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
-import { INITIAL_FRIENDS, INITIAL_PET_TASKS } from '@/lib/data';
+import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
 
 import type { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -100,11 +100,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
 
         const isValid = await form.trigger(fieldsToValidate as any);
         if (isValid) {
-            if (step === totalSteps - 1 && !isTeen) {
-                setStep(s => s + 1);
-            } else {
-                setStep(s => s + 1);
-            }
+            setStep(s => s + 1);
         }
     };
 
@@ -151,11 +147,6 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
 
         // --- Standard Adult Signup Logic ---
         try {
-            // Temporarily sign out any existing user to ensure createUser works
-            if (auth.currentUser) {
-                await auth.signOut();
-            }
-
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
             await updateProfile(user, { displayName: data.name });
@@ -186,14 +177,13 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                 friends: INITIAL_FRIENDS,
                 journeys: [],
                 petTasks: INITIAL_PET_TASKS,
-                activities: [], 
-                upcomingEvents: [],
+                activities: INITIAL_ACTIVITIES,
+                upcomingEvents: INITIAL_UPCOMING_EVENTS,
                 reminders: [],
             };
 
             await setAppUser(initialUser);
 
-            // Store credentials for auto-login
             localStorage.setItem('energysync_autologin_email', data.email);
             localStorage.setItem('energysync_autologin_password', data.password);
             
@@ -238,7 +228,7 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
     const getStepContent = () => {
          switch (step) {
             case 0: return (
-                <>
+                <div className="space-y-4">
                     <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input placeholder="e.g., Alex Smith" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
@@ -251,10 +241,9 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                         <FormField control={form.control} name="confirmPassword" render={({ field }) => (
                         <FormItem><FormLabel>Confirm Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
                     )}/>
-                </>
+                </div>
             );
             case 1: return (
-                
                     <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
                         <FormItem>
                             <FormControl>
@@ -270,10 +259,8 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             <FormMessage className="pt-2" />
                         </FormItem>
                     )}/>
-                
             );
             case 2: return (
-                 
                      <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
                          <FormItem>
                             <FormControl>
@@ -289,10 +276,8 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             <FormMessage className="pt-2" />
                          </FormItem>
                      )}/>
-                 
             );
             case 3: return isTeen ? (
-                
                     <FormField control={form.control} name="parentEmailForApproval" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Parent/Guardian Email</FormLabel>
@@ -300,7 +285,6 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             <FormMessage />
                         </FormItem>
                     )}/>
-                
             ) : (
                 <div className="text-center">
                     <p className="text-lg">Would you like to start a free 3-day trial of our Pro features?</p>
@@ -338,24 +322,16 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                             {getStepContent()}
                         </CardContent>
                         <CardFooter className="flex flex-col gap-2 pt-4">
-                             {step < totalSteps - 1 ? (
-                                <>
-                                    <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
-                                    <Button type="button" variant="outline" onClick={handleBack} className="w-full">
-                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                    </Button>
-                                </>
-                            ) : step === totalSteps - 1 && isTeen ? (
-                                <>
-                                    <Button type="button" onClick={form.handleSubmit(onSubmit)} className="w-full" disabled={loading}>
-                                        {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4"/>}
-                                        Send Approval & Finish
-                                    </Button>
-                                     <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
-                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                    </Button>
-                                </>
-                            ) : step === totalSteps - 1 && !isTeen ? (
+                             {step < totalSteps ? (
+                                <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                             ) : null}
+                             
+                             {step === totalSteps && isTeen ? (
+                                <Button type="button" onClick={form.handleSubmit(onSubmit)} className="w-full" disabled={loading}>
+                                    {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4"/>}
+                                    Send Approval Request
+                                </Button>
+                             ) : step === totalSteps && !isTeen ? (
                                 <div className="flex flex-col gap-2 w-full">
                                     <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
                                         {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
@@ -364,15 +340,26 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
                                     <Button type="button" variant="secondary" onClick={() => handleTrialDecisionAndSubmit(false)} className="w-full" disabled={loading}>
                                         {loading ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : 'No Thanks, Just Finish'}
                                     </Button>
-                                    <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
-                                        <ArrowLeft className="mr-2 h-4 w-4"/> Back
-                                    </Button>
                                 </div>
-                            ) : (
-                                 <Button type="button" onClick={() => router.push('/welcome')} className="w-full">
+                             ) : null}
+
+                             {step === (totalSteps + 1) ? (
+                                <Button type="button" onClick={() => router.push('/welcome')} className="w-full">
                                     Back to Welcome
                                 </Button>
-                            )}
+                             ) : null}
+                             
+                             {step > 0 && step <= totalSteps && (
+                                <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
+                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                </Button>
+                             )}
+
+                             {step === 0 && (
+                                <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back to Welcome
+                                </Button>
+                             )}
                         </CardFooter>
                     </form>
                 </Form>
