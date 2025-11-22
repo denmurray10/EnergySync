@@ -151,6 +151,11 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
 
         // --- Standard Adult Signup Logic ---
         try {
+            // Temporarily sign out any existing user to ensure createUser works
+            if (auth.currentUser) {
+                await auth.signOut();
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
             const user = userCredential.user;
             await updateProfile(user, { displayName: data.name });
@@ -187,6 +192,11 @@ export function AdultSignupForm({ isTeen = false }: { isTeen?: boolean }) {
             };
 
             await setAppUser(initialUser);
+
+            // Store credentials for auto-login
+            localStorage.setItem('energysync_autologin_email', data.email);
+            localStorage.setItem('energysync_autologin_password', data.password);
+            
             router.push('/signup-success');
 
         } catch (error: any) {

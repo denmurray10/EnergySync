@@ -76,6 +76,22 @@ export default function LoginPage() {
   useEffect(() => {
     if (!authLoading && firebaseUser) {
       router.push('/');
+    } else if (!authLoading && !firebaseUser) {
+      // Check for auto-login credentials
+      const autoLoginEmail = localStorage.getItem('energysync_autologin_email');
+      const autoLoginPassword = localStorage.getItem('energysync_autologin_password');
+      if (autoLoginEmail && autoLoginPassword) {
+        setLoading(true);
+        signInWithEmailAndPassword(auth, autoLoginEmail, autoLoginPassword)
+          .then(() => {
+            localStorage.removeItem('energysync_autologin_email');
+            localStorage.removeItem('energysync_autologin_password');
+            toast({ title: 'Welcome!', description: 'You have been successfully signed in.' });
+            router.push('/');
+          })
+          .catch(handleLoginError)
+          .finally(() => setLoading(false));
+      }
     }
   }, [authLoading, firebaseUser, router]);
 
@@ -172,7 +188,7 @@ export default function LoginPage() {
     }
   };
 
-  if (authLoading || firebaseUser) {
+  if (authLoading || firebaseUser || loading) {
     return (
       <main className="min-h-dvh bg-background flex items-center justify-center p-4">
         <LoaderCircle className="h-12 w-12 animate-spin text-primary" />

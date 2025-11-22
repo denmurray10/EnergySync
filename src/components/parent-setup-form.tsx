@@ -143,6 +143,11 @@ export function ParentSetupForm() {
         const email = `${data.childUsername.toLowerCase().trim()}@${projectId}.fake-user.com`;
 
         try {
+            // Temporarily sign out any existing user to ensure createUser works
+            if (auth.currentUser) {
+                await auth.signOut();
+            }
+
             const userCredential = await createUserWithEmailAndPassword(auth, email, data.childPassword);
             const user = userCredential.user;
 
@@ -180,6 +185,11 @@ export function ParentSetupForm() {
             };
             
             await setAppUser(initialUser);
+            
+            // Store credentials for auto-login
+            localStorage.setItem('energysync_autologin_email', email);
+            localStorage.setItem('energysync_autologin_password', data.childPassword);
+            
             router.push('/signup-success');
 
         } catch (error: any) {
