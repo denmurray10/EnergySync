@@ -1,4 +1,3 @@
-
 // src/context/AuthContext.tsx
 'use client';
 
@@ -34,20 +33,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper function to remove undefined values from an object
-const removeUndefineds = (obj: any) => {
-  const newObj: any = {};
-  for (const key in obj) {
-    if (obj[key] !== undefined) {
-      newObj[key] = obj[key];
+// Helper function to remove undefined values from an object recursively
+const removeUndefineds = (obj: any): any => {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
     }
-  }
-  return newObj;
+    
+    if (Array.isArray(obj)) {
+        return obj.map(item => removeUndefineds(item));
+    }
+
+    const newObj: any = {};
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
+            newObj[key] = removeUndefineds(obj[key]);
+        }
+    }
+    return newObj;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [appUser, setLocalAppUser] = useState<User | null>(null);
+  const [localAppUser, setLocalAppUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -137,17 +144,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const userRef = doc(firestore, 'users', userId);
-    const cleanedUserData = removeUndefineds(userData); // Clean the data here
-
+    
     try {
       const docSnap = await getDoc(userRef);
       if (docSnap.exists()) {
-        await updateDoc(userRef, cleanedUserData);
-        setLocalAppUser(prev => prev ? { ...prev, ...cleanedUserData } as User : null);
+        const cleanedUpdateData = removeUndefineds(userData);
+        await updateDoc(userRef, cleanedUpdateData);
       } else {
-        await setDoc(userRef, cleanedUserData as User);
-        setLocalAppUser(cleanedUserData as User);
+        const cleanedSetData = removeUndefineds(userData);
+        await setDoc(userRef, cleanedSetData);
       }
+      setLocalAppUser(prev => prev ? { ...prev, ...userData } : (userData as User));
+
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
       if (error.code === 'permission-denied') {
@@ -169,61 +177,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [toast]);
   
   const addChatMessage = useCallback(async (message: ChatMessage) => {
-    if (appUser) {
-        const newHistory = [...(appUser.chatHistory || []), message];
+    if (localAppUser) {
+        const newHistory = [...(localAppUser.chatHistory || []), message];
         await setAppUser({ chatHistory: newHistory });
     }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
   
   const setFriends = useCallback(async (friends: Friend[]) => {
-      if(appUser) {
+      if(localAppUser) {
           await setAppUser({ friends });
       }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
   
   const setPetTasks = useCallback(async (tasks: PetTask[]) => {
-      if(appUser) {
+      if(localAppUser) {
           await setAppUser({ petTasks: tasks });
       }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
   
   const setActivities = useCallback(async (activities: Activity[]) => {
-      if(appUser) {
+      if(localAppUser) {
           await setAppUser({ activities });
       }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
   
   const setUpcomingEvents = useCallback(async (events: UpcomingEvent[]) => {
-      if(appUser) {
+      if(localAppUser) {
          await setAppUser({ upcomingEvents: events });
       }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
   
   const setReminders = useCallback(async (reminders: Reminder[]) => {
-      if(appUser) {
+      if(localAppUser) {
          await setAppUser({ reminders });
       }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
 
 
   const addJourneyEntry = useCallback(async (text: string, icon: string) => {
-    if (appUser) {
+    if (localAppUser) {
         const newEntry: JourneyEntry = {
             text, icon, timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
         };
-        const newJourneys = [newEntry, ...(appUser.journeys || [])].slice(0, 50); // Keep last 50
+        const newJourneys = [newEntry, ...(localAppUser.journeys || [])].slice(0, 50); // Keep last 50
         await setAppUser({ journeys: newJourneys });
     }
-  }, [appUser, setAppUser]);
+  }, [localAppUser, setAppUser]);
   
   const gainPetExp = useCallback((amount: number) => {
-    if (!appUser || !appUser.petEnabled) return;
+    if (!localAppUser || !localAppUser.petEnabled) return;
     
-    const newExp = (appUser.petExp || 0) + amount;
-    const expToNextLevel = 100 * (appUser.petLevel || 1);
+    const newExp = (localAppUser.petExp || 0) + amount;
+    const expToNextLevel = 100 * (localAppUser.petLevel || 1);
     
     if (newExp >= expToNextLevel) {
-        const newLevel = appUser.petLevel + 1;
+        const newLevel = localAppUser.petLevel + 1;
         const remainingExp = newExp - expToNextLevel;
         toast({
             title: '🎉 Pet Level Up! 🎉',
@@ -233,7 +241,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
         setAppUser({ petExp: newExp });
     }
-  }, [appUser, setAppUser, toast]);
+  }, [localAppUser, setAppUser, toast]);
 
   const signOut = async () => {
     await auth.signOut();
@@ -241,14 +249,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setFirebaseUser(null);
   };
 
-  const friends = appUser?.friends ?? INITIAL_FRIENDS;
-  const chatHistory = appUser?.chatHistory ?? [];
-  const petTasks = appUser?.petTasks ?? INITIAL_PET_TASKS;
-  const activities = appUser?.activities ?? INITIAL_ACTIVITIES;
-  const upcomingEvents = appUser?.upcomingEvents ?? INITIAL_UPCOMING_EVENTS;
-  const reminders = appUser?.reminders ?? [];
+  const friends = localAppUser?.friends ?? INITIAL_FRIENDS;
+  const chatHistory = localAppUser?.chatHistory ?? [];
+  const petTasks = localAppUser?.petTasks ?? INITIAL_PET_TASKS;
+  const activities = localAppUser?.activities ?? INITIAL_ACTIVITIES;
+  const upcomingEvents = localAppUser?.upcomingEvents ?? INITIAL_UPCOMING_EVENTS;
+  const reminders = localAppUser?.reminders ?? [];
 
-  const value = { firebaseUser, appUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry, activities, setActivities, upcomingEvents, setUpcomingEvents, reminders, setReminders };
+  const value = { firebaseUser, appUser: localAppUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry, activities, setActivities, upcomingEvents, setUpcomingEvents, reminders, setReminders };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
