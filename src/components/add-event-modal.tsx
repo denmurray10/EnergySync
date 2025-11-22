@@ -388,7 +388,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                             <ArrowLeft className="mr-2 h-4 w-4" /> Back
                         </Button>
                     )}
-                    {step < totalSteps - 1 ? (
+                    {step < totalSteps -1 ? (
                         <Button type="button" onClick={handleNext}>
                             Next <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
