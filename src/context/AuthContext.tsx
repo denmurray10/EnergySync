@@ -86,7 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLocalAppUser(userData);
           } else {
             // This path is now only hit if the user exists in Auth but truly has no profile document.
-            console.error(`Profile document not found for existing user ${user.uid}.`);
+            console.error(`Profile document not found for existing user ${'user.uid'}.`);
             toast({
               title: 'Profile Not Found',
               description: "We couldn't find your user profile. Please try signing up again.",
