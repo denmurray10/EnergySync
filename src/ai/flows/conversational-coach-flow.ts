@@ -77,10 +77,10 @@ const conversationalCoachFlow = ai.defineFlow(
     outputSchema: ChatWithCoachOutputSchema,
   },
   async (input) => {
-    // Pass the activities as a JSON string to the tool
+    // Pass the activities as a JSON string to the tool, ensuring the prompt also receives it.
     const result = await prompt({
       ...input,
-      activitiesJson: input.activities
+      activitiesJson: input.activities,
     });
 
     return { response: result.output!.response };
