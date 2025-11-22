@@ -50,8 +50,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           // Retry logic to handle race condition on signup
           if (!userSnap.exists()) {
+            // Check if the user was created in the last 10 seconds.
             const isNewUser = user.metadata.creationTime ? 
-              (new Date().getTime() - new Date(user.metadata.creationTime).getTime() < 10000) // 10 second window
+              (new Date().getTime() - new Date(user.metadata.creationTime).getTime() < 10000)
               : false;
 
             if (isNewUser) {
