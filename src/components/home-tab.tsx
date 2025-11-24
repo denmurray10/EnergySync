@@ -226,29 +226,27 @@ export function HomeTab({
         </p>
       </div>
 
-      {user?.featureVisibility?.communityMode && (
-        <Card className="bg-card/80 backdrop-blur-sm">
-          <CardContent className="p-3 flex items-center justify-center space-x-3">
-            <Users
-              className={`text-primary transition-opacity ${communityMode ? "opacity-100" : "opacity-50"
-                }`}
-            />
-            <Switch
-              id="communityToggle"
-              checked={communityMode}
-              onCheckedChange={setCommunityMode}
-              aria-label="Social Mode Toggle"
-            />
-            <Label
-              htmlFor="communityToggle"
-              className={`font-medium text-sm transition-colors ${communityMode ? "text-primary" : "text-muted-foreground"
-                }`}
-            >
-              Social Mode
-            </Label>
-          </CardContent>
-        </Card>
-      )}
+      <Card className="bg-card/80 backdrop-blur-sm">
+        <CardContent className="p-3 flex items-center justify-center space-x-3">
+          <Users
+            className={`text-primary transition-opacity ${communityMode ? "opacity-100" : "opacity-50"
+              }`}
+          />
+          <Switch
+            id="communityToggle"
+            checked={communityMode}
+            onCheckedChange={setCommunityMode}
+            aria-label="Social Mode Toggle"
+          />
+          <Label
+            htmlFor="communityToggle"
+            className={`font-medium text-sm transition-colors ${communityMode ? "text-primary" : "text-muted-foreground"
+              }`}
+          >
+            Social Mode
+          </Label>
+        </CardContent>
+      </Card>
 
       {communityMode && user?.featureVisibility?.communityMode && (
         <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 text-center">

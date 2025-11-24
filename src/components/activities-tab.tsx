@@ -3,7 +3,6 @@
 
 import { useState, useMemo } from "react";
 import type { Activity, UpcomingEvent } from "@/lib/types";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Camera, Trash2, Calendar, History } from "lucide-react";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
@@ -43,6 +42,19 @@ const parseTimeForSorting = (timeStr: string): number => {
   }
 
   return eventHours * 100 + parseInt(minutes, 10);
+};
+
+// Get border and background color based on type (matching Smart Schedule style)
+const getLocationColor = (item: UpcomingEvent | Activity): string => {
+  // Use type for categorization
+  if ('type' in item && item.type) {
+    if (item.type === 'social') return 'border-blue-300 bg-blue-50'; // Home
+    if (item.type === 'work') return 'border-green-300 bg-green-50'; // School
+    if (item.type === 'personal') return 'border-pink-300 bg-pink-50'; // Personal
+  }
+
+  // Default to gray if no match
+  return 'border-gray-300 bg-gray-50';
 };
 
 export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMember, onDeleteActivity, onDeleteEvent, ageGroup }: ActivitiesTabProps) {
@@ -132,37 +144,36 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
         {viewMode === 'upcoming' ? (
           sortedUpcoming.length > 0 ? (
             sortedUpcoming.map((event) => (
-              <Card key={event.id} className="bg-card/80 backdrop-blur-sm shadow-lg border-l-4 border-l-blue-500">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-3xl">{event.emoji}</div>
-                      <div>
-                        <h3 className="font-bold text-card-foreground text-lg">{event.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {event.date} &bull; {event.time}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`text-lg font-bold ${event.estimatedImpact < 0 ? "text-red-500" : "text-green-500"}`}>
-                        {event.estimatedImpact > 0 ? "+" : ""}{event.estimatedImpact}%
-                      </div>
-                      {onDeleteEvent && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
-                          onClick={() => setEventToDelete(event)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          <span className="sr-only">Delete event</span>
-                        </Button>
-                      )}
+              <div key={event.id} className={`p-4 rounded-2xl border-2 ${getLocationColor(event)}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-2xl">{event.emoji}</div>
+                    <div>
+                      <p className="font-semibold text-gray-800">{event.name}</p>
+                      <p className="text-sm text-gray-600">
+                        {event.date} &bull; {event.time}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-2">
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.estimatedImpact < 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                      }`}>
+                      {event.estimatedImpact > 0 ? "+" : ""}{event.estimatedImpact}%
+                    </div>
+                    {onDeleteEvent && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
+                        onClick={() => setEventToDelete(event)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete event</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
             ))
           ) : (
             <div className="text-center py-8 text-muted-foreground">
@@ -175,44 +186,39 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
         ) : (
           filteredHistory.length > 0 ? (
             filteredHistory.map((activity) => (
-              <Card
+              <div
                 key={activity.id}
-                className="bg-card/80 backdrop-blur-sm shadow-lg"
+                className={`p-4 rounded-2xl border-2 ${getLocationColor(activity)}`}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-3xl">{activity.emoji}</div>
-                      <div>
-                        <h3 className="font-bold text-card-foreground text-lg">
-                          {activity.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {activity.duration}min &bull; {activity.location} &bull; {activity.date}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`text-lg font-bold ${activity.impact < 0 ? "text-red-500" : "text-green-500"
-                          }`}
-                      >
-                        {activity.impact > 0 ? "+" : ""}
-                        {activity.impact}%
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
-                        onClick={() => setActivityToDelete(activity)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete activity</span>
-                      </Button>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-2xl">{activity.emoji}</div>
+                    <div>
+                      <p className="font-semibold text-gray-800">
+                        {activity.name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {activity.duration}min &bull; {activity.location} &bull; {activity.date}
+                      </p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex items-center gap-2">
+                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${activity.impact < 0 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+                      }`}>
+                      {activity.impact > 0 ? "+" : ""}{activity.impact}%
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
+                      onClick={() => setActivityToDelete(activity)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete activity</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ))
           ) : (
             <div className="text-center py-8 text-muted-foreground">
