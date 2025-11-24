@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback,
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
-import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder } from '@/lib/types';
+import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder, MessengerChat } from '@/lib/types';
 import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
@@ -30,6 +30,8 @@ interface AuthContextType {
   setUpcomingEvents: (events: UpcomingEvent[]) => void;
   reminders: Reminder[];
   setReminders: (reminders: Reminder[]) => void;
+  messengerHistory: MessengerChat[];
+  setMessengerHistory: (history: MessengerChat[]) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -90,6 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!userData.chatHistory) userData.chatHistory = [];
             if (!userData.journeys) userData.journeys = [];
             if (!userData.reminders) userData.reminders = [];
+            if (!userData.messengerHistory) userData.messengerHistory = [];
 
             setLocalAppUser(userData);
           } else {
@@ -245,6 +248,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [localAppUser, setAppUser]);
 
+  const setMessengerHistory = useCallback(async (history: MessengerChat[]) => {
+    if (localAppUser) {
+      await setAppUser({ messengerHistory: history });
+    }
+  }, [localAppUser, setAppUser]);
+
 
   const addJourneyEntry = useCallback(async (text: string, icon: string) => {
     if (localAppUser) {
@@ -287,8 +296,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const activities = localAppUser?.activities ?? INITIAL_ACTIVITIES;
   const upcomingEvents = localAppUser?.upcomingEvents ?? INITIAL_UPCOMING_EVENTS;
   const reminders = localAppUser?.reminders ?? [];
+  const messengerHistory = localAppUser?.messengerHistory ?? [];
 
-  const value = { firebaseUser, appUser: localAppUser, setAppUser, loading, signOut, friends, setFriends, chatHistory, addChatMessage, petTasks, setPetTasks, gainPetExp, addJourneyEntry, activities, setActivities, upcomingEvents, setUpcomingEvents, reminders, setReminders };
+  const value = {
+    firebaseUser,
+    appUser: localAppUser,
+    setAppUser,
+    loading,
+    signOut,
+    friends,
+    setFriends,
+    chatHistory,
+    addChatMessage,
+    petTasks,
+    setPetTasks,
+    gainPetExp,
+    addJourneyEntry,
+    activities,
+    setActivities,
+    upcomingEvents,
+    setUpcomingEvents,
+    reminders,
+    setReminders,
+    messengerHistory,
+    setMessengerHistory
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

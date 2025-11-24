@@ -21,6 +21,7 @@ import { ActivitiesTab } from "@/components/activities-tab";
 import { InsightsTab } from "@/components/insights-tab";
 import { ProfileTab } from "@/components/profile-tab";
 import { PetTab } from "@/components/pet-tab";
+import { MessengerTab } from "@/components/messenger-tab";
 import { BottomNav } from "@/components/bottom-nav";
 import { RechargeModal } from "@/components/recharge-modal";
 import { VoiceCheckinModal } from "@/components/voice-checkin-modal";
@@ -52,7 +53,8 @@ export default function HomePage() {
     firebaseUser, appUser, setAppUser, loading: authLoading,
     friends, setFriends, chatHistory, addChatMessage, signOut, reminders, setReminders,
     petTasks, setPetTasks, gainPetExp, addJourneyEntry,
-    activities, setActivities, upcomingEvents, setUpcomingEvents
+    activities, setActivities, upcomingEvents, setUpcomingEvents,
+    messengerHistory, setMessengerHistory
   } = useAuth();
 
   const [showTutorial, setShowTutorial] = useState(false);
@@ -792,6 +794,14 @@ export default function HomePage() {
               ageGroup={appUser.ageGroup}
             />
           )}
+          {activeTab === "messenger" && communityMode && (
+            <MessengerTab
+              user={appUser}
+              friends={friends}
+              messengerHistory={messengerHistory}
+              onUpdateHistory={setMessengerHistory}
+            />
+          )}
           {activeTab === 'pet' && appUser.petEnabled && (
             <PetTab
               tasks={petTasks}
@@ -846,7 +856,7 @@ export default function HomePage() {
           )}
         </div>
 
-        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} featureVisibility={appUser.featureVisibility} />
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} communityMode={communityMode} featureVisibility={appUser.featureVisibility} />
 
         <RechargeModal
           open={modals.recharge}

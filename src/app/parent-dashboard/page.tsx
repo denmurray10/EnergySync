@@ -9,7 +9,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown, Star, Users2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ArrowLeft, BrainCircuit, Users, LineChart, MessageSquare, User as UserIcon, ShieldAlert, LoaderCircle, Crown, Star, Users2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
 import { useEffect, useState, useMemo } from 'react';
@@ -17,26 +18,40 @@ import { useToast } from '@/hooks/use-toast';
 import { MembershipModal } from '@/components/membership-modal';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { differenceInDays } from 'date-fns';
 
 
 export default function ParentDashboardPage() {
-    const { appUser, setAppUser, chatHistory, loading: authLoading } = useAuth();
+    const { appUser, setAppUser, chatHistory, messengerHistory, loading: authLoading } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
 
     const [isConfirmingAgeChange, setIsConfirmingAgeChange] = useState(false);
     const [pendingAgeGroup, setPendingAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
+    const [messengerSearchQuery, setMessengerSearchQuery] = useState("");
+
+    const filteredMessengerHistory = useMemo(() => {
+        if (!messengerHistory) return [];
+        if (!messengerSearchQuery) return messengerHistory;
+
+        const query = messengerSearchQuery.toLowerCase();
+        return messengerHistory.filter(chat => {
+            const friendName = appUser?.friends.find(f => f.id === chat.friendId)?.name || '';
+            const nameMatch = friendName.toLowerCase().includes(query);
+            const contentMatch = chat.messages.some(msg => msg.content.toLowerCase().includes(query));
+            return nameMatch || contentMatch;
+        });
+    }, [messengerHistory, messengerSearchQuery, appUser]);
 
     const isProMember = useMemo(() => {
         if (!appUser) return false;
@@ -54,7 +69,7 @@ export default function ParentDashboardPage() {
 
     useEffect(() => {
         if (!authLoading && !appUser?.parentalPin) {
-             router.push('/');
+            router.push('/');
         }
     }, [appUser, authLoading, router]);
 
@@ -68,10 +83,10 @@ export default function ParentDashboardPage() {
             setAppUser({ featureVisibility: newVisibility });
         }
     };
-    
+
     const handleAgeGroupChange = (newAgeGroup: 'under14' | '14to17' | 'over18') => {
         setAppUser({ ageGroup: newAgeGroup });
-        
+
         let ageDescription = `Your child's app experience has been updated.`;
         if (newAgeGroup === 'under14') ageDescription = "Experience set for users under 14.";
         if (newAgeGroup === '14to17') ageDescription = "Experience set for users 14-17.";
@@ -81,7 +96,7 @@ export default function ParentDashboardPage() {
             title: "Age Group Updated",
             description: ageDescription,
         });
-        
+
         if (newAgeGroup === 'over18' && appUser) {
             setAppUser({ parentalPin: null, parentEmail: null });
             router.push('/');
@@ -105,7 +120,7 @@ export default function ParentDashboardPage() {
             });
         }
     };
-    
+
     if (authLoading || !appUser) {
         return (
             <main className="min-h-dvh bg-background flex items-center justify-center">
@@ -113,12 +128,12 @@ export default function ParentDashboardPage() {
             </main>
         );
     }
-    
+
     const visibility = appUser.featureVisibility ?? { insights: true, friends: true, communityMode: true };
 
     return (
         <main className="min-h-dvh bg-background">
-             <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative">
+            <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative">
                 <div className="p-6 h-dvh overflow-y-auto pb-24 custom-scrollbar">
                     <div className="flex items-center gap-4 mb-6">
                         <ShieldAlert className="h-10 w-10 text-primary" />
@@ -126,7 +141,7 @@ export default function ParentDashboardPage() {
                             Parent Dashboard
                         </h1>
                     </div>
-                    
+
                     <Card className="bg-card/80 backdrop-blur-sm">
                         <CardHeader>
                             <CardTitle>Feature Controls</CardTitle>
@@ -149,7 +164,7 @@ export default function ParentDashboardPage() {
                                     onCheckedChange={(checked) => handleVisibilityChange('friends', checked)}
                                 />
                             </div>
-                             <div className="flex items-center justify-between rounded-lg border p-3">
+                            <div className="flex items-center justify-between rounded-lg border p-3">
                                 <Label htmlFor="community-toggle" className="flex items-center gap-2 font-normal"><MessageSquare /> Social Mode</Label>
                                 <Switch
                                     id="community-toggle"
@@ -170,8 +185,8 @@ export default function ParentDashboardPage() {
                         </CardHeader>
                         <CardContent>
                             {appUser.ageGroup ? (
-                                <RadioGroup 
-                                    value={appUser.ageGroup} 
+                                <RadioGroup
+                                    value={appUser.ageGroup}
                                     onValueChange={(value) => {
                                         setPendingAgeGroup(value as 'under14' | '14to17' | 'over18');
                                         setIsConfirmingAgeChange(true);
@@ -204,16 +219,16 @@ export default function ParentDashboardPage() {
                                 Membership
                             </CardTitle>
                             <CardDescription>Your child is on the <span className="font-semibold">{isProMember ? 'Pro' : 'Free'}</span> plan.</CardDescription>
-                             {daysLeftOnTrial !== null && daysLeftOnTrial > 0 && (
+                            {daysLeftOnTrial !== null && daysLeftOnTrial > 0 && (
                                 <p className="text-sm text-primary pt-2 font-semibold">
                                     Their Pro trial ends in {daysLeftOnTrial} {daysLeftOnTrial === 1 ? 'day' : 'days'}.
                                 </p>
                             )}
                         </CardHeader>
                         <CardContent>
-                             {!isProMember ? (
+                            {!isProMember ? (
                                 <Button onClick={() => setIsMembershipModalOpen(true)} className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none shadow-lg hover:shadow-xl">
-                                    <Star className="mr-2 h-4 w-4 fill-white"/>
+                                    <Star className="mr-2 h-4 w-4 fill-white" />
                                     Upgrade to Pro
                                 </Button>
                             ) : (
@@ -234,21 +249,21 @@ export default function ParentDashboardPage() {
                                 {chatHistory.length > 0 ? (
                                     <div className="space-y-4 p-2">
                                         {chatHistory.map((message, index) => (
-                                        <div key={index} className={cn("flex items-start gap-3 text-sm", message.role === 'user' ? "justify-end" : "justify-start")}>
-                                            {message.role === 'model' && (
-                                            <Avatar className="w-6 h-6 bg-primary/20 text-primary">
-                                                <AvatarFallback><BrainCircuit size={14}/></AvatarFallback>
-                                            </Avatar>
-                                            )}
-                                            <div className={cn("max-w-[80%] rounded-lg p-2", message.role === 'user' ? "bg-primary text-primary-foreground" : "bg-muted text-card-foreground")}>
-                                            <p>{message.content}</p>
+                                            <div key={index} className={cn("flex items-start gap-3 text-sm", message.role === 'user' ? "justify-end" : "justify-start")}>
+                                                {message.role === 'model' && (
+                                                    <Avatar className="w-6 h-6 bg-primary/20 text-primary">
+                                                        <AvatarFallback><BrainCircuit size={14} /></AvatarFallback>
+                                                    </Avatar>
+                                                )}
+                                                <div className={cn("max-w-[80%] rounded-lg p-2", message.role === 'user' ? "bg-primary text-primary-foreground" : "bg-muted text-card-foreground")}>
+                                                    <p>{message.content}</p>
+                                                </div>
+                                                {message.role === 'user' && (
+                                                    <Avatar className="w-6 h-6">
+                                                        <AvatarFallback><UserIcon size={14} /></AvatarFallback>
+                                                    </Avatar>
+                                                )}
                                             </div>
-                                            {message.role === 'user' && (
-                                            <Avatar className="w-6 h-6">
-                                                <AvatarFallback><UserIcon size={14}/></AvatarFallback>
-                                            </Avatar>
-                                            )}
-                                        </div>
                                         ))}
                                     </div>
                                 ) : (
@@ -258,21 +273,76 @@ export default function ParentDashboardPage() {
                         </CardContent>
                     </Card>
 
+                    <Card className="mt-6 bg-card/80 backdrop-blur-sm">
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Messenger History</CardTitle>
+                                    <CardDescription>A log of conversations with friends.</CardDescription>
+                                </div>
+                            </div>
+                            <div className="relative mt-2">
+                                <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Filter by friend name..."
+                                    className="pl-8"
+                                    value={messengerSearchQuery}
+                                    onChange={(e) => setMessengerSearchQuery(e.target.value)}
+                                />
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <ScrollArea className="h-64 w-full rounded-md border p-2">
+                                {filteredMessengerHistory.length > 0 ? (
+                                    <div className="space-y-6 p-2">
+                                        {filteredMessengerHistory.map((chat) => (
+                                            <div key={chat.friendId} className="space-y-2">
+                                                <h4 className="font-semibold text-sm text-primary border-b pb-1 mb-2 sticky top-0 bg-background/95 backdrop-blur z-10">
+                                                    Chat with {appUser?.friends.find(f => f.id === chat.friendId)?.name || 'Unknown Friend'}
+                                                </h4>
+                                                {chat.messages.map((message) => (
+                                                    <div key={message.id} className={cn("flex items-start gap-3 text-sm", message.senderId === appUser?.userId ? "justify-end" : "justify-start")}>
+                                                        {message.senderId !== appUser?.userId && (
+                                                            <Avatar className="w-6 h-6 border">
+                                                                <AvatarFallback>{appUser?.friends.find(f => f.id === chat.friendId)?.name.slice(0, 1) || '?'}</AvatarFallback>
+                                                            </Avatar>
+                                                        )}
+                                                        <div className={cn("max-w-[80%] rounded-lg p-2", message.senderId === appUser?.userId ? "bg-indigo-100 text-indigo-900" : "bg-muted text-card-foreground")}>
+                                                            <p>{message.content}</p>
+                                                            <span className="text-[10px] opacity-70 block mt-1">{message.timestamp}</span>
+                                                        </div>
+                                                        {message.senderId === appUser?.userId && (
+                                                            <Avatar className="w-6 h-6 border">
+                                                                <AvatarFallback>Me</AvatarFallback>
+                                                            </Avatar>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted-foreground text-center p-4">No messenger history yet.</p>
+                                )}
+                            </ScrollArea>
+                        </CardContent>
+                    </Card>
+
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
                     <Button onClick={() => router.push('/')} className="w-full bg-primary hover:bg-primary/90">
-                        <ArrowLeft className="mr-2 h-4 w-4"/>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to App
                     </Button>
                 </div>
             </div>
-             <MembershipModal
+            <MembershipModal
                 open={isMembershipModalOpen}
                 onOpenChange={setIsMembershipModalOpen}
                 onUpgrade={() => handleTierChange('pro')}
                 currentTier={appUser.membershipTier}
             />
-            <AlertDialog open={isConfirmingAgeChange} onOpenChange={(isOpen) => { if(!isOpen) setPendingAgeGroup(null); setIsConfirmingAgeChange(isOpen); }}>
+            <AlertDialog open={isConfirmingAgeChange} onOpenChange={(isOpen) => { if (!isOpen) setPendingAgeGroup(null); setIsConfirmingAgeChange(isOpen); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>

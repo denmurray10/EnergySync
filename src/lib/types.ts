@@ -94,6 +94,7 @@ export interface User {
   activities: Activity[];
   upcomingEvents: UpcomingEvent[];
   reminders: Reminder[];
+  messengerHistory: MessengerChat[];
 }
 
 export interface Goal {
@@ -153,6 +154,22 @@ export interface EnergyHotspot {
 export interface EnergyHotspotAnalysis {
   drainingHotspots: EnergyHotspot[];
   rechargingHotspots: EnergyHotspot[];
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: string;
+  status: 'sent' | 'delivered' | 'seen';
+}
+
+export interface MessengerChat {
+  friendId: string;
+  messages: Message[];
+  lastMessage?: Message;
+  unreadCount: number;
 }
 
 export interface Friend {
