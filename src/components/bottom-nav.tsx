@@ -17,9 +17,9 @@ type BottomNavProps = {
 const allNavItems = [
   { id: "home", icon: Home, label: "Home" },
   { id: "activities", icon: ListChecks, label: "Activities" },
-  { id: "messenger", icon: MessageCircle, label: "Messenger" },
   { id: "pet", icon: PawPrint, label: "Pet" },
   { id: "insights", icon: LineChart, label: "Insights" },
+  { id: "messenger", icon: MessageCircle, label: "Messenger" },
   { id: "profile", icon: User, label: "Profile" },
 ];
 
