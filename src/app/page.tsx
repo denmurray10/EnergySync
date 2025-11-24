@@ -131,42 +131,16 @@ export default function HomePage() {
     }, 0);
   }, [toast]);
 
-  const remindersRef = useRef(reminders);
+
+
   useEffect(() => {
-    remindersRef.current = reminders;
-  }, [reminders]);
-
-  // Event Reminders Logic
-  useEffect(() => {
-    const parseTime = (timeStr: string): Date | null => {
-      const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
-      if (!match) return null;
-
-      let [_, hours, minutes, ampm] = match;
-      let eventHours = parseInt(hours, 10);
-
-      if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
-        eventHours += 12;
-      }
-      if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
-        eventHours = 0; // Midnight case
-      }
-
-      const eventTime = new Date();
-      eventTime.setHours(eventHours, parseInt(minutes, 10), 0, 0);
-      return eventTime;
-    };
-
     const checkEvents = () => {
+      const now = new Date();
       upcomingEvents.forEach(event => {
-        const isToday = event.date === 'Today' || event.date === 'Tonight' || new Date(event.date).toDateString() === new Date().toDateString();
+        const eventTime = new Date(`${event.date}T${event.time}`);
 
-        if (!isToday) return;
-
-        const eventTime = parseTime(event.time);
-        if (!eventTime) return;
-
-        const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === new Date().toDateString());
+        // Check if reminder already triggered
+        const hasBeenTriggered = reminders.some(r => r.eventId === event.id);
 
         if (hasBeenTriggered) return;
 
@@ -179,13 +153,12 @@ export default function HomePage() {
 
         // Set reminder time for 5 minutes before the event
         const reminderTime = new Date(eventTime.getTime() - 5 * 60 * 1000);
-        const now = new Date();
 
         // Check if it's time for the reminder
         if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
           setEventForReminder(event);
           openModal('reminder');
-          setReminders(prevReminders => [...prevReminders, { eventId: event.id, triggeredAt: new Date() }]);
+          setReminders([...reminders, { eventId: event.id, triggeredAt: new Date() }]);
         }
       });
     };
@@ -193,7 +166,7 @@ export default function HomePage() {
     checkEvents(); // Run once on load
 
     return () => clearInterval(intervalId);
-  }, [upcomingEvents, setReminders, openModal]);
+  }, [upcomingEvents, setReminders, openModal, reminders]);
 
   const unlockAchievement = useCallback((name: string) => {
     let achievementAlreadyUnlocked = false;
@@ -779,7 +752,7 @@ export default function HomePage() {
   return (
     <main className="min-h-dvh bg-background">
       <div className="max-w-md mx-auto bg-card/60 backdrop-blur-lg min-h-dvh shadow-2xl relative">
-        <div className="p-4 h-dvh overflow-y-auto pb-32 custom-scrollbar">
+        <div className="p-4 h-dvh overflow-y-auto overflow-x-hidden pb-32 custom-scrollbar">
 
           {activeTab === "home" && (
             <HomeTab

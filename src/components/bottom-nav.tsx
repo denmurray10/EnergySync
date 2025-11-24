@@ -28,7 +28,7 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
     if (!petEnabled) {
       items = items.filter(item => item.id !== 'pet');
     }
-    
+
     if (!featureVisibility?.insights) {
       items = items.filter(item => item.id !== 'insights');
     }
@@ -36,7 +36,7 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
   }, [petEnabled, featureVisibility]);
 
   const handleNavClick = (item: typeof allNavItems[0]) => {
-      setActiveTab(item.id);
+    setActiveTab(item.id);
   };
 
   return (
@@ -55,7 +55,6 @@ export function BottomNav({ activeTab, setActiveTab, petEnabled, featureVisibili
               )}
             >
               <item.icon className="w-5 h-5" />
-              <span className="text-xs font-medium capitalize">{item.label}</span>
             </button>
           ))}
         </div>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo } from "react";
@@ -24,7 +23,8 @@ import {
   PlusCircle,
   Trash2,
   TrendingUp,
-  BrainCircuit
+  BrainCircuit,
+  User as UserIcon
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -82,66 +82,83 @@ const getEnergyEmoji = (energy: number) => {
 };
 
 const parseTimeForSorting = (timeStr: string): number => {
-    const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
-    if (!match) return 2400; // Invalid format, sort to end
+  const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
+  if (!match) return 2400; // Invalid format, sort to end
 
-    let [_, hours, minutes, ampm] = match;
-    let eventHours = parseInt(hours, 10);
-    
-    if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
-        eventHours += 12;
-    }
-    if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
-        eventHours = 0; // Midnight case
-    }
+  let [_, hours, minutes, ampm] = match;
+  let eventHours = parseInt(hours, 10);
 
-    return eventHours * 100 + parseInt(minutes, 10);
+  if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
+    eventHours += 12;
+  }
+  if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
+    eventHours = 0; // Midnight case
+  }
+
+  return eventHours * 100 + parseInt(minutes, 10);
 };
 
-const EventCard = ({ event, onDelete }: { event: UpcomingEvent, onDelete: (id: number) => void }) => (
-     <div
-        className={`p-4 rounded-2xl border-2 ${
-            event.conflictRisk === "high"
-            ? "border-red-200 bg-red-50"
-            : event.conflictRisk === "medium"
-            ? "border-yellow-200 bg-yellow-50"
-            : "border-green-200 bg-green-50"
-        }`}
-    >
-        <div className="flex items-center justify-between">
+const getLocationColor = (location?: 'Home' | 'School' | 'Personal') => {
+  switch (location) {
+    case 'Home':
+      return 'border-blue-300 bg-blue-50';
+    case 'School':
+      return 'border-green-300 bg-green-50';
+    case 'Personal':
+      return 'border-pink-300 bg-pink-50';
+    default:
+      return 'border-gray-300 bg-gray-50';
+  }
+};
+
+const EventCard = ({ event, onDelete, showLocationColor = false }: { event: UpcomingEvent, onDelete: (id: number) => void, showLocationColor?: boolean }) => {
+  // Determine the color based on priority: conflict risk > type-based color
+  const getCardColor = () => {
+    // Map type to category for color coding
+    const categoryFromType = event.type === 'personal' ? 'Personal' : event.type === 'work' ? 'School' : event.type === 'social' ? 'Home' : undefined;
+
+    if (event.conflictRisk === "high") return "border-red-200 bg-red-50";
+    if (event.conflictRisk === "medium") return "border-yellow-200 bg-yellow-50";
+    if (showLocationColor) return getLocationColor(categoryFromType);
+    return "border-green-200 bg-green-50";
+  };
+
+  return (
+    <div className={`p-4 rounded-2xl border-2 ${getCardColor()}`}>
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-            <div className="text-2xl">{event.emoji}</div>
-            <div>
+          <div className="text-2xl">{event.emoji}</div>
+          <div>
             <p className="font-semibold text-gray-800">{event.name}</p>
             <p className="text-sm text-gray-600">
-                {event.date} &bull; {event.time}
+              {event.date} &bull; {event.time}
             </p>
-            </div>
+          </div>
         </div>
         <div className="flex items-center gap-1">
-            <div
-            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                event.estimatedImpact < 0
-                ? "bg-red-100 text-red-700"
-                : "bg-green-100 text-green-700"
-            }`}
-            >
+          <div
+            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.estimatedImpact < 0
+              ? "bg-red-100 text-red-700"
+              : "bg-green-100 text-green-700"
+              }`}
+          >
             {event.estimatedImpact > 0 ? "+" : ""}
             {event.estimatedImpact}%
-            </div>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-gray-400 hover:bg-red-100 hover:text-red-500"
-                onClick={() => onDelete(event.id)}
-            >
-                <Trash2 className="h-4 w-4" />
-                <span className="sr-only">Delete event</span>
-            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-400 hover:bg-red-100 hover:text-red-500"
+            onClick={() => onDelete(event.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Delete event</span>
+          </Button>
         </div>
-        </div>
+      </div>
     </div>
-)
+  );
+};
 
 export function HomeTab({
   user,
@@ -176,26 +193,31 @@ export function HomeTab({
       setEventToDelete(null);
     }
   };
-  
+
   const showPetFeatures = user?.petEnabled;
-  
-  const { homeEvents, schoolEvents } = useMemo(() => {
+
+  const { allEvents, homeEvents, schoolEvents, personalEvents } = useMemo(() => {
     const sorted = [...upcomingEvents].sort((a, b) => {
-        const timeA = parseTimeForSorting(a.time);
-        const timeB = parseTimeForSorting(b.time);
-        return timeA - timeB;
+      // Sort by date first (Today vs others)
+      if (a.date === 'Today' && b.date !== 'Today') return -1;
+      if (a.date !== 'Today' && b.date === 'Today') return 1;
+
+      const timeA = parseTimeForSorting(a.time);
+      const timeB = parseTimeForSorting(b.time);
+      return timeA - timeB;
     });
-    // This is a simplistic filter. A real app might check a location property on the event.
-    // For now, we'll imagine some events are 'home' and some are 'school' for demonstration.
-    // A simple split for demonstration purposes:
-    const home = sorted.filter((_, i) => i % 2 === 0).slice(0, 3);
-    const school = sorted.filter((_, i) => i % 2 !== 0).slice(0, 3);
-    return { homeEvents: home, schoolEvents: school };
+
+    const all = sorted.slice(0, 4);
+    const home = sorted.filter(e => e.location === 'Home').slice(0, 4);
+    const school = sorted.filter(e => e.location === 'School').slice(0, 4);
+    const personal = sorted.filter(e => e.location === 'Personal' || e.type === 'personal').slice(0, 4);
+
+    return { allEvents: all, homeEvents: home, schoolEvents: school, personalEvents: personal };
   }, [upcomingEvents]);
 
   return (
     <div className="space-y-6">
-       <div className="mb-4">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-pink-600 bg-clip-text text-transparent">
           Hello, {user?.name}!
         </h1>
@@ -208,9 +230,8 @@ export function HomeTab({
         <Card className="bg-card/80 backdrop-blur-sm">
           <CardContent className="p-3 flex items-center justify-center space-x-3">
             <Users
-              className={`text-primary transition-opacity ${
-                communityMode ? "opacity-100" : "opacity-50"
-              }`}
+              className={`text-primary transition-opacity ${communityMode ? "opacity-100" : "opacity-50"
+                }`}
             />
             <Switch
               id="communityToggle"
@@ -220,9 +241,8 @@ export function HomeTab({
             />
             <Label
               htmlFor="communityToggle"
-              className={`font-medium text-sm transition-colors ${
-                communityMode ? "text-primary" : "text-muted-foreground"
-              }`}
+              className={`font-medium text-sm transition-colors ${communityMode ? "text-primary" : "text-muted-foreground"
+                }`}
             >
               Social Mode
             </Label>
@@ -263,12 +283,12 @@ export function HomeTab({
         </Card>
       )}
 
-       {showPetFeatures && (
+      {showPetFeatures && (
         <ProFeatureWrapper isPro={isProMember}>
-            <PetCompanionCard onClick={() => openModal('chatCoach')} ageGroup={ageGroup} />
+          <PetCompanionCard onClick={() => openModal('chatCoach')} ageGroup={ageGroup} />
         </ProFeatureWrapper>
-       )}
-      
+      )}
+
       {ageGroup !== 'under14' && (
         <ProFeatureWrapper isPro={isProMember}>
           <ReadinessCard
@@ -300,25 +320,25 @@ export function HomeTab({
               </span>
             </div>
           </div>
-          
-           <div className="grid grid-cols-1 gap-3">
+
+          <div className="grid grid-cols-1 gap-3">
             <Button
-                onClick={() => openModal("recharge")}
-                className="group w-full h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-3"
+              onClick={() => openModal("recharge")}
+              className="group w-full h-auto bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-3"
             >
-                <Zap className="w-5 h-5 mr-2" />
-                <span className="font-semibold">Start Recharge</span>
+              <Zap className="w-5 h-5 mr-2" />
+              <span className="font-semibold">Start Recharge</span>
             </Button>
-             <ProFeatureWrapper isPro={isProMember}>
-                <Button
-                    onClick={() => openModal("voiceCheckIn")}
-                    className="group w-full h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-3"
-                >
-                    <Mic className="w-5 h-5 mr-2" />
-                    <span className="font-semibold">Voice Check-in</span>
-                </Button>
-             </ProFeatureWrapper>
-            </div>
+            <ProFeatureWrapper isPro={isProMember}>
+              <Button
+                onClick={() => openModal("voiceCheckIn")}
+                className="group w-full h-auto bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-3"
+              >
+                <Mic className="w-5 h-5 mr-2" />
+                <span className="font-semibold">Voice Check-in</span>
+              </Button>
+            </ProFeatureWrapper>
+          </div>
 
         </CardContent>
       </Card>
@@ -326,103 +346,140 @@ export function HomeTab({
       {ageGroup !== 'under14' && (
         <ProFeatureWrapper isPro={isProMember}>
           <Card className="bg-card/80 backdrop-blur-sm">
-              <CardHeader>
-                  <CardTitle className="flex items-center text-xl">
-                      <TrendingUp className="text-cyan-500 mr-3" />
-                      Energy Forecast
-                  </CardTitle>
-              </CardHeader>
-              <CardContent>
-                  {isForecastLoading ? (
-                      <div className="space-y-2">
-                          <Skeleton className="h-48 w-full" />
-                          <div className="flex justify-between">
-                              <Skeleton className="h-4 w-10" />
-                              <Skeleton className="h-4 w-10" />
-                              <Skeleton className="h-4 w-10" />
-                              <Skeleton className="h-4 w-10" />
-                          </div>
-                      </div>
-                  ) : (
-                      <EnergyForecastChart data={energyForecast || []} />
-                  )}
-              </CardContent>
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl">
+                <TrendingUp className="text-cyan-500 mr-3" />
+                Energy Forecast
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isForecastLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-48 w-full" />
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                  </div>
+                </div>
+              ) : (
+                <EnergyForecastChart data={energyForecast || []} />
+              )}
+            </CardContent>
           </Card>
         </ProFeatureWrapper>
       )}
-      
-       {showPetFeatures && (
+
+      {showPetFeatures && (
         <ProFeatureWrapper isPro={isProMember}>
-            <Card className="bg-card/80 backdrop-blur-sm">
+          <Card className="bg-card/80 backdrop-blur-sm">
             <CardHeader>
-                <CardTitle className="flex items-center text-xl">
+              <CardTitle className="flex items-center text-xl">
                 {ageGroup === 'under14' ? <Zap className="text-yellow-500 mr-3" /> : <BrainCircuit className="text-yellow-500 mr-3" />}
                 {ageGroup === 'under14' ? "Your Pet's Thoughts" : "Proactive Suggestions"}
-                </CardTitle>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-                {isSuggestionLoading ? (
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-4/5" />
-                        <Skeleton className="h-4 w-2/3" />
-                    </div>
-                ) : (
-                    <p className="text-sm text-muted-foreground mb-4">
-                        {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
-                    </p>
-                )}
-                {actionableSuggestion && (
-                    <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
-                        <CalendarPlus className="mr-2 h-4 w-4" />
-                        Add "{actionableSuggestion.activityName}" to Schedule
-                    </Button>
-                )}
+              {isSuggestionLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-4">
+                  {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
+                </p>
+              )}
+              {actionableSuggestion && (
+                <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Add "{actionableSuggestion.activityName}" to Schedule
+                </Button>
+              )}
             </CardContent>
-            </Card>
+          </Card>
         </ProFeatureWrapper>
-       )}
+      )}
 
       <Card className="bg-card/80 backdrop-blur-sm">
         <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center text-xl">
-              <Calendar className="text-indigo-500 mr-3" />
-              Smart Schedule
-            </CardTitle>
-            <Button onClick={() => openModal('addEvent')} size="icon" variant="ghost" className="text-primary -mr-2">
-                <PlusCircle className="h-6 w-6"/>
-                <span className="sr-only">Add Event</span>
-            </Button>
+          <CardTitle className="flex items-center text-xl">
+            <Calendar className="text-indigo-500 mr-3" />
+            Smart Schedule
+          </CardTitle>
+          <Button onClick={() => openModal('addEvent')} size="icon" variant="ghost" className="text-primary -mr-2">
+            <PlusCircle className="h-6 w-6" />
+            <span className="sr-only">Add Event</span>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6">
-            <div>
-                <div className="flex items-center mb-2">
-                    <Home className="mr-2 h-5 w-5 text-blue-500" />
-                    <h3 className="font-semibold text-card-foreground">Home</h3>
-                </div>
-                <div className="space-y-2">
+          <div className="w-full flex overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide">
+            {/* All Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <Calendar className="mr-2 h-5 w-5 text-purple-500" />
+                <h3 className="font-semibold text-card-foreground">All Upcoming</h3>
+              </div>
+              <div className="space-y-2">
+                {allEvents.length > 0 ? (
+                  allEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
+                ) : (
+                  <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Home Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <Home className="mr-2 h-5 w-5 text-blue-500" />
+                <h3 className="font-semibold text-card-foreground">Home</h3>
+              </div>
+              <div className="space-y-2">
                 {homeEvents.length > 0 ? (
-                    homeEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} />)
+                  homeEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
                 ) : (
-                    <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at home.</p>
+                  <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at home.</p>
                 )}
-                </div>
+              </div>
             </div>
-             <div>
-                <div className="flex items-center mb-2">
-                    <School className="mr-2 h-5 w-5 text-green-500" />
-                    <h3 className="font-semibold text-card-foreground">School</h3>
-                </div>
-                <div className="space-y-2">
+
+            {/* School Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <School className="mr-2 h-5 w-5 text-green-500" />
+                <h3 className="font-semibold text-card-foreground">School</h3>
+              </div>
+              <div className="space-y-2">
                 {schoolEvents.length > 0 ? (
-                    schoolEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} />)
+                  schoolEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
                 ) : (
-                    <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at school.</p>
+                  <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at school.</p>
                 )}
-                </div>
+              </div>
             </div>
+
+            {/* Personal Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <UserIcon className="mr-2 h-5 w-5 text-pink-500" />
+                <h3 className="font-semibold text-card-foreground">Personal</h3>
+              </div>
+              <div className="space-y-2">
+                {personalEvents.length > 0 ? (
+                  personalEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
+                ) : (
+                  <p className="text-sm text-muted-foreground px-4 py-2">No personal events scheduled.</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-center text-muted-foreground mt-2">Swipe for more categories &rarr;</p>
         </CardContent>
       </Card>
-       <AlertDialog open={!!eventToDelete} onOpenChange={(isOpen) => !isOpen && setEventToDelete(null)}>
+
+      <AlertDialog open={!!eventToDelete} onOpenChange={(isOpen) => !isOpen && setEventToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
@@ -439,5 +496,3 @@ export function HomeTab({
     </div>
   );
 }
-
-    

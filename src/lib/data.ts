@@ -9,7 +9,7 @@ export const INITIAL_ACTIVITIES: Activity[] = [
     // Today
     { id: 1, name: 'Online Gaming Session', type: 'social', impact: -10, duration: 120, date: format(today, 'yyyy-MM-dd'), emoji: '🎮', location: 'Home', autoDetected: true, recoveryTime: 30 },
     { id: 2, name: 'Study Group', type: 'work', impact: -25, duration: 90, date: format(today, 'yyyy-MM-dd'), emoji: '📚', location: 'Library', autoDetected: false, recoveryTime: 60 },
-    
+
     // Yesterday
     { id: 3, name: 'Listening to Music', type: 'recharge', impact: 30, duration: 45, date: format(subDays(today, 1), 'yyyy-MM-dd'), emoji: '🎵', location: 'Bedroom', autoDetected: true, recoveryTime: 0 },
     { id: 4, name: 'Video Call with Friends', type: 'social', impact: -15, duration: 60, date: format(subDays(today, 1), 'yyyy-MM-dd'), emoji: '📱', location: 'Home', autoDetected: true, recoveryTime: 45 },
@@ -27,7 +27,7 @@ export const INITIAL_ACTIVITIES: Activity[] = [
     // 4 days ago
     { id: 11, name: 'Coffee with Colleague', type: 'social', impact: -5, duration: 30, date: format(subDays(today, 4), 'yyyy-MM-dd'), emoji: '☕', location: 'Cafe', autoDetected: false, recoveryTime: 15 },
     { id: 12, name: 'Work from Downtown Office', type: 'work', impact: -15, duration: 480, date: format(subDays(today, 4), 'yyyy-MM-dd'), emoji: '🏢', location: 'Downtown Office', autoDetected: false, recoveryTime: 15 },
-    
+
     // 5 days ago
     { id: 13, name: 'Meditation', type: 'recharge', impact: 15, duration: 20, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🧘', location: 'Home', autoDetected: true, recoveryTime: 0 },
     { id: 14, name: 'Networking Event', type: 'social', impact: -20, duration: 180, date: format(subDays(today, 5), 'yyyy-MM-dd'), emoji: '🤝', location: 'Conference Hall', autoDetected: false, recoveryTime: 90 },
@@ -42,15 +42,15 @@ export const INITIAL_ACTIVITIES: Activity[] = [
 ];
 
 export const INITIAL_UPCOMING_EVENTS: UpcomingEvent[] = [
-    { id: 1, name: 'Movie Night', type: 'social', estimatedImpact: -20, date: 'Tonight', time: '8:00 PM', emoji: '🎬', conflictRisk: 'medium', bufferSuggested: 30 },
-    { id: 2, name: 'Job Interview', type: 'work', estimatedImpact: -35, date: 'Tomorrow', time: '2:00 PM', emoji: '💼', conflictRisk: 'high', bufferSuggested: 90 },
+    { id: 1, name: 'Movie Night', type: 'social', estimatedImpact: -20, date: 'Tonight', time: '8:00 PM', emoji: '🎬', conflictRisk: 'low', bufferSuggested: 30, location: 'Home' },
+    { id: 2, name: 'Job Interview', type: 'work', estimatedImpact: -35, date: 'Tomorrow', time: '2:00 PM', emoji: '💼', conflictRisk: 'low', bufferSuggested: 90, location: 'Personal' },
 ];
 
 export const INITIAL_ACHIEVEMENTS: Achievement[] = [
     { id: 1, name: 'First Recharge', unlocked: true, icon: '🔋' },
     { id: 2, name: 'Self-Care Pro', unlocked: false, icon: '🧘‍♀️' },
     { id: 3, name: 'Social Butterfly', unlocked: true, icon: '🦋' },
-    { id: 4, name: 'Mindful Logger', unlocked: false, icon: '📝'},
+    { id: 4, name: 'Mindful Logger', unlocked: false, icon: '📝' },
     { id: 5, name: 'Scheduler Supreme', unlocked: false, icon: '📅' },
     { id: 6, name: 'Bio-Scanner', unlocked: false, icon: '❤️' },
     { id: 7, name: 'Community Member', unlocked: false, icon: '🤝' },

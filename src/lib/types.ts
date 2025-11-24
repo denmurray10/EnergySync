@@ -15,7 +15,7 @@ export interface Activity {
 
 export interface UpcomingEvent {
   id: number;
-  name:string;
+  name: string;
   type: 'social' | 'work' | 'personal';
   estimatedImpact: number;
   date: string;
@@ -24,7 +24,7 @@ export interface UpcomingEvent {
   conflictRisk: 'high' | 'medium' | 'low';
   bufferSuggested: number;
   taggedFriendIds?: string[];
-  location?: 'Home' | 'School';
+  location?: string;
 }
 
 export interface Achievement {
@@ -52,14 +52,14 @@ export interface PetCustomization {
 }
 
 export interface JourneyEntry {
-    text: string;
-    icon: string;
-    timestamp: string;
+  text: string;
+  icon: string;
+  timestamp: string;
 }
 
 export interface Reminder {
-    eventId: number;
-    triggeredAt: Date;
+  eventId: number;
+  triggeredAt: Date;
 }
 
 export interface User {
@@ -114,28 +114,28 @@ export interface Challenge {
 }
 
 export interface ReadinessReport {
-    score: number;
-    title: string;
-    summary: string;
+  score: number;
+  title: string;
+  summary: string;
 }
 
 export interface ChatMessage {
-    role: 'user' | 'model';
-    content: string;
+  role: 'user' | 'model';
+  content: string;
 }
 
 export interface ActionableSuggestion {
-    type: 'ritual' | 'buffer';
-    eventId: number;
-    activityName: string;
-    duration: number;
-    impact: number;
-    emoji: string;
+  type: 'ritual' | 'buffer';
+  eventId: number;
+  activityName: string;
+  duration: number;
+  impact: number;
+  emoji: string;
 }
 
 export interface EnergyForecastData {
-    hour: string;
-    predictedEnergy: number;
+  hour: string;
+  predictedEnergy: number;
 }
 
 export interface PetTask {

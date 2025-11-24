@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -42,6 +42,7 @@ import { Checkbox } from "./ui/checkbox";
 
 const eventFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
+  location: z.string().optional(),
   type: z.enum(["social", "work", "personal"]),
   estimatedImpact: z.number().min(-50).max(50),
   date: z.string().min(1, "Please enter a date."),
@@ -54,19 +55,19 @@ type EventFormValues = z.infer<typeof eventFormSchema>;
 
 const timeOptions: string[] = [];
 for (let h = 1; h <= 12; h++) {
-    for (let m = 0; m < 60; m += 30) {
-        const hour = h;
-        const minute = m.toString().padStart(2, '0');
-        timeOptions.push(`${hour}:${minute} AM`);
-        timeOptions.push(`${hour}:${minute} PM`);
-    }
+  for (let m = 0; m < 60; m += 30) {
+    const hour = h;
+    const minute = m.toString().padStart(2, '0');
+    timeOptions.push(`${hour}:${minute} AM`);
+    timeOptions.push(`${hour}:${minute} PM`);
+  }
 }
 // Adjust for 12 AM/PM ordering
 const sortedTimeOptions = [
-    ...timeOptions.filter(t => t.includes('AM')).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })),
-    ...timeOptions.filter(t => t.includes('PM')).sort((a,b) => a.localeCompare(b, undefined, { numeric: true })),
+  ...timeOptions.filter(t => t.includes('AM')).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
+  ...timeOptions.filter(t => t.includes('PM')).sort((a, b) => a.localeCompare(b, undefined, { numeric: true })),
 ].filter(t => !t.startsWith("12:00 PM"));
-sortedTimeOptions.push('12:00 PM'); 
+sortedTimeOptions.push('12:00 PM');
 sortedTimeOptions.unshift(...sortedTimeOptions.splice(sortedTimeOptions.findIndex(v => v.startsWith("12:") && v.endsWith("AM")), 2))
 
 
@@ -86,11 +87,12 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
 
   const totalSteps = 3;
   const progress = ((step + 1) / totalSteps) * 100;
-  
+
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
       name: "",
+      location: "",
       type: "personal",
       estimatedImpact: -10,
       date: format(addDays(new Date(), 1), "PPP"),
@@ -103,6 +105,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
   const resetForm = () => {
     form.reset({
       name: "",
+      location: "",
       type: "personal",
       estimatedImpact: -10,
       date: format(addDays(new Date(), 1), "PPP"),
@@ -112,24 +115,51 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     });
     setStep(0);
   };
-  
+
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-        resetForm();
+      resetForm();
     }
     onOpenChange(isOpen);
   };
 
   const handleNext = async () => {
-      let fieldsToValidate: (keyof EventFormValues)[] = [];
-      if (step === 0) fieldsToValidate = ['name', 'type'];
-      if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
-      
-      const isValid = await form.trigger(fieldsToValidate);
-      if (isValid && step < totalSteps - 1) {
-          setStep(s => s + 1);
-      }
+    let fieldsToValidate: (keyof EventFormValues)[] = [];
+    if (step === 0) fieldsToValidate = ['name', 'type'];
+    if (step === 1) fieldsToValidate = ['estimatedImpact', 'date', 'time'];
+
+    const isValid = await form.trigger(fieldsToValidate);
+    if (isValid && step < totalSteps - 1) {
+      setStep(s => s + 1);
+    }
   };
+
+  // Automatic emoji generation when name changes
+  useEffect(() => {
+    const eventName = form.watch('name');
+
+    if (!eventName || eventName.length < 3 || isSuggesting) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const suggestions = await suggestEventDetails({ name: eventName });
+        if (suggestions) {
+          form.setValue("type", suggestions.type, { shouldValidate: true });
+          form.setValue("estimatedImpact", suggestions.estimatedImpact, { shouldValidate: true });
+          form.setValue("emoji", suggestions.emoji, { shouldValidate: true });
+        }
+      } catch (error) {
+        console.error("Failed to get suggestions:", error);
+      } finally {
+        setIsSuggesting(false);
+      }
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timer);
+  }, [form.watch('name'), isSuggesting]);
 
   const handleSuggestDetails = async () => {
     const eventName = form.getValues("name");
@@ -191,24 +221,37 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
             />
             <FormField
               control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Redruth, Cinema" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
               name="type"
               render={({ field }) => (
-                  <FormItem>
+                <FormItem>
                   <FormLabel>Type</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
+                    <FormControl>
                       <SelectTrigger>
-                          <SelectValue placeholder="Select event type" />
+                        <SelectValue placeholder="Select type" />
                       </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                      <SelectItem value="social">Social</SelectItem>
-                      <SelectItem value="work">Work</SelectItem>
-                      <SelectItem value="personal">Personal</SelectItem>
-                      </SelectContent>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="social">🏠 Home</SelectItem>
+                      <SelectItem value="work">🏫 School</SelectItem>
+                      <SelectItem value="personal">👤 Personal</SelectItem>
+                    </SelectContent>
                   </Select>
                   <FormMessage />
-                  </FormItem>
+                </FormItem>
               )}
             />
           </div>
@@ -301,48 +344,48 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
             </div>
           </div>
         );
-        case 2:
-            return (
-                <div className="space-y-4">
-                    <FormLabel>Tag Friends (Optional)</FormLabel>
-                     <p className="text-sm text-muted-foreground">Select friends to share this event with.</p>
-                    <ScrollArea className="h-48 w-full rounded-md border p-2">
-                        <FormField
-                            control={form.control}
-                            name="taggedFriendIds"
-                            render={({ field }) => (
-                                <div className="space-y-2">
-                                {friends.filter(f => !f.isMe).map(friend => (
-                                    <FormItem key={friend.id} className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-2 hover:bg-muted">
-                                        <FormControl>
-                                            <Checkbox
-                                                checked={field.value?.includes(friend.id)}
-                                                onCheckedChange={(checked) => {
-                                                    return checked
-                                                    ? field.onChange([...(field.value || []), friend.id])
-                                                    : field.onChange(
-                                                        field.value?.filter(
-                                                            (value) => value !== friend.id
-                                                        )
-                                                        )
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
-                                                <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <FormLabel className="font-normal text-sm">{friend.name}</FormLabel>
-                                        </div>
-                                    </FormItem>
-                                ))}
-                                </div>
-                            )}
-                        />
-                    </ScrollArea>
-                </div>
-            )
+      case 2:
+        return (
+          <div className="space-y-4">
+            <FormLabel>Tag Friends (Optional)</FormLabel>
+            <p className="text-sm text-muted-foreground">Select friends to share this event with.</p>
+            <ScrollArea className="h-48 w-full rounded-md border p-2">
+              <FormField
+                control={form.control}
+                name="taggedFriendIds"
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    {friends.filter(f => !f.isMe).map(friend => (
+                      <FormItem key={friend.id} className="flex flex-row items-center space-x-3 space-y-0 rounded-lg p-2 hover:bg-muted">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value?.includes(friend.id)}
+                            onCheckedChange={(checked) => {
+                              return checked
+                                ? field.onChange([...(field.value || []), friend.id])
+                                : field.onChange(
+                                  field.value?.filter(
+                                    (value) => value !== friend.id
+                                  )
+                                )
+                            }}
+                          />
+                        </FormControl>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={friend.avatar} data-ai-hint={friend.avatarHint} />
+                            <AvatarFallback>{friend.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <FormLabel className="font-normal text-sm">{friend.name}</FormLabel>
+                        </div>
+                      </FormItem>
+                    ))}
+                  </div>
+                )}
+              />
+            </ScrollArea>
+          </div>
+        )
       default:
         return null;
     }
@@ -368,20 +411,20 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
             <DialogFooter className="pt-8 gap-2 sm:justify-between">
               <div>
                 {step > 0 && (
-                    <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                    </Button>
+                  <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                  </Button>
                 )}
               </div>
               <div>
                 {step < totalSteps - 1 ? (
-                    <Button type="button" onClick={handleNext}>
-                        Next <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                  <Button type="button" onClick={handleNext}>
+                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 ) : (
-                    <Button type="submit">
-                        <Check className="mr-2 h-4 w-4" /> Add Event
-                    </Button>
+                  <Button type="submit">
+                    <Check className="mr-2 h-4 w-4" /> Add Event
+                  </Button>
                 )}
               </div>
             </DialogFooter>
@@ -392,4 +435,3 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
   );
 }
 
-    
