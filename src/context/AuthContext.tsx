@@ -2,7 +2,7 @@
 // src/context/AuthContext.tsx
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useRef } from 'react';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
@@ -36,21 +36,21 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Helper function to remove undefined values from an object recursively
 const removeUndefineds = (obj: any): any => {
-    if (obj === null || typeof obj !== 'object') {
-        return obj;
-    }
-    
-    if (Array.isArray(obj)) {
-        return obj.map(item => removeUndefineds(item));
-    }
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
 
-    const newObj: any = {};
-    for (const key in obj) {
-        if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
-            newObj[key] = removeUndefineds(obj[key]);
-        }
+  if (Array.isArray(obj)) {
+    return obj.map(item => removeUndefineds(item));
+  }
+
+  const newObj: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
+      newObj[key] = removeUndefineds(obj[key]);
     }
-    return newObj;
+  }
+  return newObj;
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           // Retry logic to handle race condition on signup
           if (!userSnap.exists()) {
-            const isNewUser = user.metadata.creationTime ? 
+            const isNewUser = user.metadata.creationTime ?
               (new Date().getTime() - new Date(user.metadata.creationTime).getTime() < 10000)
               : false;
 
@@ -104,25 +104,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setLocalAppUser(null);
           }
         } catch (error: any) {
-            console.error("Error fetching user document from Firestore:", error);
-            if (error.code === 'permission-denied') {
-                toast({
-                    title: 'Action Required: Enable Firestore API',
-                    description: "Your app is connected, but the Firestore API is disabled in Google Cloud. Please enable it to proceed.",
-                    variant: 'destructive',
-                    duration: 10000,
-                });
-            } else {
-                toast({
-                    title: 'Could not load profile',
-                    description: `There was a problem fetching your user data. Please try logging in again.`,
-                    variant: 'destructive',
-                });
-            }
-            await auth.signOut();
-            setLocalAppUser(null);
+          console.error("Error fetching user document from Firestore:", error);
+          if (error.code === 'permission-denied') {
+            toast({
+              title: 'Action Required: Enable Firestore API',
+              description: "Your app is connected, but the Firestore API is disabled in Google Cloud. Please enable it to proceed.",
+              variant: 'destructive',
+              duration: 10000,
+            });
+          } else {
+            toast({
+              title: 'Could not load profile',
+              description: `There was a problem fetching your user data. Please try logging in again.`,
+              variant: 'destructive',
+            });
+          }
+          await auth.signOut();
+          setLocalAppUser(null);
         } finally {
-            setLoading(false);
+          setLoading(false);
         }
       } else {
         setLocalAppUser(null);
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const userRef = doc(firestore, 'users', userId);
-    
+
     try {
       const docSnap = await getDoc(userRef);
       if (docSnap.exists()) {
@@ -161,10 +161,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Firestore operation failed in setAppUser:", error);
       if (error.code === 'permission-denied') {
         toast({
-            title: 'Action Required: Enable Firestore API',
-            description: "Your app is connected, but the Firestore API is disabled in Google Cloud. Please enable it to proceed.",
-            variant: 'destructive',
-            duration: 10000,
+          title: 'Action Required: Enable Firestore API',
+          description: "Your app is connected, but the Firestore API is disabled in Google Cloud. Please enable it to proceed.",
+          variant: 'destructive',
+          duration: 10000,
         });
       } else {
         toast({
@@ -176,85 +176,102 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw error;
     }
   }, [toast]);
-  
+
+  const localAppUserRef = useRef<User | null>(null);
+  const latestChatHistoryRef = useRef<ChatMessage[]>([]);
+
+  useEffect(() => {
+    localAppUserRef.current = localAppUser;
+    // Only sync if ref is empty to avoid overwriting optimistic updates with stale state
+    if (localAppUser?.chatHistory && latestChatHistoryRef.current.length === 0) {
+      latestChatHistoryRef.current = localAppUser.chatHistory;
+    }
+  }, [localAppUser]);
+
   const addChatMessage = useCallback(async (message: ChatMessage, callback?: (history: ChatMessage[]) => void) => {
+    // Use the ref for the most up-to-date history, falling back to state or empty array
+    const currentHistory = latestChatHistoryRef.current;
+    const newHistory = [...currentHistory, message];
+
+    // Update ref immediately to handle rapid successive calls
+    latestChatHistoryRef.current = newHistory;
+
+    // Update local state first for instant UI feedback, then persist.
+    setLocalAppUser(prev => prev ? { ...prev, chatHistory: newHistory } : null);
+
+    // Execute the callback with the most up-to-date history
+    if (callback) {
+      callback(newHistory);
+    }
+
+    try {
+      if (auth.currentUser) {
+        const userRef = doc(firestore, 'users', auth.currentUser.uid);
+        await updateDoc(userRef, { chatHistory: newHistory });
+      }
+    } catch (e) {
+      console.error("Failed to persist chat history", e);
+      // Optionally rollback state or show an error
+    }
+  }, []);
+
+  const setFriends = useCallback(async (friends: Friend[]) => {
     if (localAppUser) {
-        const newHistory = [...(localAppUser.chatHistory || []), message];
-        
-        // Update local state first for instant UI feedback, then persist.
-        setLocalAppUser(prev => prev ? { ...prev, chatHistory: newHistory } : null);
-
-        // Execute the callback with the most up-to-date history
-        if (callback) {
-            callback(newHistory);
-        }
-
-        try {
-            await setAppUser({ chatHistory: newHistory });
-        } catch (e) {
-            console.error("Failed to persist chat history", e);
-            // Optionally rollback state or show an error
-        }
+      await setAppUser({ friends });
     }
   }, [localAppUser, setAppUser]);
-  
-  const setFriends = useCallback(async (friends: Friend[]) => {
-      if(localAppUser) {
-          await setAppUser({ friends });
-      }
-  }, [localAppUser, setAppUser]);
-  
+
   const setPetTasks = useCallback(async (tasks: PetTask[]) => {
-      if(localAppUser) {
-          await setAppUser({ petTasks: tasks });
-      }
+    if (localAppUser) {
+      await setAppUser({ petTasks: tasks });
+    }
   }, [localAppUser, setAppUser]);
-  
+
   const setActivities = useCallback(async (activities: Activity[]) => {
-      if(localAppUser) {
-          await setAppUser({ activities });
-      }
+    if (localAppUser) {
+      await setAppUser({ activities });
+    }
   }, [localAppUser, setAppUser]);
-  
+
   const setUpcomingEvents = useCallback(async (events: UpcomingEvent[]) => {
-      if(localAppUser) {
-         await setAppUser({ upcomingEvents: events });
-      }
+    if (localAppUser) {
+      await setAppUser({ upcomingEvents: events });
+    }
   }, [localAppUser, setAppUser]);
-  
+
   const setReminders = useCallback(async (reminders: Reminder[]) => {
-      if(localAppUser) {
-         await setAppUser({ reminders });
-      }
+    if (localAppUser) {
+      await setAppUser({ reminders });
+    }
   }, [localAppUser, setAppUser]);
 
 
   const addJourneyEntry = useCallback(async (text: string, icon: string) => {
     if (localAppUser) {
-        const newEntry: JourneyEntry = {
-            text, icon, timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-        };
-        const newJourneys = [newEntry, ...(localAppUser.journeys || [])].slice(0, 50); // Keep last 50
-        await setAppUser({ journeys: newJourneys });
+      const newEntry: JourneyEntry = {
+        text, icon, timestamp: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+      };
+      const newJourneys = [newEntry, ...(localAppUser.journeys || [])].slice(0, 50); // Keep last 50
+      await setAppUser({ journeys: newJourneys });
     }
   }, [localAppUser, setAppUser]);
-  
+
   const gainPetExp = useCallback((amount: number) => {
     if (!localAppUser || !localAppUser.petEnabled) return;
-    
+
     const newExp = (localAppUser.petExp || 0) + amount;
     const expToNextLevel = 100 * (localAppUser.petLevel || 1);
-    
+
     if (newExp >= expToNextLevel) {
-        const newLevel = localAppUser.petLevel + 1;
-        const remainingExp = newExp - expToNextLevel;
-        toast({
-            title: '🎉 Pet Level Up! 🎉',
-            description: `Your energy companion grew to Level ${newLevel}!`,
-        });
-        setAppUser({ petLevel: newLevel, petExp: remainingExp });
+      const newLevel = localAppUser.petLevel + 1;
+      const remainingExp = newExp - expToNextLevel;
+      toast({
+        title: '🎉 Pet Level Up! 🎉',
+        description: `Your energy companion grew to Level ${newLevel}!`,
+      });
+      setAppUser({ petLevel: newLevel, petExp: remainingExp });
     } else {
-        setAppUser({ petExp: newExp });
+      setAppUser({ petExp: newExp });
     }
   }, [localAppUser, setAppUser, toast]);
 

@@ -48,15 +48,15 @@ const locations = ['Home', 'School', 'Personal'];
 export default function HomePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { 
-      firebaseUser, appUser, setAppUser, loading: authLoading, 
-      friends, setFriends, chatHistory, addChatMessage, signOut, reminders, setReminders,
-      petTasks, setPetTasks, gainPetExp, addJourneyEntry,
-      activities, setActivities, upcomingEvents, setUpcomingEvents
+  const {
+    firebaseUser, appUser, setAppUser, loading: authLoading,
+    friends, setFriends, chatHistory, addChatMessage, signOut, reminders, setReminders,
+    petTasks, setPetTasks, gainPetExp, addJourneyEntry,
+    activities, setActivities, upcomingEvents, setUpcomingEvents
   } = useAuth();
-  
+
   const [showTutorial, setShowTutorial] = useState(false);
-  
+
   const [currentEnergy, setCurrentEnergy] = useState(75);
   const [energyDebt, setEnergyDebt] = useState(15);
   const [activeTab, setActiveTab] = useState("home");
@@ -86,7 +86,7 @@ export default function HomePage() {
   const closeModal = useCallback((modalName: keyof typeof modals) => {
     setModals(prev => ({ ...prev, [modalName]: false }));
   }, []);
-  
+
   const [eventForReminder, setEventForReminder] = useState<UpcomingEvent | null>(null);
 
   const [communityMode, setCommunityMode] = useState(false);
@@ -96,11 +96,11 @@ export default function HomePage() {
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   const [actionableSuggestion, setActionableSuggestion] = useState<ActionableSuggestion | null>(null);
   const [isSuggestionLoading, setIsSuggestionLoading] = useState(true);
-  
+
   const [goals, setGoals] = useState<Goal[]>(INITIAL_GOALS);
   const [challenges, setChallenges] = useState<Challenge[]>(INITIAL_CHALLENGES);
   const [isGoalsLoading, setIsGoalsLoading] = useState(false);
-  
+
   const [locationIndex, setLocationIndex] = useState(0);
   const currentUserLocation = locations[locationIndex];
 
@@ -118,19 +118,19 @@ export default function HomePage() {
 
   // Pet feature state
   const [petInteractions, setPetInteractions] = useState<number>(0);
-  
+
   const petHappiness = currentEnergy;
 
   const showToast = useCallback((title: string, description: string, icon: string = '✨') => {
     // Defer toast to avoid state updates during render
     setTimeout(() => {
-        toast({
-            title: `${icon} ${title}`,
-            description: description,
-        });
+      toast({
+        title: `${icon} ${title}`,
+        description: description,
+      });
     }, 0);
   }, [toast]);
-  
+
   const remindersRef = useRef(reminders);
   useEffect(() => {
     remindersRef.current = reminders;
@@ -139,55 +139,55 @@ export default function HomePage() {
   // Event Reminders Logic
   useEffect(() => {
     const parseTime = (timeStr: string): Date | null => {
-        const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
-        if (!match) return null;
+      const match = timeStr.match(/(\d{1,2}):(\d{2})\s(AM|PM)/i);
+      if (!match) return null;
 
-        let [_, hours, minutes, ampm] = match;
-        let eventHours = parseInt(hours, 10);
-        
-        if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
-            eventHours += 12;
-        }
-        if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
-            eventHours = 0; // Midnight case
-        }
-        
-        const eventTime = new Date();
-        eventTime.setHours(eventHours, parseInt(minutes, 10), 0, 0);
-        return eventTime;
+      let [_, hours, minutes, ampm] = match;
+      let eventHours = parseInt(hours, 10);
+
+      if (ampm.toUpperCase() === 'PM' && eventHours !== 12) {
+        eventHours += 12;
+      }
+      if (ampm.toUpperCase() === 'AM' && eventHours === 12) {
+        eventHours = 0; // Midnight case
+      }
+
+      const eventTime = new Date();
+      eventTime.setHours(eventHours, parseInt(minutes, 10), 0, 0);
+      return eventTime;
     };
 
     const checkEvents = () => {
-        upcomingEvents.forEach(event => {
-            const isToday = event.date === 'Today' || event.date === 'Tonight' || new Date(event.date).toDateString() === new Date().toDateString();
+      upcomingEvents.forEach(event => {
+        const isToday = event.date === 'Today' || event.date === 'Tonight' || new Date(event.date).toDateString() === new Date().toDateString();
 
-            if (!isToday) return;
-            
-            const eventTime = parseTime(event.time);
-            if (!eventTime) return;
+        if (!isToday) return;
 
-            const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === new Date().toDateString());
+        const eventTime = parseTime(event.time);
+        if (!eventTime) return;
 
-            if (hasBeenTriggered) return;
+        const hasBeenTriggered = remindersRef.current.some(r => r.eventId === event.id && new Date(r.triggeredAt).toDateString() === new Date().toDateString());
 
-            const thirtyMinutesAfterEvent = new Date(eventTime.getTime() + 30 * 60 * 1000);
+        if (hasBeenTriggered) return;
 
-            if (new Date() > thirtyMinutesAfterEvent) {
-                // This logic seems to be for completing/clearing events, which might be better handled elsewhere.
-                // For now, let's just focus on triggering reminders.
-            }
-            
-            // Set reminder time for 5 minutes before the event
-            const reminderTime = new Date(eventTime.getTime() - 5 * 60 * 1000);
-            const now = new Date();
+        const thirtyMinutesAfterEvent = new Date(eventTime.getTime() + 30 * 60 * 1000);
 
-            // Check if it's time for the reminder
-            if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
-                 setEventForReminder(event);
-                 openModal('reminder');
-                 setReminders(prevReminders => [...prevReminders, { eventId: event.id, triggeredAt: new Date() }]);
-            }
-        });
+        if (new Date() > thirtyMinutesAfterEvent) {
+          // This logic seems to be for completing/clearing events, which might be better handled elsewhere.
+          // For now, let's just focus on triggering reminders.
+        }
+
+        // Set reminder time for 5 minutes before the event
+        const reminderTime = new Date(eventTime.getTime() - 5 * 60 * 1000);
+        const now = new Date();
+
+        // Check if it's time for the reminder
+        if (reminderTime.getHours() === now.getHours() && reminderTime.getMinutes() === now.getMinutes()) {
+          setEventForReminder(event);
+          openModal('reminder');
+          setReminders(prevReminders => [...prevReminders, { eventId: event.id, triggeredAt: new Date() }]);
+        }
+      });
     };
     const intervalId = setInterval(checkEvents, 60000); // Check every minute
     checkEvents(); // Run once on load
@@ -202,22 +202,22 @@ export default function HomePage() {
     let achievementIcon = '✨';
 
     setAchievements(prevAchievements => {
-        const achievement = prevAchievements.find((a) => a.name === name);
-        if (achievement) {
-            achievementExists = true;
-            achievementName = achievement.name;
-            achievementIcon = achievement.icon;
-            if (achievement.unlocked) {
-                achievementAlreadyUnlocked = true;
-                return prevAchievements;
-            }
-            return prevAchievements.map(a => (a.name === name ? { ...a, unlocked: true } : a));
+      const achievement = prevAchievements.find((a) => a.name === name);
+      if (achievement) {
+        achievementExists = true;
+        achievementName = achievement.name;
+        achievementIcon = achievement.icon;
+        if (achievement.unlocked) {
+          achievementAlreadyUnlocked = true;
+          return prevAchievements;
         }
-        return prevAchievements;
+        return prevAchievements.map(a => (a.name === name ? { ...a, unlocked: true } : a));
+      }
+      return prevAchievements;
     });
 
     if (achievementExists && !achievementAlreadyUnlocked) {
-        showToast(`Achievement Unlocked!`, `You've earned: ${achievementName}`, achievementIcon);
+      showToast(`Achievement Unlocked!`, `You've earned: ${achievementName}`, achievementIcon);
     }
   }, [showToast]);
 
@@ -228,10 +228,10 @@ export default function HomePage() {
       router.push('/welcome');
     }
   }, [firebaseUser, authLoading, router]);
-  
+
   useEffect(() => {
     if (appUser && !appUser.tutorialSeen) {
-        setShowTutorial(true);
+      setShowTutorial(true);
     }
   }, [appUser]);
 
@@ -240,23 +240,23 @@ export default function HomePage() {
     if (!appUser) return false;
     if (appUser.membershipTier === 'pro') return true;
     if (appUser.proTrialEndDate) {
-        return new Date(appUser.proTrialEndDate) > new Date();
+      return new Date(appUser.proTrialEndDate) > new Date();
     }
     return false;
   }, [appUser]);
-  
+
   const fetchProactiveSuggestion = useCallback(async () => {
     if (!isProMember || (appUser?.ageGroup !== 'under14' && !appUser?.petEnabled)) {
-        setAiSuggestion(null);
-        setIsSuggestionLoading(false);
-        return;
+      setAiSuggestion(null);
+      setIsSuggestionLoading(false);
+      return;
     }
     setIsSuggestionLoading(true);
     try {
       const recentActivities = activities.slice(0, 5);
-      const result = await getProactiveSuggestion({ 
-        currentEnergy, 
-        upcomingEvents, 
+      const result = await getProactiveSuggestion({
+        currentEnergy,
+        upcomingEvents,
         recentActivities,
         currentUserLocation
       });
@@ -270,7 +270,7 @@ export default function HomePage() {
       setIsSuggestionLoading(false);
     }
   }, [activities, upcomingEvents, currentEnergy, currentUserLocation, isProMember, appUser]);
-  
+
   const fetchEnergyForecast = useCallback(async () => {
     if (!isProMember || !readinessReport) return;
     setIsForecastLoading(true);
@@ -285,7 +285,7 @@ export default function HomePage() {
     } catch (error) {
       console.error("Failed to get energy forecast:", error);
       setEnergyForecast(null);
-       toast({
+      toast({
         title: "Forecast Failed",
         description: "Could not generate your energy forecast.",
         variant: "destructive",
@@ -299,43 +299,43 @@ export default function HomePage() {
     if (!isProMember) return;
     setIsHotspotsLoading(true);
     try {
-        const result = await analyzeEnergyHotspots({ activities });
-        setEnergyHotspots(result);
+      const result = await analyzeEnergyHotspots({ activities });
+      setEnergyHotspots(result);
     } catch (error) {
-        console.error("Failed to analyze energy hotspots:", error);
-        setEnergyHotspots(null);
-        toast({
-            title: "Analysis Failed",
-            description: "Could not analyze your energy hotspots.",
-            variant: "destructive",
-        });
+      console.error("Failed to analyze energy hotspots:", error);
+      setEnergyHotspots(null);
+      toast({
+        title: "Analysis Failed",
+        description: "Could not analyze your energy hotspots.",
+        variant: "destructive",
+      });
     } finally {
-        setIsHotspotsLoading(false);
+      setIsHotspotsLoading(false);
     }
-}, [isProMember, activities, toast]);
+  }, [isProMember, activities, toast]);
 
   useEffect(() => {
     if (activeTab === 'home' && appUser) {
       fetchProactiveSuggestion();
-      if(readinessReport) {
+      if (readinessReport) {
         fetchEnergyForecast();
       }
     }
     if (activeTab === 'insights' && appUser?.featureVisibility?.insights) {
-        fetchEnergyHotspots();
+      fetchEnergyHotspots();
     }
   }, [activeTab, appUser, fetchProactiveSuggestion, readinessReport, fetchEnergyForecast, fetchEnergyHotspots]);
 
   const handleTierChange = (newTier: 'free' | 'pro') => {
     if (appUser) {
-        setAppUser({ membershipTier: newTier, proTrialEndDate: null });
-        toast({
-            title: `Membership Updated!`,
-            description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
-        });
-        if (newTier === 'pro') {
-            unlockAchievement('Upgraded to Pro!');
-        }
+      setAppUser({ membershipTier: newTier, proTrialEndDate: null });
+      toast({
+        title: `Membership Updated!`,
+        description: `You are now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
+      });
+      if (newTier === 'pro') {
+        unlockAchievement('Upgraded to Pro!');
+      }
     }
   };
 
@@ -347,7 +347,7 @@ export default function HomePage() {
       }
     }
   };
-  
+
   const handleTutorialComplete = () => {
     setShowTutorial(false);
     setAppUser({ tutorialSeen: true });
@@ -356,16 +356,37 @@ export default function HomePage() {
   const handleShowTutorial = () => {
     setShowTutorial(true);
   };
-  
+
+  const handleShowDebrief = useCallback(async () => {
+    openModal('dailyDebrief');
+    if (!isProMember) return;
+    setIsStoryLoading(true);
+    try {
+      const recentActivities = activities.slice(0, 10);
+      const result = await getEnergyStory({
+        activities: recentActivities,
+        readinessReport,
+        currentEnergy,
+      });
+      setEnergyStory(result.story || null);
+    } catch (error) {
+      console.error('Failed to fetch energy story:', error);
+      setEnergyStory(null);
+      toast({ title: 'Debrief Failed', description: 'Could not load your daily debrief.', variant: 'destructive' });
+    } finally {
+      setIsStoryLoading(false);
+    }
+  }, [openModal, isProMember, activities, readinessReport, currentEnergy, toast]);
+
   const handleUpdateUser = (updatedData: Partial<User>) => {
-    if(appUser) {
+    if (appUser) {
       setAppUser(updatedData);
       if (updatedData.avatar) {
         const userIndex = friends.findIndex(f => f.isMe);
         if (userIndex !== -1) {
-            const newFriends = [...friends];
-            newFriends[userIndex] = { ...newFriends[userIndex], avatar: updatedData.avatar! };
-            setFriends(newFriends);
+          const newFriends = [...friends];
+          newFriends[userIndex] = { ...newFriends[userIndex], avatar: updatedData.avatar! };
+          setFriends(newFriends);
         }
       }
     }
@@ -379,14 +400,14 @@ export default function HomePage() {
       autoDetected: false,
       recoveryTime: 0,
     };
-    const newActivities = [newActivity, ...activities].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const newActivities = [newActivity, ...activities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setActivities(newActivities);
-    
+
     showToast('Activity Logged!', `Great job logging '${newActivity.name}'!`, '📝');
     unlockAchievement('Mindful Logger');
 
     if (newActivity.impact > 0) {
-        gainPetExp(newActivity.impact);
+      gainPetExp(newActivity.impact);
     }
 
     closeModal('addActivity');
@@ -404,17 +425,17 @@ export default function HomePage() {
 
   const handleLogEvent = (newEventData: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => {
     const newEvent: UpcomingEvent = {
-        ...newEventData,
-        id: Date.now(),
-        conflictRisk: 'low', // Default value
-        bufferSuggested: 0 // Default value
+      ...newEventData,
+      id: Date.now(),
+      conflictRisk: 'low', // Default value
+      bufferSuggested: 0 // Default value
     };
-    
+
     let location: 'Home' | 'School' | undefined;
     if (newEventData.type !== 'personal') {
-        const activityCount = activities.filter(a => a.location === 'School').length;
-        // Simple logic to assign location, can be made more robust
-        location = activityCount > activities.length / 2 ? 'School' : 'Home';
+      const activityCount = activities.filter(a => a.location === 'School').length;
+      // Simple logic to assign location, can be made more robust
+      location = activityCount > activities.length / 2 ? 'School' : 'Home';
     }
 
     const eventWithLocation = { ...newEvent, location };
@@ -422,8 +443,8 @@ export default function HomePage() {
     const newEvents = [...upcomingEvents, eventWithLocation];
     setUpcomingEvents(newEvents);
     toast({
-        title: "Event Added!",
-        description: `"${newEvent.name}" is now on your schedule.`,
+      title: "Event Added!",
+      description: `"${newEvent.name}" is now on your schedule.`,
     });
     closeModal('addEvent');
   };
@@ -453,13 +474,13 @@ export default function HomePage() {
 
   const handleCustomRecharge = (rechargeData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
     const newActivity: Activity = {
-        ...rechargeData,
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        autoDetected: false,
-        recoveryTime: 0,
+      ...rechargeData,
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      autoDetected: false,
+      recoveryTime: 0,
     };
-    const newActivities = [newActivity, ...activities].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const newActivities = [newActivity, ...activities].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setActivities(newActivities);
     handleRecharge(newActivity.impact, newActivity.impact);
     closeModal('recharge');
@@ -474,7 +495,7 @@ export default function HomePage() {
 
   const handleShareStatus = () => {
     if (!appUser) return;
-  
+
     const meFriend: Friend = {
       id: appUser.userId,
       name: appUser.name,
@@ -493,9 +514,9 @@ export default function HomePage() {
       title: 'Status Shared',
       description: 'Your status is now at the top of your Friend Network.',
     });
-    
+
     if (appUser?.featureVisibility?.insights) {
-        setActiveTab('insights');
+      setActiveTab('insights');
     }
   };
 
@@ -504,7 +525,7 @@ export default function HomePage() {
     const toastMessage = `${result.energyImpact > 0 ? '+' : ''}${result.energyImpact}% - ${result.summary}`;
     showToast('Voice Check-in Complete', toastMessage, '🎤');
     if (result.energyImpact > 0) {
-        gainPetExp(result.energyImpact);
+      gainPetExp(result.energyImpact);
     }
     closeModal('voiceCheckIn');
   };
@@ -515,28 +536,28 @@ export default function HomePage() {
       unlockAchievement('Community Member');
     }
     if (appUser) {
-        setAppUser({ featureVisibility: { ...appUser.featureVisibility, communityMode: isOn } });
+      setAppUser({ featureVisibility: { ...appUser.featureVisibility, communityMode: isOn } });
     }
   };
-  
+
   const handleScheduleAction = (action: ActionableSuggestion) => {
     if (!action) return;
     const eventName = `(${action.type}) ${action.activityName}`;
     const newEvent: UpcomingEvent = {
-        id: Date.now(),
-        name: eventName,
-        type: 'personal',
-        estimatedImpact: action.impact,
-        date: 'Today',
-        time: 'In your schedule',
-        emoji: action.emoji,
-        conflictRisk: 'low',
-        bufferSuggested: 0
+      id: Date.now(),
+      name: eventName,
+      type: 'personal',
+      estimatedImpact: action.impact,
+      date: 'Today',
+      time: 'In your schedule',
+      emoji: action.emoji,
+      conflictRisk: 'low',
+      bufferSuggested: 0
     };
     setUpcomingEvents([...upcomingEvents, newEvent]);
     toast({
-        title: "Action Scheduled!",
-        description: `We've added "${eventName}" to your smart schedule.`,
+      title: "Action Scheduled!",
+      description: `We've added "${eventName}" to your smart schedule.`,
     });
     setActionableSuggestion(null); // Clear the suggestion after scheduling
     unlockAchievement('Scheduler Supreme');
@@ -548,28 +569,28 @@ export default function HomePage() {
     setIsReadinessLoading(true);
     setReadinessReport(null);
     try {
-        const recentActivities = activities.slice(0, 3);
-        const report = await getReadinessScore({ surveyData, recentActivities });
-        setReadinessReport(report);
-        toast({
-            title: "Readiness Score Calculated!",
-            description: "We've analyzed your survey to generate your readiness score.",
-        });
-        unlockAchievement('Bio-Scanner');
+      const recentActivities = activities.slice(0, 3);
+      const report = await getReadinessScore({ surveyData, recentActivities });
+      setReadinessReport(report);
+      toast({
+        title: "Readiness Score Calculated!",
+        description: "We've analyzed your survey to generate your readiness score.",
+      });
+      unlockAchievement('Bio-Scanner');
     } catch (error) {
-        console.error("Failed to get readiness score:", error);
-        toast({ title: "Sync Failed", description: "Could not get readiness score.", variant: "destructive" });
+      console.error("Failed to get readiness score:", error);
+      toast({ title: "Sync Failed", description: "Could not get readiness score.", variant: "destructive" });
     } finally {
-        setIsReadinessLoading(false);
+      setIsReadinessLoading(false);
     }
   }, [activities, unlockAchievement, toast, isProMember, closeModal]);
 
   const handleChatSubmit = useCallback(async (query: string) => {
     if (!isProMember || !appUser) return;
-  
+
     setIsChatting(true);
     const userMessage: ChatMessage = { role: 'user', content: query };
-  
+
     addChatMessage(userMessage, async (updatedHistory) => {
       try {
         const result = await chatWithCoach({
@@ -593,12 +614,12 @@ export default function HomePage() {
 
   const changeLocation = () => {
     setLocationIndex((prevIndex) => {
-        const newIndex = (prevIndex + 1) % locations.length;
-        toast({ title: 'Location Changed', description: `Your location is now set to ${locations[newIndex]}.` });
-        return newIndex;
+      const newIndex = (prevIndex + 1) % locations.length;
+      toast({ title: 'Location Changed', description: `Your location is now set to ${locations[newIndex]}.` });
+      return newIndex;
     });
   };
-  
+
   const handleGoalComplete = (goalId: number) => {
     const goal = goals.find(g => g.id === goalId);
     if (goal) {
@@ -616,20 +637,20 @@ export default function HomePage() {
     if (!isProMember) return;
     setIsGoalsLoading(true);
     try {
-        const recentActivities = activities.slice(0, 15);
-        const currentGoalNames = goals.map(g => ({ name: g.name }));
-        const result = await suggestGoals({ activities: recentActivities, currentGoals: currentGoalNames });
-        const newGoals = result.goals.map((g, i) => ({ ...g, id: Date.now() + i, completed: false }));
-        const newChallenges = result.challenges.map((c, i) => ({ ...c, id: Date.now() + i }));
-        setGoals(newGoals);
-        setChallenges(newChallenges);
-        toast({ title: "Suggestions Loaded!", description: "New AI goals and challenges are ready." });
-        unlockAchievement('Goal Setter');
+      const recentActivities = activities.slice(0, 15);
+      const currentGoalNames = goals.map(g => ({ name: g.name }));
+      const result = await suggestGoals({ activities: recentActivities, currentGoals: currentGoalNames });
+      const newGoals = result.goals.map((g, i) => ({ ...g, id: Date.now() + i, completed: false }));
+      const newChallenges = result.challenges.map((c, i) => ({ ...c, id: Date.now() + i }));
+      setGoals(newGoals);
+      setChallenges(newChallenges);
+      toast({ title: "Suggestions Loaded!", description: "New AI goals and challenges are ready." });
+      unlockAchievement('Goal Setter');
     } catch (error) {
-        console.error("Failed to suggest goals:", error);
-        toast({ title: "Suggestion Failed", description: "Could not get AI suggestions.", variant: "destructive" });
+      console.error("Failed to suggest goals:", error);
+      toast({ title: "Suggestion Failed", description: "Could not get AI suggestions.", variant: "destructive" });
     } finally {
-        setIsGoalsLoading(false);
+      setIsGoalsLoading(false);
     }
   }, [activities, goals, isProMember, toast, unlockAchievement]);
 
@@ -651,32 +672,32 @@ export default function HomePage() {
     if (!task) return;
 
     const wasCompleted = task.completed;
-    
+
     const newTasks = petTasks.map(t => t.id === taskId ? { ...t, completed: !wasCompleted } : t)
     setPetTasks(newTasks);
 
     if (!wasCompleted) {
-        setPetInteractions(prev => prev + 5);
-        gainPetExp(10);
-        addJourneyEntry(`Completed task: "${task.name}"`, task.icon);
-        toast({ title: "Task Complete!", description: "You've earned 5 interactions & 10 pet XP! 🎉" });
-        setAppUser({ lastTaskCompletionTime: Date.now() });
+      setPetInteractions(prev => prev + 5);
+      gainPetExp(10);
+      addJourneyEntry(`Completed task: "${task.name}"`, task.icon);
+      toast({ title: "Task Complete!", description: "You've earned 5 interactions & 10 pet XP! 🎉" });
+      setAppUser({ lastTaskCompletionTime: Date.now() });
     } else {
-        setPetInteractions(prev => Math.max(0, prev - 5));
+      setPetInteractions(prev => Math.max(0, prev - 5));
     }
   };
 
-  const handlePetInteraction = (actionToast: {title: string, description: string}) => {
+  const handlePetInteraction = (actionToast: { title: string, description: string }) => {
     if (petInteractions > 0) {
-        setPetInteractions(prev => prev - 1);
-        toast(actionToast);
-        unlockAchievement('Pet Pal');
+      setPetInteractions(prev => prev - 1);
+      toast(actionToast);
+      unlockAchievement('Pet Pal');
     }
   };
 
   const handlePurchaseAndEquipItem = (
-    category: 'color' | 'accessory' | 'background' | 'outline', 
-    item: string, 
+    category: 'color' | 'accessory' | 'background' | 'outline',
+    item: string,
     cost: number
   ) => {
     if (!appUser) return;
@@ -702,14 +723,14 @@ export default function HomePage() {
       updatedCustomization.unlockedBackgrounds.push(item);
       updatedCustomization.background = item as 'default' | 'park' | 'cozy';
     }
-    
+
     setAppUser({ petCustomization: updatedCustomization });
     toast({ title: 'Item Purchased!', description: 'You can equip it from the customization menu.' });
     unlockAchievement('Pet Customizer');
   };
 
   const handleEquipItem = (
-    category: 'color' | 'accessory' | 'background' | 'outline', 
+    category: 'color' | 'accessory' | 'background' | 'outline',
     item: string
   ) => {
     if (!appUser) return;
@@ -721,15 +742,15 @@ export default function HomePage() {
     setAppUser({ petCustomization: updatedCustomization });
     toast({ title: 'Item Equipped!', description: 'Your pet has a new look!' });
   };
-  
+
   const handleSavePetSettings = (newName: string, newType: 'cat' | 'dog' | 'horse' | 'chicken') => {
     if (appUser) {
-        setAppUser({ petName: newName, petType: newType });
-        toast({ title: 'Pet Updated!', description: `Say hello to your ${newType}, ${newName}!` });
-        closeModal('petSettings');
+      setAppUser({ petName: newName, petType: newType });
+      toast({ title: 'Pet Updated!', description: `Say hello to your ${newType}, ${newName}!` });
+      closeModal('petSettings');
     }
   };
-  
+
   const handlePinSet = (pin: string, email: string) => {
     if (appUser) {
       handleUpdateUser({ parentalPin: pin, parentEmail: email });
@@ -749,9 +770,9 @@ export default function HomePage() {
 
   if (authLoading || !appUser) {
     return (
-        <main className="min-h-dvh bg-background flex items-center justify-center">
-            <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
-        </main>
+      <main className="min-h-dvh bg-background flex items-center justify-center">
+        <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+      </main>
     );
   }
 
@@ -790,29 +811,31 @@ export default function HomePage() {
           {activeTab === "activities" && (
             <ActivitiesTab
               activities={activities}
+              upcomingEvents={upcomingEvents}
               openModal={openModal}
               isProMember={isProMember}
               onDeleteActivity={handleDeleteActivity}
+              onDeleteEvent={handleDeleteEvent}
               ageGroup={appUser.ageGroup}
             />
           )}
-           {activeTab === 'pet' && appUser.petEnabled && (
-              <PetTab
-                tasks={petTasks}
-                onTaskComplete={handleTaskComplete}
-                interactions={petInteractions}
-                petHappiness={petHappiness}
-                onPetInteraction={handlePetInteraction}
-                customization={appUser.petCustomization}
-                openCustomization={() => openModal('petCustomization')}
-                openSettings={() => openModal('petSettings')}
-                level={appUser.petLevel}
-                exp={appUser.petExp}
-                petName={appUser.petName}
-                petType={appUser.petType}
-                lastTaskCompletionTime={appUser.lastTaskCompletionTime}
-              />
-           )}
+          {activeTab === 'pet' && appUser.petEnabled && (
+            <PetTab
+              tasks={petTasks}
+              onTaskComplete={handleTaskComplete}
+              interactions={petInteractions}
+              petHappiness={petHappiness}
+              onPetInteraction={handlePetInteraction}
+              customization={appUser.petCustomization}
+              openCustomization={() => openModal('petCustomization')}
+              openSettings={() => openModal('petSettings')}
+              level={appUser.petLevel}
+              exp={appUser.petExp}
+              petName={appUser.petName}
+              petType={appUser.petType}
+              lastTaskCompletionTime={appUser.lastTaskCompletionTime}
+            />
+          )}
           {activeTab === "insights" && appUser.featureVisibility?.insights && (
             <InsightsTab
               user={appUser}
@@ -851,7 +874,7 @@ export default function HomePage() {
         </div>
 
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} featureVisibility={appUser.featureVisibility} />
-        
+
         <RechargeModal
           open={modals.recharge}
           onOpenChange={() => closeModal('recharge')}
@@ -864,30 +887,30 @@ export default function HomePage() {
           ageGroup={appUser.ageGroup}
         />
         <VoiceCheckinModal
-            open={modals.voiceCheckIn}
-            onOpenChange={() => closeModal('voiceCheckIn')}
-            onCheckinComplete={handleVoiceCheckinComplete}
-            ageGroup={appUser.ageGroup}
+          open={modals.voiceCheckIn}
+          onOpenChange={() => closeModal('voiceCheckIn')}
+          onCheckinComplete={handleVoiceCheckinComplete}
+          ageGroup={appUser.ageGroup}
         />
         <WeeklyReportModal
-            open={modals.weeklyReport}
-            onOpenChange={() => closeModal('weeklyReport')}
-            activities={activities}
-            isProMember={isProMember}
-            ageGroup={appUser.ageGroup}
+          open={modals.weeklyReport}
+          onOpenChange={() => closeModal('weeklyReport')}
+          activities={activities}
+          isProMember={isProMember}
+          ageGroup={appUser.ageGroup}
         />
         <AddActivityModal
-            open={modals.addActivity}
-            onOpenChange={() => closeModal('addActivity')}
-            onLogActivity={handleLogActivity}
-            isProMember={isProMember}
-            ageGroup={appUser.ageGroup}
+          open={modals.addActivity}
+          onOpenChange={() => closeModal('addActivity')}
+          onLogActivity={handleLogActivity}
+          isProMember={isProMember}
+          ageGroup={appUser.ageGroup}
         />
         <TutorialModal
-            open={showTutorial}
-            onOpenChange={setShowTutorial}
-            onComplete={handleTutorialComplete}
-            ageGroup={appUser.ageGroup}
+          open={showTutorial}
+          onOpenChange={setShowTutorial}
+          onComplete={handleTutorialComplete}
+          ageGroup={appUser.ageGroup}
         />
         <DailyDebriefModal
           open={modals.dailyDebrief}
@@ -898,96 +921,96 @@ export default function HomePage() {
           ageGroup={appUser.ageGroup}
         />
         <ChatCoachModal
-            open={modals.chatCoach}
-            onOpenChange={() => closeModal('chatCoach')}
-            chatHistory={chatHistory}
-            isThinking={isChatting}
-            onSendMessage={handleChatSubmit}
-            isProMember={isProMember}
-            ageGroup={appUser.ageGroup}
+          open={modals.chatCoach}
+          onOpenChange={() => closeModal('chatCoach')}
+          chatHistory={chatHistory}
+          isThinking={isChatting}
+          onSendMessage={handleChatSubmit}
+          isProMember={isProMember}
+          ageGroup={appUser.ageGroup}
         />
         <ImageCheckinModal
-            open={modals.imageCheckin}
-            onOpenChange={() => closeModal('imageCheckin')}
-            onLogActivity={handleLogActivity}
-            ageGroup={appUser.ageGroup}
+          open={modals.imageCheckin}
+          onOpenChange={() => closeModal('imageCheckin')}
+          onLogActivity={handleLogActivity}
+          ageGroup={appUser.ageGroup}
         />
         <AddEventModal
-            open={modals.addEvent}
-            onOpenChange={() => closeModal('addEvent')}
-            onLogEvent={handleLogEvent}
-            isProMember={isProMember}
-            ageGroup={appUser.ageGroup}
-            friends={friends}
+          open={modals.addEvent}
+          onOpenChange={() => closeModal('addEvent')}
+          onLogEvent={handleLogEvent}
+          isProMember={isProMember}
+          ageGroup={appUser.ageGroup}
+          friends={friends}
         />
         {appUser && (
-            <PetCustomizationModal
-                open={modals.petCustomization}
-                onOpenChange={() => closeModal('petCustomization')}
-                customization={appUser.petCustomization}
-                interactions={petInteractions}
-                onPurchase={handlePurchaseAndEquipItem}
-                onEquip={handleEquipItem}
-            />
+          <PetCustomizationModal
+            open={modals.petCustomization}
+            onOpenChange={() => closeModal('petCustomization')}
+            customization={appUser.petCustomization}
+            interactions={petInteractions}
+            onPurchase={handlePurchaseAndEquipItem}
+            onEquip={handleEquipItem}
+          />
         )}
         {appUser && (
-            <PetSettingsModal
-                open={modals.petSettings}
-                onOpenChange={() => closeModal('petSettings')}
-                currentName={appUser.petName}
-                currentType={appUser.petType}
-                onSave={handleSavePetSettings}
-            />
+          <PetSettingsModal
+            open={modals.petSettings}
+            onOpenChange={() => closeModal('petSettings')}
+            currentName={appUser.petName}
+            currentType={appUser.petType}
+            onSave={handleSavePetSettings}
+          />
         )}
         {appUser && (
-            <QRCodeModal
-                open={modals.qrCode}
-                onOpenChange={() => closeModal('qrCode')}
-                user={appUser}
-            />
+          <QRCodeModal
+            open={modals.qrCode}
+            onOpenChange={() => closeModal('qrCode')}
+            user={appUser}
+          />
         )}
-         <AgeGateModal open={false} onSelect={() => {}} />
-         <ReadinessSurveyModal
-            open={modals.readinessSurvey}
-            onOpenChange={() => closeModal('readinessSurvey')}
-            onComplete={handleReadinessSurveyComplete}
-            isProMember={isProMember}
-         />
-         {appUser && (
-            <ParentalControlModal
-                open={modals.parentalControls}
-                onOpenChange={(isOpen) => {
-                    if (!isOpen) {
-                        closeModal('parentalControls');
-                    }
-                }}
-                mode={appUser.parentalPin ? 'verify' : 'set'}
-                correctPin={appUser.parentalPin}
-                onPinSet={handlePinSet}
-                onPinVerified={handlePinVerified}
-            />
-         )}
-         {appUser && (
-            <MembershipModal
-                open={modals.membership}
-                onOpenChange={() => closeModal('membership')}
-                onUpgrade={() => handleTierChange('pro')}
-                currentTier={appUser.membershipTier}
-            />
-         )}
-         <ReminderModal 
-            open={modals.reminder}
-            onOpenChange={() => closeModal('reminder')}
-            event={eventForReminder}
-         />
+        <AgeGateModal open={false} onSelect={() => { }} />
+        <ReadinessSurveyModal
+          open={modals.readinessSurvey}
+          onOpenChange={() => closeModal('readinessSurvey')}
+          onComplete={handleReadinessSurveyComplete}
+          isProMember={isProMember}
+        />
+        {appUser && (
+          <ParentalControlModal
+            open={modals.parentalControls}
+            onOpenChange={(isOpen) => {
+              if (!isOpen) {
+                closeModal('parentalControls');
+              }
+            }}
+            mode={appUser.parentalPin ? 'verify' : 'set'}
+            correctPin={appUser.parentalPin}
+            onPinSet={handlePinSet}
+            onPinVerified={handlePinVerified}
+          />
+        )}
+        {appUser && (
+          <MembershipModal
+            open={modals.membership}
+            onOpenChange={() => closeModal('membership')}
+            onUpgrade={() => handleTierChange('pro')}
+            currentTier={appUser.membershipTier}
+          />
+        )}
+        <ReminderModal
+          open={modals.reminder}
+          onOpenChange={() => closeModal('reminder')}
+          event={eventForReminder}
+        />
       </div>
     </main>
   );
 }
 
-    
 
-    
 
-    
+
+
+
 
