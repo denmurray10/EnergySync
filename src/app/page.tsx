@@ -906,28 +906,6 @@ export default function HomePage() {
           ageGroup={appUser.ageGroup}
         />
         <VoiceCheckinModal
-          open={modals.voiceCheckIn}
-          onOpenChange={() => closeModal('voiceCheckIn')}
-          onCheckinComplete={handleVoiceCheckinComplete}
-          ageGroup={appUser.ageGroup}
-        />
-        <WeeklyReportModal
-          open={modals.weeklyReport}
-          onOpenChange={() => closeModal('weeklyReport')}
-          activities={activities}
-          isProMember={isProMember}
-          ageGroup={appUser.ageGroup}
-        />
-        <AddActivityModal
-          open={modals.addActivity}
-          onOpenChange={() => {
-            closeModal('addActivity');
-            setEditActivity(null);
-          }}
-          onLogActivity={handleLogActivity}
-          isProMember={isProMember}
-          ageGroup={appUser.ageGroup}
-          editActivity={editActivity}
           onUpdateActivity={handleUpdateActivity}
         />
         <TutorialModal
@@ -952,45 +930,9 @@ export default function HomePage() {
           onSendMessage={handleChatSubmit}
           isProMember={isProMember}
           ageGroup={appUser.ageGroup}
+          userImage={appUser?.avatar}
+          onUpgrade={() => openModal('membership')}
         />
-        <ImageCheckinModal
-          open={modals.imageCheckin}
-          onOpenChange={() => closeModal('imageCheckin')}
-          onLogActivity={handleLogActivity}
-          ageGroup={appUser.ageGroup}
-        />
-        <AddEventModal
-          open={modals.addEvent}
-          onOpenChange={() => {
-            closeModal('addEvent');
-            setEditEvent(null);
-          }}
-          onLogEvent={handleLogEvent}
-          isProMember={isProMember}
-          ageGroup={appUser.ageGroup}
-          friends={friends}
-          editEvent={editEvent}
-          onUpdateEvent={handleUpdateEvent}
-        />
-        {appUser && (
-          <PetCustomizationModal
-            open={modals.petCustomization}
-            onOpenChange={() => closeModal('petCustomization')}
-            customization={appUser.petCustomization}
-            interactions={petInteractions}
-            onPurchase={handlePurchaseAndEquipItem}
-            onEquip={handleEquipItem}
-          />
-        )}
-        {appUser && (
-          <PetSettingsModal
-            open={modals.petSettings}
-            onOpenChange={() => closeModal('petSettings')}
-            currentName={appUser.petName}
-            currentType={appUser.petType}
-            onSave={handleSavePetSettings}
-          />
-        )}
         {appUser && (
           <QRCodeModal
             open={modals.qrCode}
