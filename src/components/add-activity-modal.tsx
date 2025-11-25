@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -48,13 +48,16 @@ type AddActivityModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLogActivity: (data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
+  onUpdateActivity?: (id: number, data: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => void;
+  editActivity?: Activity | null;
   isProMember: boolean;
   ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
-export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMember, ageGroup }: AddActivityModalProps) {
+export function AddActivityModal({ open, onOpenChange, onLogActivity, onUpdateActivity, editActivity, isProMember, ageGroup }: AddActivityModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const isEditMode = !!editActivity;
 
   const form = useForm<ActivityFormValues>({
     resolver: zodResolver(activityFormSchema),
@@ -67,6 +70,22 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
       emoji: "📝",
     },
   });
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editActivity && open) {
+      form.reset({
+        name: editActivity.name,
+        type: editActivity.type,
+        impact: editActivity.impact,
+        duration: editActivity.duration,
+        location: editActivity.location,
+        emoji: editActivity.emoji,
+      });
+    } else if (!open) {
+      form.reset();
+    }
+  }, [editActivity, open, form]);
 
   const handleSuggestDetails = async () => {
     const activityName = form.getValues("name");
@@ -105,8 +124,13 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
   };
 
   function onSubmit(data: ActivityFormValues) {
-    onLogActivity(data);
+    if (isEditMode && editActivity && onUpdateActivity) {
+      onUpdateActivity(editActivity.id, data);
+    } else {
+      onLogActivity(data);
+    }
     form.reset();
+    onOpenChange(false);
   }
 
   const autoFillText = ageGroup === 'under14' ? 'Ask Pet' : 'Auto-fill';
@@ -118,9 +142,9 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
     }}>
       <DialogContent className="bg-card/95 backdrop-blur-lg">
         <DialogHeader>
-          <DialogTitle>Log a New Activity</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Edit Activity' : 'Log a New Activity'}</DialogTitle>
           <DialogDescription>
-            Track what drains and recharges you. Or, let your helper fill in the details for you!
+            {isEditMode ? 'Update the details of your activity.' : 'Track what drains and recharges you. Or, let your helper fill in the details for you!'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -141,8 +165,8 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
                       <span className="ml-2">{autoFillText}</span>
                       {!isProMember && (
                         <Badge variant="destructive" className="ml-2 bg-gradient-to-r from-yellow-400 to-amber-500 text-white border-none">
-                            <Star className="w-3 h-3 mr-1 fill-white"/>
-                            PRO
+                          <Star className="w-3 h-3 mr-1 fill-white" />
+                          PRO
                         </Badge>
                       )}
                     </Button>
@@ -167,7 +191,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="type"
               render={({ field }) => (
@@ -205,11 +229,11 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
                       onValueChange={(value) => field.onChange(value[0])}
                     />
                   </FormControl>
-                   <FormMessage />
+                  <FormMessage />
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="duration"
               render={({ field }) => (
@@ -222,7 +246,7 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
                 </FormItem>
               )}
             />
-             <FormField
+            <FormField
               control={form.control}
               name="location"
               render={({ field }) => (
@@ -236,8 +260,8 @@ export function AddActivityModal({ open, onOpenChange, onLogActivity, isProMembe
               )}
             />
             <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit">Log Activity</Button>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+              <Button type="submit">{isEditMode ? 'Update Activity' : 'Log Activity'}</Button>
             </DialogFooter>
           </form>
         </Form>

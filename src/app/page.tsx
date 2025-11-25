@@ -90,6 +90,7 @@ export default function HomePage() {
   }, []);
 
   const [eventForReminder, setEventForReminder] = useState<UpcomingEvent | null>(null);
+  const [editActivity, setEditActivity] = useState<Activity | null>(null);
 
   const [communityMode, setCommunityMode] = useState(false);
   const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
@@ -396,6 +397,41 @@ export default function HomePage() {
       title: "Activity Deleted",
       description: "The activity has been removed from your history.",
     });
+  };
+
+  const handleUpdateActivity = (activityId: number, updatedData: Omit<Activity, 'id' | 'date' | 'autoDetected' | 'recoveryTime'>) => {
+    const newActivities = activities.map(activity =>
+      activity.id === activityId
+        ? { ...activity, ...updatedData }
+        : activity
+    );
+    setActivities(newActivities);
+    showToast('Activity Updated!', `Successfully updated "${updatedData.name}"!`, '✏️');
+    setEditActivity(null);
+  };
+
+  const handleEditActivity = (activity: Activity) => {
+    setEditActivity(activity);
+    openModal('addActivity');
+  };
+
+  const [editEvent, setEditEvent] = useState<UpcomingEvent | null>(null);
+
+  const handleUpdateEvent = (eventId: number, updatedData: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => {
+    const newEvents = upcomingEvents.map(event =>
+      event.id === eventId
+        ? { ...event, ...updatedData }
+        : event
+    );
+    setUpcomingEvents(newEvents);
+    showToast('Event Updated!', `Successfully updated "${updatedData.name}"!`, '✏️');
+    setEditEvent(null);
+    closeModal('addEvent');
+  };
+
+  const handleEditEvent = (event: UpcomingEvent) => {
+    setEditEvent(event);
+    openModal('addEvent');
   };
 
   const handleLogEvent = (newEventData: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => {
@@ -778,7 +814,7 @@ export default function HomePage() {
               readinessReport={readinessReport}
               isReadinessLoading={isReadinessLoading}
               onSyncHealth={() => openModal('readinessSurvey')}
-              onDeleteEvent={handleDeleteEvent}
+              onEditEvent={handleEditEvent}
               energyForecast={energyForecast}
               isForecastLoading={isForecastLoading}
             />
@@ -789,8 +825,8 @@ export default function HomePage() {
               upcomingEvents={upcomingEvents}
               openModal={openModal}
               isProMember={isProMember}
-              onDeleteActivity={handleDeleteActivity}
-              onDeleteEvent={handleDeleteEvent}
+              onEditActivity={handleEditActivity}
+              onEditEvent={handleEditEvent}
               ageGroup={appUser.ageGroup}
             />
           )}
@@ -884,10 +920,15 @@ export default function HomePage() {
         />
         <AddActivityModal
           open={modals.addActivity}
-          onOpenChange={() => closeModal('addActivity')}
+          onOpenChange={() => {
+            closeModal('addActivity');
+            setEditActivity(null);
+          }}
           onLogActivity={handleLogActivity}
           isProMember={isProMember}
           ageGroup={appUser.ageGroup}
+          editActivity={editActivity}
+          onUpdateActivity={handleUpdateActivity}
         />
         <TutorialModal
           open={showTutorial}
@@ -920,11 +961,16 @@ export default function HomePage() {
         />
         <AddEventModal
           open={modals.addEvent}
-          onOpenChange={() => closeModal('addEvent')}
+          onOpenChange={() => {
+            closeModal('addEvent');
+            setEditEvent(null);
+          }}
           onLogEvent={handleLogEvent}
           isProMember={isProMember}
           ageGroup={appUser.ageGroup}
           friends={friends}
+          editEvent={editEvent}
+          onUpdateEvent={handleUpdateEvent}
         />
         {appUser && (
           <PetCustomizationModal

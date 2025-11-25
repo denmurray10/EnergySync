@@ -4,8 +4,9 @@
 import { useState, useMemo } from "react";
 import type { Activity, UpcomingEvent } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Camera, Trash2, Calendar, History } from "lucide-react";
+import { PlusCircle, Camera, Pencil, Calendar, History } from "lucide-react";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
+import { format, parse, isValid } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,14 +17,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 
 type ActivitiesTabProps = {
   activities: Activity[];
   upcomingEvents: UpcomingEvent[];
   openModal: (modalName: string) => void;
   isProMember: boolean;
-  onDeleteActivity: (id: number) => void;
-  onDeleteEvent?: (id: number) => void;
+  onEditActivity: (activity: Activity) => void;
+  onEditEvent?: (event: UpcomingEvent) => void;
   ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
@@ -57,24 +59,96 @@ const getLocationColor = (item: UpcomingEvent | Activity): string => {
   return 'border-gray-300 bg-gray-50';
 };
 
-export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMember, onDeleteActivity, onDeleteEvent, ageGroup }: ActivitiesTabProps) {
-  const [activityToDelete, setActivityToDelete] = useState<Activity | null>(null);
-  const [eventToDelete, setEventToDelete] = useState<UpcomingEvent | null>(null);
+// Format date to "Tue 25th Nov" format
+const formatActivityDate = (dateString: string): string => {
+  // Try to parse common date formats
+  const formats = [
+    'yyyy-MM-dd',           // 2025-11-25
+    'PPP',                   // December 25, 2025
+    'MMMM d, yyyy',         // December 25, 2025
+  ];
+
+  for (const formatString of formats) {
+    try {
+      const parsed = parse(dateString, formatString, new Date());
+      if (isValid(parsed)) {
+        return format(parsed, 'EEE do MMM');
+      }
+    } catch {
+      // Continue to next format
+    }
+  }
+
+  // Try direct Date parsing as fallback
+  try {
+    const date = new Date(dateString);
+    if (isValid(date) && !isNaN(date.getTime())) {
+      return format(date, 'EEE do MMM');
+    }
+  } catch {
+    // Fallback to original if all parsing fails
+  }
+
+  return dateString;
+};
+
+// Check if a date is today
+const isToday = (dateString: string): boolean => {
+  const formats = ['yyyy-MM-dd', 'PPP', 'MMMM d, yyyy'];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (const formatString of formats) {
+    try {
+      const parsed = parse(dateString, formatString, new Date());
+      if (isValid(parsed)) {
+        parsed.setHours(0, 0, 0, 0);
+        return parsed.getTime() === today.getTime();
+      }
+    } catch { }
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isValid(date) && !isNaN(date.getTime())) {
+      date.setHours(0, 0, 0, 0);
+      return date.getTime() === today.getTime();
+    }
+  } catch { }
+
+  return false;
+};
+
+// Check if a date is tomorrow
+const isTomorrow = (dateString: string): boolean => {
+  const formats = ['yyyy-MM-dd', 'PPP', 'MMMM d, yyyy'];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  for (const formatString of formats) {
+    try {
+      const parsed = parse(dateString, formatString, new Date());
+      if (isValid(parsed)) {
+        parsed.setHours(0, 0, 0, 0);
+        return parsed.getTime() === tomorrow.getTime();
+      }
+    } catch { }
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isValid(date) && !isNaN(date.getTime())) {
+      date.setHours(0, 0, 0, 0);
+      return date.getTime() === tomorrow.getTime();
+    }
+  } catch { }
+
+  return false;
+};
+
+export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMember, onEditActivity, onEditEvent, ageGroup }: ActivitiesTabProps) {
   const [viewMode, setViewMode] = useState<'upcoming' | 'history'>('upcoming');
-
-  const confirmDeleteActivity = () => {
-    if (activityToDelete) {
-      onDeleteActivity(activityToDelete.id);
-      setActivityToDelete(null);
-    }
-  };
-
-  const confirmDeleteEvent = () => {
-    if (eventToDelete && onDeleteEvent) {
-      onDeleteEvent(eventToDelete.id);
-      setEventToDelete(null);
-    }
-  };
 
   const filteredHistory = useMemo(() => {
     const sevenDaysAgo = new Date();
@@ -148,10 +222,18 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="text-2xl">{event.emoji}</div>
-                    <div>
-                      <p className="font-semibold text-gray-800">{event.name}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-gray-800">{event.name}</p>
+                        {isToday(event.date) && (
+                          <Badge className="bg-blue-500 text-white text-xs px-2 py-0.5">Today</Badge>
+                        )}
+                        {isTomorrow(event.date) && (
+                          <Badge className="bg-purple-500 text-white text-xs px-2 py-0.5">Tomorrow</Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600">
-                        {event.date} &bull; {event.time}
+                        {formatActivityDate(event.date)} &bull; {event.time}
                       </p>
                     </div>
                   </div>
@@ -160,15 +242,15 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
                       }`}>
                       {event.estimatedImpact > 0 ? "+" : ""}{event.estimatedImpact}%
                     </div>
-                    {onDeleteEvent && (
+                    {onEditEvent && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
-                        onClick={() => setEventToDelete(event)}
+                        className="h-8 w-8 text-muted-foreground hover:bg-blue-100 hover:text-blue-600"
+                        onClick={() => onEditEvent(event)}
                       >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Delete event</span>
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Edit event</span>
                       </Button>
                     )}
                   </div>
@@ -193,12 +275,20 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="text-2xl">{activity.emoji}</div>
-                    <div>
-                      <p className="font-semibold text-gray-800">
-                        {activity.name}
-                      </p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="font-semibold text-gray-800">
+                          {activity.name}
+                        </p>
+                        {isToday(activity.date) && (
+                          <Badge className="bg-blue-500 text-white text-xs px-2 py-0.5">Today</Badge>
+                        )}
+                        {isTomorrow(activity.date) && (
+                          <Badge className="bg-purple-500 text-white text-xs px-2 py-0.5">Tomorrow</Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-600">
-                        {activity.duration}min &bull; {activity.location} &bull; {activity.date}
+                        {activity.duration}min &bull; {activity.location} &bull; {formatActivityDate(activity.date)}
                       </p>
                     </div>
                   </div>
@@ -210,11 +300,11 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-500"
-                      onClick={() => setActivityToDelete(activity)}
+                      className="h-8 w-8 text-muted-foreground hover:bg-blue-100 hover:text-blue-600"
+                      onClick={() => onEditActivity(activity)}
                     >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete activity</span>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit activity</span>
                     </Button>
                   </div>
                 </div>
@@ -227,36 +317,6 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
           )
         )}
       </div>
-
-      <AlertDialog open={!!activityToDelete} onOpenChange={(isOpen) => !isOpen && setActivityToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Activity?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete "{activityToDelete?.name}" from your history.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteActivity} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!eventToDelete} onOpenChange={(isOpen) => !isOpen && setEventToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Event?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will remove "{eventToDelete?.name}" from your schedule.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteEvent} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

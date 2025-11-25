@@ -10,6 +10,7 @@ import { PetCompanionCard } from "@/components/pet-companion-card";
 import { ReadinessCard } from "@/components/readiness-card";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 import { EnergyForecastChart } from "@/components/energy-forecast-chart";
+import { format, parse, isValid } from "date-fns";
 import {
   Users,
   Share2,
@@ -21,7 +22,7 @@ import {
   School,
   CalendarPlus,
   PlusCircle,
-  Trash2,
+  Pencil,
   TrendingUp,
   BrainCircuit,
   User as UserIcon
@@ -60,7 +61,7 @@ type HomeTabProps = {
   readinessReport: ReadinessReport | null;
   isReadinessLoading: boolean;
   onSyncHealth: () => void;
-  onDeleteEvent: (id: number) => void;
+  onEditEvent: (event: UpcomingEvent) => void;
   energyForecast: EnergyForecastData[] | null;
   isForecastLoading: boolean;
 };
@@ -111,7 +112,85 @@ const getLocationColor = (location?: 'Home' | 'School' | 'Personal') => {
   }
 };
 
-const EventCard = ({ event, onDelete, showLocationColor = false }: { event: UpcomingEvent, onDelete: (id: number) => void, showLocationColor?: boolean }) => {
+// Check if a date is today
+const isToday = (dateString: string): boolean => {
+  const formats = ['yyyy-MM-dd', 'PPP', 'MMMM d, yyyy'];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (const formatString of formats) {
+    try {
+      const parsed = parse(dateString, formatString, new Date());
+      if (isValid(parsed)) {
+        parsed.setHours(0, 0, 0, 0);
+        return parsed.getTime() === today.getTime();
+      }
+    } catch { }
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isValid(date) && !isNaN(date.getTime())) {
+      date.setHours(0, 0, 0, 0);
+      return date.getTime() === today.getTime();
+    }
+  } catch { }
+
+  return false;
+};
+
+// Check if a date is tomorrow
+const isTomorrow = (dateString: string): boolean => {
+  const formats = ['yyyy-MM-dd', 'PPP', 'MMMM d, yyyy'];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+
+  for (const formatString of formats) {
+    try {
+      const parsed = parse(dateString, formatString, new Date());
+      if (isValid(parsed)) {
+        parsed.setHours(0, 0, 0, 0);
+        return parsed.getTime() === tomorrow.getTime();
+      }
+    } catch { }
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isValid(date) && !isNaN(date.getTime())) {
+      date.setHours(0, 0, 0, 0);
+      return date.getTime() === tomorrow.getTime();
+    }
+  } catch { }
+
+  return false;
+};
+
+// Format date to "Tue 25th Nov" format
+const formatEventDate = (dateString: string): string => {
+  const formats = ['yyyy-MM-dd', 'PPP', 'MMMM d, yyyy'];
+
+  for (const formatString of formats) {
+    try {
+      const parsed = parse(dateString, formatString, new Date());
+      if (isValid(parsed)) {
+        return format(parsed, 'EEE do MMM');
+      }
+    } catch { }
+  }
+
+  try {
+    const date = new Date(dateString);
+    if (isValid(date) && !isNaN(date.getTime())) {
+      return format(date, 'EEE do MMM');
+    }
+  } catch { }
+
+  return dateString;
+};
+
+const EventCard = ({ event, onEdit, showLocationColor = false }: { event: UpcomingEvent, onEdit: (event: UpcomingEvent) => void, showLocationColor?: boolean }) => {
   // Determine the color based on priority: conflict risk > type-based color
   const getCardColor = () => {
     // Map type to category for color coding
@@ -131,7 +210,7 @@ const EventCard = ({ event, onDelete, showLocationColor = false }: { event: Upco
           <div>
             <p className="font-semibold text-gray-800">{event.name}</p>
             <p className="text-sm text-gray-600">
-              {event.date} &bull; {event.time}
+              {formatEventDate(event.date)} &bull; {event.time}
             </p>
           </div>
         </div>
@@ -148,11 +227,11 @@ const EventCard = ({ event, onDelete, showLocationColor = false }: { event: Upco
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-400 hover:bg-red-100 hover:text-red-500"
-            onClick={() => onDelete(event.id)}
+            className="h-8 w-8 text-gray-400 hover:bg-blue-100 hover:text-blue-600"
+            onClick={() => onEdit(event)}
           >
-            <Trash2 className="h-4 w-4" />
-            <span className="sr-only">Delete event</span>
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Edit event</span>
           </Button>
         </div>
       </div>
@@ -181,19 +260,10 @@ export function HomeTab({
   readinessReport,
   isReadinessLoading,
   onSyncHealth,
-  onDeleteEvent,
+  onEditEvent,
   energyForecast,
   isForecastLoading,
 }: HomeTabProps) {
-  const [eventToDelete, setEventToDelete] = useState<UpcomingEvent | null>(null);
-
-  const confirmDelete = () => {
-    if (eventToDelete) {
-      onDeleteEvent(eventToDelete.id);
-      setEventToDelete(null);
-    }
-  };
-
   const showPetFeatures = user?.petEnabled;
 
   const { allEvents, homeEvents, schoolEvents, personalEvents } = useMemo(() => {
@@ -421,7 +491,7 @@ export function HomeTab({
               </div>
               <div className="space-y-2">
                 {allEvents.length > 0 ? (
-                  allEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
+                  allEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
                 ) : (
                   <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events.</p>
                 )}
@@ -436,7 +506,7 @@ export function HomeTab({
               </div>
               <div className="space-y-2">
                 {homeEvents.length > 0 ? (
-                  homeEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
+                  homeEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
                 ) : (
                   <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at home.</p>
                 )}
@@ -451,7 +521,7 @@ export function HomeTab({
               </div>
               <div className="space-y-2">
                 {schoolEvents.length > 0 ? (
-                  schoolEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
+                  schoolEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
                 ) : (
                   <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at school.</p>
                 )}
@@ -466,7 +536,7 @@ export function HomeTab({
               </div>
               <div className="space-y-2">
                 {personalEvents.length > 0 ? (
-                  personalEvents.map((event) => <EventCard key={event.id} event={event} onDelete={() => setEventToDelete(event)} showLocationColor={true} />)
+                  personalEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
                 ) : (
                   <p className="text-sm text-muted-foreground px-4 py-2">No personal events scheduled.</p>
                 )}
@@ -477,20 +547,143 @@ export function HomeTab({
         </CardContent>
       </Card>
 
-      <AlertDialog open={!!eventToDelete} onOpenChange={(isOpen) => !isOpen && setEventToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the event "{eventToDelete?.name}". This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {ageGroup !== 'under14' && (
+        <ProFeatureWrapper isPro={isProMember}>
+          <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl">
+                <TrendingUp className="text-cyan-500 mr-3" />
+                Energy Forecast
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isForecastLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-48 w-full" />
+                  <div className="flex justify-between">
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                    <Skeleton className="h-4 w-10" />
+                  </div>
+                </div>
+              ) : (
+                <EnergyForecastChart data={energyForecast || []} />
+              )}
+            </CardContent>
+          </Card>
+        </ProFeatureWrapper>
+      )}
+
+      {showPetFeatures && (
+        <ProFeatureWrapper isPro={isProMember}>
+          <Card className="bg-card/80 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center text-xl">
+                {ageGroup === 'under14' ? <Zap className="text-yellow-500 mr-3" /> : <BrainCircuit className="text-yellow-500 mr-3" />}
+                {ageGroup === 'under14' ? "Your Pet's Thoughts" : "Proactive Suggestions"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isSuggestionLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-4/5" />
+                  <Skeleton className="h-4 w-2/3" />
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground mb-4">
+                  {aiSuggestion || "No suggestions at this time. Try syncing your data!"}
+                </p>
+              )}
+              {actionableSuggestion && (
+                <Button onClick={() => handleScheduleAction(actionableSuggestion)} className="w-full mt-2">
+                  <CalendarPlus className="mr-2 h-4 w-4" />
+                  Add "{actionableSuggestion.activityName}" to Schedule
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </ProFeatureWrapper>
+      )}
+
+      <Card className="bg-card/80 backdrop-blur-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center text-xl">
+            <Calendar className="text-indigo-500 mr-3" />
+            Smart Schedule
+          </CardTitle>
+          <Button onClick={() => openModal('addEvent')} size="icon" variant="ghost" className="text-primary -mr-2">
+            <PlusCircle className="h-6 w-6" />
+            <span className="sr-only">Add Event</span>
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="w-full flex overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-hide">
+            {/* All Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <Calendar className="mr-2 h-5 w-5 text-purple-500" />
+                <h3 className="font-semibold text-card-foreground">All Upcoming</h3>
+              </div>
+              <div className="space-y-2">
+                {allEvents.length > 0 ? (
+                  allEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
+                ) : (
+                  <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Home Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <Home className="mr-2 h-5 w-5 text-blue-500" />
+                <h3 className="font-semibold text-card-foreground">Home</h3>
+              </div>
+              <div className="space-y-2">
+                {homeEvents.length > 0 ? (
+                  homeEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
+                ) : (
+                  <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at home.</p>
+                )}
+              </div>
+            </div>
+
+            {/* School Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <School className="mr-2 h-5 w-5 text-green-500" />
+                <h3 className="font-semibold text-card-foreground">School</h3>
+              </div>
+              <div className="space-y-2">
+                {schoolEvents.length > 0 ? (
+                  schoolEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
+                ) : (
+                  <p className="text-sm text-muted-foreground px-4 py-2">No upcoming events at school.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Personal Events Section */}
+            <div className="w-full flex-shrink-0 snap-center px-2">
+              <div className="flex items-center mb-2">
+                <UserIcon className="mr-2 h-5 w-5 text-pink-500" />
+                <h3 className="font-semibold text-card-foreground">Personal</h3>
+              </div>
+              <div className="space-y-2">
+                {personalEvents.length > 0 ? (
+                  personalEvents.map((event) => <EventCard key={event.id} event={event} onEdit={onEditEvent} showLocationColor={true} />)
+                ) : (
+                  <p className="text-sm text-muted-foreground px-4 py-2">No personal events scheduled.</p>
+                )}
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-center text-muted-foreground mt-2">Swipe for more categories &rarr;</p>
+        </CardContent>
+      </Card>
+
+      {/* Delete confirmation dialog removed */}
     </div>
   );
 }

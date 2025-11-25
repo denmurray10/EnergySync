@@ -78,9 +78,11 @@ type AddEventModalProps = {
   isProMember: boolean;
   ageGroup: 'under14' | '14to17' | 'over18' | null;
   friends: Friend[];
+  editEvent?: UpcomingEvent | null;
+  onUpdateEvent?: (id: number, data: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => void;
 };
 
-export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup, friends }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup, friends, editEvent, onUpdateEvent }: AddEventModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [step, setStep] = useState(0);
@@ -102,18 +104,48 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     },
   });
 
+  // Populate form when editEvent changes
+  useEffect(() => {
+    if (editEvent) {
+      form.reset({
+        name: editEvent.name,
+        location: editEvent.location || "",
+        type: editEvent.type,
+        estimatedImpact: editEvent.estimatedImpact,
+        date: editEvent.date,
+        time: editEvent.time,
+        emoji: editEvent.emoji,
+        taggedFriendIds: editEvent.taggedFriendIds || [],
+      });
+    } else {
+      form.reset({
+        name: "",
+        location: "",
+        type: "personal",
+        estimatedImpact: -10,
+        date: format(addDays(new Date(), 1), "PPP"),
+        time: "5:00 PM",
+        emoji: "🗓️",
+        taggedFriendIds: [],
+      });
+      setStep(0);
+    }
+  }, [editEvent, form]);
+
   const resetForm = () => {
-    form.reset({
-      name: "",
-      location: "",
-      type: "personal",
-      estimatedImpact: -10,
-      date: format(addDays(new Date(), 1), "PPP"),
-      time: "5:00 PM",
-      emoji: "🗓️",
-      taggedFriendIds: [],
-    });
-    setStep(0);
+    if (!editEvent) {
+      form.reset({
+        name: "",
+        location: "",
+        type: "personal",
+        estimatedImpact: -10,
+        date: format(addDays(new Date(), 1), "PPP"),
+        time: "5:00 PM",
+        emoji: "🗓️",
+        taggedFriendIds: [],
+      });
+      setStep(0);
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -138,7 +170,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
   useEffect(() => {
     const eventName = form.watch('name');
 
-    if (!eventName || eventName.length < 3 || isSuggesting) {
+    if (!eventName || eventName.length < 3 || isSuggesting || editEvent) { // Don't auto-suggest if editing
       return;
     }
 
@@ -159,7 +191,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     }, 500); // 500ms debounce
 
     return () => clearTimeout(timer);
-  }, [form.watch('name'), isSuggesting]);
+  }, [form.watch('name'), isSuggesting, editEvent]);
 
   const handleSuggestDetails = async () => {
     const eventName = form.getValues("name");
@@ -197,7 +229,11 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
   };
 
   function onSubmit(data: EventFormValues) {
-    onLogEvent(data);
+    if (editEvent && onUpdateEvent) {
+      onUpdateEvent(editEvent.id, data);
+    } else {
+      onLogEvent(data);
+    }
     handleOpenChange(false);
   }
 
@@ -395,9 +431,9 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="bg-card/95 backdrop-blur-lg rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Add to Schedule</DialogTitle>
+          <DialogTitle>{editEvent ? "Edit Event" : "Add to Schedule"}</DialogTitle>
           <DialogDescription>
-            Add a new event to your Smart Schedule to see its potential impact.
+            {editEvent ? "Update the details of your event." : "Add a new event to your Smart Schedule to see its potential impact."}
           </DialogDescription>
         </DialogHeader>
 
@@ -423,7 +459,7 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
                   </Button>
                 ) : (
                   <Button type="submit">
-                    <Check className="mr-2 h-4 w-4" /> Add Event
+                    <Check className="mr-2 h-4 w-4" /> {editEvent ? "Update Event" : "Add Event"}
                   </Button>
                 )}
               </div>
