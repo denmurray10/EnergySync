@@ -41,6 +41,7 @@ import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
 import { ParentalControlModal } from "@/components/parental-control-modal";
 import { MembershipModal } from "@/components/membership-modal";
 import { ReminderModal } from "@/components/reminder-modal";
+import { ARPetModal } from "@/components/ar-pet-modal";
 import placeholderImages from '@/app/lib/placeholder-images.json';
 
 
@@ -79,6 +80,7 @@ export default function HomePage() {
     parentalControls: false,
     membership: false,
     reminder: false,
+    arPet: false,
   });
 
   const openModal = useCallback((modalName: keyof typeof modals) => {
@@ -341,8 +343,6 @@ export default function HomePage() {
       const recentActivities = activities.slice(0, 10);
       const result = await getEnergyStory({
         activities: recentActivities,
-        readinessReport,
-        currentEnergy,
       });
       setEnergyStory(result.story || null);
     } catch (error) {
@@ -547,7 +547,13 @@ export default function HomePage() {
       unlockAchievement('Community Member');
     }
     if (appUser) {
-      setAppUser({ featureVisibility: { ...appUser.featureVisibility, communityMode: isOn } });
+      setAppUser({
+        featureVisibility: {
+          insights: appUser.featureVisibility?.insights ?? true,
+          friends: appUser.featureVisibility?.friends ?? true,
+          communityMode: isOn
+        }
+      });
     }
   };
 
@@ -610,9 +616,48 @@ export default function HomePage() {
           currentEnergy,
           activities: JSON.stringify(activities.slice(0, 10)),
           events: JSON.stringify(upcomingEvents),
+          goals: JSON.stringify(goals),
+          petStatus: `Happiness: ${petHappiness}, Level: ${appUser.petLevel}`,
         });
+
         addChatMessage({ role: 'model', content: result.response });
         unlockAchievement('Chatterbox');
+
+        // Handle AI Suggested Actions
+        if (result.suggestedAction && result.suggestedAction.type !== 'none') {
+          const action = result.suggestedAction;
+          if (action.type === 'schedule_event') {
+            const { name, time } = action.data;
+            const newEvent = {
+              name: name || "New Event",
+              type: 'personal' as const,
+              estimatedImpact: -5,
+              date: 'Today',
+              time: time || "Soon",
+              emoji: '📅',
+              location: 'Home' as const
+            };
+            setUpcomingEvents([...upcomingEvents, {
+              ...newEvent,
+              id: Date.now(),
+              conflictRisk: 'low',
+              bufferSuggested: 0
+            }]);
+            toast({ title: "Event Scheduled!", description: `I've added "${name}" to your schedule.` });
+          } else if (action.type === 'log_activity') {
+            const { name, type } = action.data;
+            const newActivity = {
+              name: name || "Activity",
+              type: (type as any) || 'personal',
+              impact: 5,
+              duration: 30,
+              emoji: '⚡',
+              location: 'Home' as const
+            };
+            handleLogActivity(newActivity);
+          }
+        }
+
       } catch (error) {
         console.error("Chat error:", error);
         addChatMessage({ role: 'model', content: "Sorry, I'm having trouble connecting right now." });
@@ -620,7 +665,7 @@ export default function HomePage() {
         setIsChatting(false);
       }
     });
-  }, [isProMember, appUser, addChatMessage, currentEnergy, activities, upcomingEvents, unlockAchievement]);
+  }, [isProMember, appUser, addChatMessage, currentEnergy, activities, upcomingEvents, goals, petHappiness, unlockAchievement, toast, handleLogActivity]);
 
 
   const changeLocation = () => {
@@ -804,7 +849,7 @@ export default function HomePage() {
               setCommunityMode={toggleCommunityMode}
               getEnergyStatus={getEnergyStatus}
               onShareStatus={handleShareStatus}
-              openModal={openModal}
+              openModal={(name) => openModal(name as any)}
               aiSuggestion={aiSuggestion}
               actionableSuggestion={actionableSuggestion}
               handleScheduleAction={handleScheduleAction}
@@ -823,7 +868,7 @@ export default function HomePage() {
             <ActivitiesTab
               activities={activities}
               upcomingEvents={upcomingEvents}
-              openModal={openModal}
+              openModal={(name) => openModal(name as any)}
               isProMember={isProMember}
               onEditActivity={handleEditActivity}
               onEditEvent={handleEditEvent}
@@ -853,6 +898,7 @@ export default function HomePage() {
               petName={appUser.petName}
               petType={appUser.petType}
               lastTaskCompletionTime={appUser.lastTaskCompletionTime}
+              onOpenAR={() => openModal('arPet')}
             />
           )}
           {activeTab === "insights" && appUser.featureVisibility?.insights && (
@@ -865,7 +911,7 @@ export default function HomePage() {
               achievements={achievements}
               currentEnergy={currentEnergy}
               activities={activities}
-              openModal={openModal}
+              openModal={(name) => openModal(name as any)}
               goals={goals}
               challenges={challenges}
               onGoalComplete={handleGoalComplete}
@@ -886,7 +932,7 @@ export default function HomePage() {
               onTierChange={handleTierChange}
               onTogglePet={handleTogglePet}
               onUpdateUser={handleUpdateUser}
-              openModal={openModal}
+              openModal={(name) => openModal(name as any)}
               isParentModeUnlocked={isParentModeUnlocked}
             />
           )}
@@ -906,7 +952,10 @@ export default function HomePage() {
           ageGroup={appUser.ageGroup}
         />
         <VoiceCheckinModal
-          onUpdateActivity={handleUpdateActivity}
+          open={modals.voiceCheckIn}
+          onOpenChange={() => closeModal('voiceCheckIn')}
+          onCheckinComplete={handleVoiceCheckinComplete}
+          ageGroup={appUser.ageGroup}
         />
         <TutorialModal
           open={showTutorial}
@@ -934,13 +983,42 @@ export default function HomePage() {
           onUpgrade={() => openModal('membership')}
         />
         {appUser && (
+          <PetCustomizationModal
+            open={modals.petCustomization}
+            onOpenChange={() => closeModal('petCustomization')}
+            customization={appUser.petCustomization}
+            interactions={petInteractions}
+            onPurchase={handlePurchaseAndEquipItem}
+            onEquip={handleEquipItem}
+          />
+        )}
+        {appUser && (
+          <PetSettingsModal
+            open={modals.petSettings}
+            onOpenChange={() => closeModal('petSettings')}
+            currentName={appUser.petName}
+            currentType={appUser.petType}
+            onSave={handleSavePetSettings}
+          />
+        )}
+        {appUser && (
+          <ARPetModal
+            open={modals.arPet}
+            onOpenChange={() => closeModal('arPet')}
+            petType={appUser.petType}
+            petHappiness={petHappiness}
+            customization={appUser.petCustomization}
+            level={appUser.petLevel}
+          />
+        )}
+        {appUser && (
           <QRCodeModal
             open={modals.qrCode}
             onOpenChange={() => closeModal('qrCode')}
             user={appUser}
           />
         )}
-        <AgeGateModal open={false} onSelect={() => { }} />
+        <AgeGateModal open={false} onSelect={() => { }} onOpenChange={() => { }} />
         <ReadinessSurveyModal
           open={modals.readinessSurvey}
           onOpenChange={() => closeModal('readinessSurvey')}

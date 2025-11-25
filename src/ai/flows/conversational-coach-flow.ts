@@ -22,12 +22,18 @@ const ChatWithCoachInputSchema = z.object({
   currentEnergy: z.number().describe('The user\'s current energy level (0-100).'),
   activities: z.string().describe("A JSON string representing an array of the user's recent activities. The AI can use tools to analyze this data."),
   events: z.string().describe('A JSON string representing an array of the user\'s upcoming events.'),
+  goals: z.string().optional().describe('A JSON string representing the user\'s current goals.'),
+  petStatus: z.string().optional().describe('A description of the pet\'s current status (happiness, level).'),
 });
 export type ChatWithCoachInput = z.infer<typeof ChatWithCoachInputSchema>;
 
 
 const ChatWithCoachOutputSchema = z.object({
   response: z.string().describe("The AI coach's response to the user's query."),
+  suggestedAction: z.object({
+    type: z.enum(['schedule_event', 'log_activity', 'none']),
+    data: z.any().describe("The data for the action. For 'schedule_event', it should be { name, time }. For 'log_activity', it should be { name, type }."),
+  }).optional().describe("An optional action the AI suggests performing for the user."),
 });
 export type ChatWithCoachOutput = z.infer<typeof ChatWithCoachOutputSchema>;
 
@@ -51,11 +57,26 @@ const prompt = ai.definePrompt({
   - Be patient and encouraging. "You can do it!" "Great job!"
   - If the question is too hard, suggest asking a teacher or parent, but try your best to explain the basics first.
 
+  **NEW SUPERPOWER: You can DO things!**
+  - If your friend says "Remind me to nap at 2pm", you can actually schedule it!
+  - If your friend says "I just went for a run", you can log that activity!
+  - To do this, use the 'suggestedAction' part of your answer.
+
+  **Action Rules:**
+  1. **Scheduling:** If the user asks to schedule something, set 'suggestedAction' type to 'schedule_event'.
+     - Data: { "name": "Nap", "time": "2:00 PM" } (Infer the time if possible, or default to "Soon")
+  2. **Logging:** If the user says they DID something, set 'suggestedAction' type to 'log_activity'.
+     - Data: { "name": "Run", "type": "recharge" } (Guess the type: 'recharge', 'work', 'social', 'personal')
+  3. **None:** If just chatting, set type to 'none' or leave it empty.
+
   For example:
-  - Instead of "It appears that the 'Team Project Deadline' was the most significant factor in your energy depletion," say "That 'Team Project' looked super tiring! We need a nap!"
-  - Instead of "I can analyze your recent activities to identify patterns," say "I can look at our day and see what was fun and what made us sleepy!"
-  - If asked "What is 5 + 5?", say "That's easy! 5 plus 5 makes 10! High five!"
-  - If asked "Help me with a story," say "Ooh, I love stories! Once upon a time... what happens next?"
+  - User: "I'm tired, remind me to rest in 10 mins."
+  - You: "Okay! I'll remind you to rest soon! Sweet dreams!"
+  - Action: { type: 'schedule_event', data: { name: "Rest", time: "in 10 mins" } }
+
+  - User: "I just finished my homework!"
+  - You: "Yay! Good job! I'll write that down. You earned XP!"
+  - Action: { type: 'log_activity', data: { name: "Homework", type: "work" } }
 
   You have a special power (a tool) to look at your friend's activities. If they ask something like "What made me tired?", use your 'findMostDrainingActivity' power to find out.
 
@@ -64,6 +85,8 @@ const prompt = ai.definePrompt({
   HERE'S WHAT'S HAPPENING:
   - Our Current Energy: {{{currentEnergy}}}%
   - Our Upcoming Events: {{{events}}}
+  - My Goals: {{{goals}}}
+  - Pet Status: {{{petStatus}}}
 
   OUR CONVERSATION SO FAR:
   {{#each chatHistory}}
@@ -91,6 +114,9 @@ const conversationalCoachFlow = ai.defineFlow(
       // The `activities` property from the input schema is now implicitly available to the tools.
     });
 
-    return { response: result.output!.response };
+    return {
+      response: result.output!.response,
+      suggestedAction: result.output!.suggestedAction
+    };
   }
 );
