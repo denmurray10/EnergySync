@@ -540,14 +540,27 @@ export function ARPetModal({
                             level={level}
                             suggestion={null}
                             showBackground={false}
-                            onToyClick={() => {
+                        />
+                    </div>
+
+                    {/* Independent Toy - Fixed position on screen */}
+                    {customization.toy && customization.toy !== 'none' && ACCESSORIES[customization.toy] && (
+                        <div
+                            className="absolute bottom-32 right-8 z-20 cursor-pointer transition-transform active:scale-90 hover:scale-110"
+                            onClick={() => {
                                 if (customization.toy === 'ball') doTrick('bounce');
                                 else if (customization.toy === 'bone') throwTreat();
                                 else if (customization.toy === 'frisbee') doTrick('spin');
                                 else if (customization.toy === 'laser') doTrick('sparkle');
                             }}
-                        />
-                    </div>
+                        >
+                            <div className="bg-white/10 backdrop-blur-sm rounded-full p-4 border-2 border-white/20">
+                                <div className="text-5xl drop-shadow-md animate-bounce">
+                                    {ACCESSORIES[customization.toy].emoji}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {energyOrbs.map(orb => (
                         <div key={orb.id} className="absolute w-7 h-7 rounded-full animate-pulse z-20 pointer-events-none"

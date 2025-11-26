@@ -104,7 +104,6 @@ type VirtualPetProps = {
     level: number;
     suggestion: ActionableSuggestion | null;
     showBackground?: boolean;
-    onToyClick?: () => void;
 };
 
 export function VirtualPet({
@@ -114,8 +113,7 @@ export function VirtualPet({
     customization,
     level,
     suggestion,
-    showBackground = true,
-    onToyClick
+    showBackground = true
 }: VirtualPetProps) {
 
     const getHappinessText = () => {
@@ -155,19 +153,6 @@ export function VirtualPet({
                 <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
                     <div className="text-2xl drop-shadow-sm">
                         {ACCESSORIES[customization.collar].emoji}
-                    </div>
-                </div>
-            )}
-            {customization.toy && customization.toy !== 'none' && ACCESSORIES[customization.toy] && (
-                <div
-                    className="absolute bottom-0 -right-8 z-30 cursor-pointer transition-transform active:scale-90"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onToyClick?.();
-                    }}
-                >
-                    <div className="text-3xl drop-shadow-md animate-bounce">
-                        {ACCESSORIES[customization.toy].emoji}
                     </div>
                 </div>
             )}
