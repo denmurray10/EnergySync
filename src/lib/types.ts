@@ -43,11 +43,19 @@ export interface BiometricData {
 export interface PetCustomization {
   color: string;
   outlineColor: string;
-  accessory: 'none' | 'bowtie';
+  accessory: 'none' | 'bowtie'; // Legacy - keeping for compatibility
+  hat: 'none' | 'tophat' | 'crown' | 'santa' | 'witch' | 'party' | 'cowboy';
+  glasses: 'none' | 'cool' | 'nerd' | 'heart' | 'star';
+  collar: 'none' | 'bowtie' | 'bandana' | 'scarf' | 'bell';
+  toy?: 'none' | 'ball' | 'bone' | 'frisbee' | 'laser';
   background: 'default' | 'park' | 'cozy';
   unlockedColors: string[];
   unlockedOutlineColors: string[];
-  unlockedAccessories: string[];
+  unlockedAccessories: string[]; // Legacy
+  unlockedHats: string[];
+  unlockedGlasses: string[];
+  unlockedCollars: string[];
+  unlockedToys?: string[];
   unlockedBackgrounds: string[];
 }
 
@@ -95,6 +103,19 @@ export interface User {
   upcomingEvents: UpcomingEvent[];
   reminders: Reminder[];
   messengerHistory: MessengerChat[];
+  dailyChallenges: DailyChallenge[];
+  lastChallengeReset: string;
+}
+
+export interface DailyChallenge {
+  id: string;
+  type: 'catch_items' | 'feed_treats' | 'play_minigame' | 'maintain_energy' | 'perform_tricks';
+  description: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+  reward: { type: 'xp' | 'item'; value: number | string };
+  icon: string;
 }
 
 export interface Goal {

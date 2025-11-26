@@ -4,10 +4,11 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy } from "lucide-react";
+import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target } from "lucide-react";
 import { VirtualPet, type PetType } from "./virtual-pet";
-import type { PetCustomization } from "@/lib/types";
+import type { PetCustomization, DailyChallenge } from "@/lib/types";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { getUnlockedAccessories, type AccessorySlot, ACCESSORIES } from "@/lib/accessories";
 
 type ARPetModalProps = {
     open: boolean;
@@ -16,6 +17,11 @@ type ARPetModalProps = {
     petHappiness: number;
     customization: PetCustomization;
     level: number;
+    onCustomizationChange?: (customization: Partial<PetCustomization>) => void;
+    isPro?: boolean;
+    achievements?: string[];
+    dailyChallenges?: DailyChallenge[];
+    onUpdateChallenge?: (type: string, amount: number) => void;
 };
 
 const SPEECH_BUBBLES = {
@@ -29,6 +35,7 @@ const SPEECH_BUBBLES = {
     lowEnergy: ["You seem tired... 🥱", "Time for a break? ☕", "Let's recharge! 🔋"],
     highEnergy: ["You're on fire! 🔥", "Amazing energy! ⚡", "Keep it up! 🌟"],
     gameStart: ["Let's play! 🎮", "Catch time! 🎯", "Here we go! 🚀"],
+    gameWin: ["We did it! 🏆", "Great job! 🌟", "You're amazing! 🎉"],
 };
 
 const TREAT_TYPES = {
@@ -43,7 +50,19 @@ type Treat = { id: number; x: number; y: number; vy: number };
 type FallingObject = { id: number; x: number; y: number; type: 'star' | 'heart' | 'coin'; velocity: number };
 type Particle = { id: number; x: number; y: number; vx: number; vy: number; color: string; life: number };
 
-export function ARPetModal({ open, onOpenChange, petType, petHappiness, customization, level }: ARPetModalProps) {
+export function ARPetModal({
+    open,
+    onOpenChange,
+    petType,
+    petHappiness,
+    customization,
+    level,
+    onCustomizationChange,
+    isPro,
+    achievements,
+    dailyChallenges,
+    onUpdateChallenge
+}: ARPetModalProps) {
     const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
     const [petPosition, setPetPosition] = useState({ x: 0, y: 0 });
     const [petScale, setPetScale] = useState(1.5);
@@ -53,6 +72,7 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
     const [soundEnabled, setSoundEnabled] = useState(false);
     const [lastTap, setLastTap] = useState(0);
     const [cameraError, setCameraError] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     const [energyOrbs, setEnergyOrbs] = useState<EnergyOrb[]>([]);
     const [treats, setTreats] = useState<Treat[]>([]);
@@ -62,6 +82,10 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
     const [combo, setCombo] = useState(0);
     const [gameActive, setGameActive] = useState(false);
     const [missedCount, setMissedCount] = useState(0);
+    const [gameTimeLeft, setGameTimeLeft] = useState(20);
+    const [showAccessories, setShowAccessories] = useState(false);
+    const [showChallenges, setShowChallenges] = useState(false);
+    const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
 
     const webcamRef = useRef<Webcam>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -82,10 +106,11 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
     }, [petHappiness]);
 
     const showSpeechBubble = useCallback((category: keyof typeof SPEECH_BUBBLES) => {
+        if (isDragging || speechBubble !== null) return;
         const messages = SPEECH_BUBBLES[category];
         setSpeechBubble(messages[Math.floor(Math.random() * messages.length)]);
         setTimeout(() => setSpeechBubble(null), 3000);
-    }, []);
+    }, [isDragging, speechBubble]);
 
     const playSound = useCallback((freq: number, dur: number) => {
         if (!soundEnabled) return;
@@ -170,15 +195,17 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
             playSound(880, 0.2);
             showSpeechBubble('sparkle');
         }
+        onUpdateChallenge?.('perform_tricks', 1);
         vibrate([30, 10, 30]);
         setTimeout(() => setIsAnimating(false), 700);
-    }, [playSound, showSpeechBubble, vibrate, createParticles, petPosition]);
+    }, [playSound, showSpeechBubble, vibrate, createParticles, petPosition, onUpdateChallenge]);
 
     const startGame = useCallback(() => {
         setGameActive(true);
         setScore(0);
         setCombo(0);
         setMissedCount(0);
+        setGameTimeLeft(20);
         setFallingObjects([]);
         showSpeechBubble('gameStart');
     }, [showSpeechBubble]);
@@ -186,11 +213,16 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
     const endGame = useCallback(() => {
         setGameActive(false);
         setFallingObjects([]);
-    }, []);
+        if (score > 0) {
+            showSpeechBubble('gameWin');
+            onUpdateChallenge?.('play_minigame', 1);
+        }
+    }, [score, showSpeechBubble, onUpdateChallenge]);
 
-    // Handle pet touch interactions
+    // Touch handlers for pet
     const handlePetTouchStart = useCallback((e: React.TouchEvent) => {
         e.stopPropagation();
+        setIsDragging(false);
         if (e.touches.length === 1) {
             const rect = containerRef.current?.getBoundingClientRect();
             if (rect) {
@@ -200,7 +232,6 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                 };
             }
         } else if (e.touches.length === 2) {
-            // Pinch zoom start
             const dist = Math.sqrt(
                 Math.pow(e.touches[1].clientX - e.touches[0].clientX, 2) +
                 Math.pow(e.touches[1].clientY - e.touches[0].clientY, 2)
@@ -212,14 +243,13 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
     const handlePetTouchMove = useCallback((e: React.TouchEvent) => {
         e.stopPropagation();
         if (!touchStartRef.current) return;
+        setIsDragging(true);
 
         if (e.touches.length === 1 && !touchStartRef.current.dist) {
-            // Drag pet
             const deltaX = e.touches[0].clientX - touchStartRef.current.x;
             const deltaY = e.touches[0].clientY - touchStartRef.current.y;
             setPetPosition({ x: deltaX / 2, y: deltaY / 2 });
         } else if (e.touches.length === 2 && touchStartRef.current.dist) {
-            // Pinch zoom
             const dist = Math.sqrt(
                 Math.pow(e.touches[1].clientX - e.touches[0].clientX, 2) +
                 Math.pow(e.touches[1].clientY - e.touches[0].clientY, 2)
@@ -233,9 +263,8 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
         e.stopPropagation();
 
         if (touchStartRef.current && !touchStartRef.current.dist && e.touches.length === 0) {
-            // Check if it was a tap (not drag)
             const now = Date.now();
-            if (Math.abs(petPosition.x) < 5 && Math.abs(petPosition.y) < 5) {
+            if (!isDragging && Math.abs(petPosition.x) < 5 && Math.abs(petPosition.y) < 5) {
                 if (now - lastTap < 300) {
                     doTrick('spin');
                 } else {
@@ -244,7 +273,6 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                 setLastTap(now);
             }
 
-            // Smooth return to center
             const returnInterval = setInterval(() => {
                 setPetPosition(prev => {
                     const newX = prev.x * 0.85;
@@ -259,7 +287,8 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
         }
 
         touchStartRef.current = null;
-    }, [lastTap, doTrick, petPosition]);
+        setTimeout(() => setIsDragging(false), 100);
+    }, [lastTap, doTrick, petPosition, isDragging]);
 
     // Physics loop
     useEffect(() => {
@@ -273,7 +302,6 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
             const centerX = rect.width / 2;
             const centerY = rect.height / 2;
 
-            // Update orbs
             setEnergyOrbs(prev => prev.map(orb => {
                 const newX = orb.x + orb.vx;
                 const newY = orb.y + orb.vy;
@@ -289,6 +317,7 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                     playSound(880, 0.1);
                     vibrate([15]);
                     showSpeechBubble('orbCaught');
+                    onUpdateChallenge?.('catch_items', 1);
                     return null;
                 }
 
@@ -297,7 +326,6 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                     : null;
             }).filter(Boolean) as EnergyOrb[]);
 
-            // Update treats
             setTreats(prev => prev.map(treat => {
                 const newY = treat.y + treat.vy;
                 const dist = Math.sqrt(
@@ -310,13 +338,13 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                     playSound(659, 0.15);
                     vibrate([25]);
                     showSpeechBubble('treatEaten');
+                    onUpdateChallenge?.('feed_treats', 1);
                     return null;
                 }
 
                 return newY < rect.height + 50 ? { ...treat, y: newY, vy: treat.vy + 0.15 } : null;
             }).filter(Boolean) as Treat[]);
 
-            // Update falling objects
             if (gameActive) {
                 setFallingObjects(prev => prev.map(obj => {
                     const newY = obj.y + obj.velocity;
@@ -332,6 +360,7 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                         createParticles(obj.x, newY, '#ffd700', 8);
                         playSound(880 + combo * 40, 0.1);
                         vibrate([10]);
+                        onUpdateChallenge?.('catch_items', 1);
                         return null;
                     }
 
@@ -348,7 +377,6 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                 }).filter(Boolean) as FallingObject[]);
             }
 
-            // Update particles
             setParticles(prev => prev.map(p => ({
                 ...p,
                 x: p.x + p.vx,
@@ -362,9 +390,26 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
 
         frameId = requestAnimationFrame(update);
         return () => cancelAnimationFrame(frameId);
-    }, [open, petPosition, gameActive, combo, petType, createParticles, playSound, vibrate, showSpeechBubble, endGame]);
+    }, [open, petPosition, gameActive, combo, petType, createParticles, playSound, vibrate, showSpeechBubble, endGame, onUpdateChallenge]);
 
-    // Spawn falling objects
+    // Game timer
+    useEffect(() => {
+        if (!gameActive) return;
+
+        const interval = setInterval(() => {
+            setGameTimeLeft(prev => {
+                if (prev <= 1) {
+                    endGame();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [gameActive, endGame]);
+
+    // Spawn objects
     useEffect(() => {
         if (!gameActive || !containerRef.current) return;
 
@@ -383,7 +428,7 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
         return () => clearInterval(interval);
     }, [gameActive]);
 
-    // Device motion
+    // Motion
     useEffect(() => {
         if (!open) return;
 
@@ -471,12 +516,11 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                         <div className="absolute top-20 left-1/2 -translate-x-1/2 z-20 bg-yellow-500/20 backdrop-blur px-4 py-2 rounded-lg border border-yellow-500/40 max-w-xs">
                             <div className="flex items-center gap-2 text-yellow-100 text-sm">
                                 <AlertCircle className="h-4 w-4" />
-                                <p>Fantasy mode active! ✨</p>
+                                <p>Fantasy mode! ✨</p>
                             </div>
                         </div>
                     )}
 
-                    {/* Pet */}
                     <div
                         className="relative z-10 transition-all duration-200 drop-shadow-2xl cursor-pointer"
                         style={{
@@ -496,36 +540,37 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                             level={level}
                             suggestion={null}
                             showBackground={false}
+                            onToyClick={() => {
+                                if (customization.toy === 'ball') doTrick('bounce');
+                                else if (customization.toy === 'bone') throwTreat();
+                                else if (customization.toy === 'frisbee') doTrick('spin');
+                                else if (customization.toy === 'laser') doTrick('sparkle');
+                            }}
                         />
                     </div>
 
-                    {/* Orbs */}
                     {energyOrbs.map(orb => (
                         <div key={orb.id} className="absolute w-7 h-7 rounded-full animate-pulse z-20 pointer-events-none"
                             style={{ left: orb.x, top: orb.y, backgroundColor: orb.color, boxShadow: `0 0 15px ${orb.color}`, transform: 'translate(-50%, -50%)' }} />
                     ))}
 
-                    {/* Treats */}
                     {treats.map(t => (
                         <div key={t.id} className="absolute text-3xl z-20 pointer-events-none" style={{ left: t.x, top: t.y, transform: 'translate(-50%, -50%)' }}>
                             {TREAT_TYPES[petType].emoji}
                         </div>
                     ))}
 
-                    {/* Falling objects */}
                     {fallingObjects.map(obj => (
                         <div key={obj.id} className="absolute text-2xl z-20 pointer-events-none" style={{ left: obj.x, top: obj.y, transform: 'translate(-50%, -50%)' }}>
                             {obj.type === 'star' ? '⭐' : obj.type === 'heart' ? '❤️' : '🪙'}
                         </div>
                     ))}
 
-                    {/* Particles */}
                     {particles.map(p => (
                         <div key={p.id} className="absolute w-1.5 h-1.5 rounded-full z-20 pointer-events-none"
                             style={{ left: p.x, top: p.y, backgroundColor: p.color, opacity: p.life, transform: 'translate(-50%, -50%)' }} />
                     ))}
 
-                    {/* Speech */}
                     {speechBubble && (
                         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-in fade-in zoom-in-95 duration-200"
                             style={{ transform: `translate(calc(-50% + ${petPosition.x}px), calc(-110px + ${petPosition.y}px))` }}>
@@ -538,9 +583,8 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                         </div>
                     )}
 
-                    {/* Score */}
                     {score > 0 && (
-                        <div className="absolute top-20 left-4 z-20 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
+                        <div className="absolute top-20 right-4 z-20 bg-black/50 backdrop-blur px-3 py-2 rounded-lg">
                             <div className="flex items-center gap-2 text-white">
                                 <Trophy className="h-4 w-4 text-yellow-400" />
                                 <span className="font-bold text-xl">{score}</span>
@@ -550,42 +594,222 @@ export function ARPetModal({ open, onOpenChange, petType, petHappiness, customiz
                     )}
 
                     {gameActive && (
-                        <div className="absolute top-20 right-4 z-20 bg-red-500/50 backdrop-blur px-3 py-1.5 rounded text-white text-sm">
-                            Miss: {missedCount}/3
+                        <div className="absolute top-20 right-4 z-20 bg-black/60 backdrop-blur px-4 py-2 rounded-lg">
+                            <div className="text-white text-sm font-bold">
+                                ⏱️ {gameTimeLeft}s
+                            </div>
+                            <div className="text-red-400 text-xs">
+                                Misses: {missedCount}/3
+                            </div>
                         </div>
                     )}
 
-                    {/* Controls */}
                     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur" onClick={throwTreat}>
-                            <Cookie className="h-5 w-5" />
+                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={throwTreat}>
+                            <Cookie className="h-5 w-5 text-white" />
                         </Button>
-                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur" onClick={gameActive ? endGame : startGame}>
-                            <Star className="h-5 w-5" />
+                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={gameActive ? endGame : startGame}>
+                            <Star className="h-5 w-5 text-white" />
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                            onClick={() => setShowAccessories(!showAccessories)}
+                        >
+                            <Shirt className="h-5 w-5 text-white" />
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                            onClick={() => setShowChallenges(!showChallenges)}
+                        >
+                            <Target className="h-5 w-5 text-white" />
                         </Button>
                     </div>
 
                     <div className="absolute top-4 right-4 z-20 flex gap-2">
-                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur" onClick={() => setSoundEnabled(!soundEnabled)}>
-                            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={() => setSoundEnabled(!soundEnabled)}>
+                            {soundEnabled ? <Volume2 className="h-5 w-5 text-white" /> : <VolumeX className="h-5 w-5 text-white" />}
                         </Button>
                         {!cameraError && (
-                            <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur" onClick={() => setFacingMode(p => p === "user" ? "environment" : "user")}>
-                                <RefreshCw className="h-5 w-5" />
+                            <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={() => setFacingMode(p => p === "user" ? "environment" : "user")}>
+                                <RefreshCw className="h-5 w-5 text-white" />
                             </Button>
                         )}
                         <Button variant="destructive" size="icon" className="rounded-full" onClick={() => onOpenChange(false)}>
-                            <X className="h-5 w-5" />
+                            <X className="h-5 w-5 text-white" />
                         </Button>
                     </div>
 
-                    {/* Instructions */}
+                    {/* Accessory Drawer */}
+                    {showAccessories && (
+                        <>
+                            {/* Backdrop */}
+                            <div
+                                className="absolute inset-0 z-20 bg-black/20"
+                                onClick={() => setShowAccessories(false)}
+                            />
+                            <div
+                                className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-lg border-t-2 border-purple-400/30 rounded-t-3xl transition-all duration-300 animate-in slide-in-from-bottom"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="p-4 max-h-[40vh] overflow-y-auto scrollbar-hide">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-white font-bold text-lg">Pet Accessories</h3>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowAccessories(false)}
+                                            className="text-white"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    {/* Slot Tabs */}
+                                    <div className="flex gap-2 mb-4">
+                                        {(['hat', 'glasses', 'collar', 'toy'] as AccessorySlot[]).map(slot => (
+                                            <button
+                                                key={slot}
+                                                onClick={() => setSelectedSlot(slot)}
+                                                className={`px-4 py-2 rounded-lg font-medium capitalize transition-colors ${selectedSlot === slot
+                                                    ? 'bg-white text-black'
+                                                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                                                    }`}
+                                            >
+                                                {slot}s
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    {/* Accessories Grid */}
+                                    <div className="grid grid-cols-4 gap-3">
+                                        {/* None option */}
+                                        <button
+                                            onClick={() => {
+                                                if (onCustomizationChange) {
+                                                    onCustomizationChange({ [selectedSlot]: 'none' });
+                                                }
+                                            }}
+                                            className={`p-4 rounded-xl border-2 transition-all ${customization[selectedSlot] === 'none'
+                                                ? 'border-white bg-white/20'
+                                                : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            <div className="text-3xl mb-1">❌</div>
+                                            <div className="text-white/80 text-xs">None</div>
+                                        </button>
+
+                                        {/* Unlocked accessories */}
+                                        {getUnlockedAccessories(selectedSlot, level, achievements || [], isPro || false).map(acc => (
+                                            <button
+                                                key={acc.id}
+                                                onClick={() => {
+                                                    if (onCustomizationChange) {
+                                                        onCustomizationChange({ [selectedSlot]: acc.id });
+                                                    }
+                                                }}
+                                                className={`p-4 rounded-xl border-2 transition-all ${customization[selectedSlot] === acc.id
+                                                    ? 'border-white bg-white/20'
+                                                    : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                                    }`}
+                                                title={acc.description}
+                                            >
+                                                <div className="text-3xl mb-1">{acc.emoji}</div>
+                                                <div className="text-white/80 text-xs truncate">{acc.name.split(' ')[0]}</div>
+                                            </button>
+                                        ))}
+
+                                        {/* Locked accessories (preview) */}
+                                        {Object.values(ACCESSORIES)
+                                            .filter(acc =>
+                                                acc.slot === selectedSlot &&
+                                                !getUnlockedAccessories(selectedSlot, level, achievements || [], isPro || false)
+                                                    .some(unlocked => unlocked.id === acc.id)
+                                            )
+                                            .slice(0, 3)
+                                            .map(acc => (
+                                                <div
+                                                    key={acc.id}
+                                                    className="p-4 rounded-xl border-2 border-white/10 bg-black/40 relative opacity-50"
+                                                    title={`Unlock at ${acc.unlockCondition.type}: ${acc.unlockCondition.value || 'special'}`}
+                                                >
+                                                    <div className="text-3xl mb-1 grayscale">{acc.emoji}</div>
+                                                    <div className="text-white/50 text-xs">🔒</div>
+                                                    <div className="absolute top-1 right-1 text-xs bg-yellow-500 text-black px-1 rounded">
+                                                        {acc.unlockCondition.type === 'level' ? `L${acc.unlockCondition.value}` : '⭐'}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Challenges Drawer */}
+                    {showChallenges && dailyChallenges && (
+                        <>
+                            {/* Backdrop */}
+                            <div
+                                className="absolute inset-0 z-20 bg-black/20"
+                                onClick={() => setShowChallenges(false)}
+                            />
+                            <div
+                                className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-lg border-t-2 border-purple-400/30 rounded-t-3xl transition-all duration-300 animate-in slide-in-from-bottom"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="p-4 max-h-[40vh] overflow-y-auto scrollbar-hide">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-white font-bold text-lg">Daily Challenges</h3>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowChallenges(false)}
+                                            className="text-white"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {dailyChallenges.map(challenge => (
+                                            <div key={challenge.id} className="bg-white/10 rounded-xl p-3 border border-white/10">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="text-2xl">{challenge.icon}</div>
+                                                    <div className="flex-1">
+                                                        <div className="text-white font-medium text-sm">{challenge.description}</div>
+                                                        <div className="text-white/60 text-xs">Reward: {challenge.reward.value} XP</div>
+                                                    </div>
+                                                    {challenge.completed ? (
+                                                        <div className="text-green-400 font-bold text-sm">DONE!</div>
+                                                    ) : (
+                                                        <div className="text-white/80 text-sm">{challenge.progress}/{challenge.target}</div>
+                                                    )}
+                                                </div>
+                                                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-500 ${challenge.completed ? 'bg-green-500' : 'bg-blue-500'}`}
+                                                        style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
                     <div className="absolute bottom-12 left-0 right-0 z-20 flex flex-col gap-2 items-center pointer-events-none">
                         <div className="bg-black/40 backdrop-blur px-5 py-2.5 rounded-full text-white/90 font-medium shadow-lg border border-white/10">
-                            {cameraError ? "Fantasy Mode ✨" : gameActive ? "🎮 Catch Game" : "AR Companion"}
+                            {cameraError ? "Fantasy Mode ✨" : gameActive ? `🎮 Catch Game` : "AR Companion"}
                         </div>
                         <div className="bg-black/30 backdrop-blur px-4 py-1.5 rounded-full text-white/70 text-sm">
-                            {gameActive ? "Tap pet to catch!" : "Tap → orbs • Drag pet • Pinch zoom • Shake → sparkle"}
+                            {gameActive ? "Drag pet to catch!" : "Tap → orbs • Drag pet • Pinch zoom • Shake → sparkle"}
                         </div>
                     </div>
                 </div>

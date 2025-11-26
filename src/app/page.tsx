@@ -55,7 +55,7 @@ export default function HomePage() {
     friends, setFriends, chatHistory, addChatMessage, signOut, reminders, setReminders,
     petTasks, setPetTasks, gainPetExp, addJourneyEntry,
     activities, setActivities, upcomingEvents, setUpcomingEvents,
-    messengerHistory, setMessengerHistory
+    messengerHistory, setMessengerHistory, updateDailyChallengeProgress
   } = useAuth();
 
   const [showTutorial, setShowTutorial] = useState(false);
@@ -365,6 +365,17 @@ export default function HomePage() {
           setFriends(newFriends);
         }
       }
+    }
+  };
+
+  const handleARCustomizationChange = (customization: Partial<PetCustomization>) => {
+    if (appUser) {
+      setAppUser({
+        petCustomization: {
+          ...appUser.petCustomization,
+          ...customization
+        }
+      });
     }
   };
 
@@ -1009,6 +1020,11 @@ export default function HomePage() {
             petHappiness={petHappiness}
             customization={appUser.petCustomization}
             level={appUser.petLevel}
+            onCustomizationChange={handleARCustomizationChange}
+            isPro={isProMember}
+            achievements={achievements.filter(a => a.unlocked).map(a => a.name)}
+            dailyChallenges={appUser.dailyChallenges}
+            onUpdateChallenge={updateDailyChallengeProgress}
           />
         )}
         {appUser && (

@@ -2,7 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { cn } from "@/lib/utils";
-import type { PetCustomization } from "@/lib/types";
+import type { PetCustomization, ActionableSuggestion } from "@/lib/types";
+import { ACCESSORIES } from "@/lib/accessories";
 
 const DynamicDotLottie = dynamic(
     () => import('@lottiefiles/dotlottie-react').then(mod => mod.DotLottieReact),
@@ -95,17 +96,27 @@ const PetBody = ({ type, color, outlineColor }: { type: PetType, color: string, 
     }
 }
 
-export type VirtualPetProps = {
+type VirtualPetProps = {
     petType: PetType;
     happiness: number;
     isInteracting: boolean;
     customization: PetCustomization;
     level: number;
-    suggestion: string | null;
+    suggestion: ActionableSuggestion | null;
     showBackground?: boolean;
-}
+    onToyClick?: () => void;
+};
 
-export const VirtualPet = ({ petType, happiness, isInteracting, customization, level, suggestion, showBackground = true }: VirtualPetProps) => {
+export function VirtualPet({
+    petType,
+    happiness,
+    isInteracting,
+    customization,
+    level,
+    suggestion,
+    showBackground = true,
+    onToyClick
+}: VirtualPetProps) {
 
     const getHappinessText = () => {
         if (happiness >= 80) return "Feeling ecstatic because you are!";
@@ -125,6 +136,42 @@ export const VirtualPet = ({ petType, happiness, isInteracting, customization, l
 
     const petContent = (
         <div className={cn("relative transition-transform", isInteracting && "animate-jump")} style={{ transform: `scale(${scale})` }}>
+            {/* Accessories Overlay */}
+            {customization.hat && customization.hat !== 'none' && ACCESSORIES[customization.hat] && (
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                    <div className="text-4xl drop-shadow-md animate-bounce">
+                        {ACCESSORIES[customization.hat].emoji}
+                    </div>
+                </div>
+            )}
+            {customization.glasses && customization.glasses !== 'none' && ACCESSORIES[customization.glasses] && (
+                <div className="absolute top-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                    <div className="text-3xl drop-shadow-sm">
+                        {ACCESSORIES[customization.glasses].emoji}
+                    </div>
+                </div>
+            )}
+            {customization.collar && customization.collar !== 'none' && ACCESSORIES[customization.collar] && (
+                <div className="absolute top-16 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                    <div className="text-2xl drop-shadow-sm">
+                        {ACCESSORIES[customization.collar].emoji}
+                    </div>
+                </div>
+            )}
+            {customization.toy && customization.toy !== 'none' && ACCESSORIES[customization.toy] && (
+                <div
+                    className="absolute bottom-0 -right-8 z-30 cursor-pointer transition-transform active:scale-90"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onToyClick?.();
+                    }}
+                >
+                    <div className="text-3xl drop-shadow-md animate-bounce">
+                        {ACCESSORIES[customization.toy].emoji}
+                    </div>
+                </div>
+            )}
+
             {petType === 'dog' ? (
                 <DynamicDotLottie
                     src="https://lottie.host/09487b01-8ddf-44ee-9132-312a993d0950/OwLvmZQ781.lottie"
@@ -144,11 +191,6 @@ export const VirtualPet = ({ petType, happiness, isInteracting, customization, l
                         )}
                         <PetFace happiness={happiness} />
                         {petType === 'chicken' && <path d="M 47 60 L 53 60 L 50 65 Z" fill="#facc15" />}
-                        {customization.accessory === 'bowtie' && (
-                            <path
-                                d="M 45 75 L 55 80 L 55 70 Z M 55 75 L 45 80 L 45 70 Z"
-                                fill="hsl(var(--destructive))" stroke={customization.outlineColor} strokeWidth="1.5" strokeLinejoin="round" />
-                        )}
                     </g>
                 </svg>
             )}

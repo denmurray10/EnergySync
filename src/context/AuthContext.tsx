@@ -8,6 +8,7 @@ import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
 import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder, MessengerChat } from '@/lib/types';
 import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
+import { generateDailyChallenges } from '@/lib/daily-challenges';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -32,6 +33,7 @@ interface AuthContextType {
   setReminders: (reminders: Reminder[]) => void;
   messengerHistory: MessengerChat[];
   setMessengerHistory: (history: MessengerChat[]) => void;
+  updateDailyChallengeProgress: (type: string, amount: number) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,6 +55,15 @@ const removeUndefineds = (obj: any): any => {
     }
   }
   return newObj;
+};
+
+const isNewDay = (dateString?: string) => {
+  if (!dateString) return true;
+  const lastDate = new Date(dateString);
+  const today = new Date();
+  return lastDate.getDate() !== today.getDate() ||
+    lastDate.getMonth() !== today.getMonth() ||
+    lastDate.getFullYear() !== today.getFullYear();
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -92,7 +103,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!userData.chatHistory) userData.chatHistory = [];
             if (!userData.journeys) userData.journeys = [];
             if (!userData.reminders) userData.reminders = [];
+            if (!userData.reminders) userData.reminders = [];
             if (!userData.messengerHistory) userData.messengerHistory = [];
+
+            // Initialize Daily Challenges
+            if (!userData.dailyChallenges || isNewDay(userData.lastChallengeReset)) {
+              userData.dailyChallenges = generateDailyChallenges();
+              userData.lastChallengeReset = new Date().toISOString();
+              // We need to persist this initial generation
+              updateDoc(userRef, {
+                dailyChallenges: userData.dailyChallenges,
+                lastChallengeReset: userData.lastChallengeReset
+              }).catch(e => console.error("Failed to save initial challenges", e));
+            }
 
             setLocalAppUser(userData);
           } else {
@@ -284,6 +307,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [localAppUser, setAppUser, toast]);
 
+  const updateDailyChallengeProgress = useCallback((type: string, amount: number) => {
+    if (!localAppUser || !localAppUser.dailyChallenges) return;
+
+    let xpToGain = 0;
+    let challengesChanged = false;
+
+    const updatedChallenges = localAppUser.dailyChallenges.map(challenge => {
+      if (challenge.type === type && !challenge.completed) {
+        const newProgress = Math.min(challenge.target, challenge.progress + amount);
+        const completed = newProgress >= challenge.target;
+
+        if (completed && !challenge.completed) {
+          challengesChanged = true;
+          if (challenge.reward.type === 'xp') {
+            xpToGain += (challenge.reward.value as number);
+          }
+          toast({
+            title: 'Daily Challenge Complete! 🎯',
+            description: `You earned ${challenge.reward.value} XP!`,
+            variant: 'default'
+          });
+        } else if (newProgress !== challenge.progress) {
+          challengesChanged = true;
+        }
+
+        return { ...challenge, progress: newProgress, completed };
+      }
+      return challenge;
+    });
+
+    if (challengesChanged) {
+      setAppUser({ dailyChallenges: updatedChallenges });
+      if (xpToGain > 0) {
+        gainPetExp(xpToGain);
+      }
+    }
+  }, [localAppUser, setAppUser, gainPetExp, toast]);
+
   const signOut = async () => {
     await auth.signOut();
     setLocalAppUser(null);
@@ -319,7 +380,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     reminders,
     setReminders,
     messengerHistory,
-    setMessengerHistory
+    setMessengerHistory,
+    updateDailyChallengeProgress
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
