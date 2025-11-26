@@ -79,5 +79,3 @@
 8. **Social Features** - Shareability
 9. **Persistent State** - Quality of life
 10. **Weather** - Polish/delight
-
-Which features would you like me to implement first?
