@@ -548,13 +548,23 @@ export function ARPetModal({
     // Ball play requests
     useEffect(() => {
         if (!open || gameActive) return;
+
+        // Show first ball play message after 5 seconds
+        const initialTimeout = setTimeout(() => {
+            showSpeechBubble('ballPlay');
+        }, 5000);
+
+        // Then show randomly every 10 seconds (60% chance)
         const interval = setInterval(() => {
-            // Randomly ask to play with the ball (30% chance)
-            if (Math.random() < 0.3) {
+            if (Math.random() < 0.6) {
                 showSpeechBubble('ballPlay');
             }
-        }, 15000); // Check every 15 seconds
-        return () => clearInterval(interval);
+        }, 10000);
+
+        return () => {
+            clearTimeout(initialTimeout);
+            clearInterval(interval);
+        };
     }, [open, gameActive, showSpeechBubble]);
 
     const energyState = getPetEnergyState();
@@ -688,7 +698,12 @@ export function ARPetModal({
                     >
                         <div className="relative">
                             <div className="drop-shadow-2xl filter brightness-110">
-                                <img src="/accessories/tennis-ball.png" alt="Tennis Ball" className="w-16 h-16 object-contain" />
+                                {/* CSS Tennis Ball */}
+                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#CDDC39] to-[#8BC34A] relative overflow-hidden shadow-lg">
+                                    {/* White curved lines */}
+                                    <div className="absolute top-0 left-1/2 w-1 h-full bg-white rounded-full transform -translate-x-1/2 rotate-12"></div>
+                                    <div className="absolute top-0 left-1/2 w-1 h-full bg-white rounded-full transform -translate-x-1/2 -rotate-12"></div>
+                                </div>
                             </div>
                             {isDraggingBall && (
                                 <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
@@ -887,7 +902,10 @@ export function ARPetModal({
                                                 >
                                                     <div className="text-3xl mb-1">
                                                         {acc.id === 'ball' ? (
-                                                            <img src="/accessories/tennis-ball.png" alt="Tennis Ball" className="w-8 h-8 object-contain" />
+                                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#CDDC39] to-[#8BC34A] relative overflow-hidden shadow-md mx-auto">
+                                                                <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white rounded-full transform -translate-x-1/2 rotate-12"></div>
+                                                                <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white rounded-full transform -translate-x-1/2 -rotate-12"></div>
+                                                            </div>
                                                         ) : (
                                                             acc.emoji
                                                         )}
