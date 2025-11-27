@@ -37,6 +37,7 @@ const SPEECH_BUBBLES = {
     gameStart: ["Let's play! 🎮", "Catch time! 🎯", "Here we go! 🚀"],
     gameWin: ["We did it! 🏆", "Great job! 🌟", "You're amazing! 🎉"],
     ballPlay: ["Throw me the ball! 🎾", "How hard can you throw? 💪", "Wanna play fetch? 🐕", "Bet you can't hit me! 😏", "I'm ready! Throw it! 🎯"],
+    sit: ["Where should I sit? 🪑", "Find me a good spot! 📍", "I'll stay right there! 🐕"],
 };
 
 const TREAT_TYPES = {
@@ -97,6 +98,12 @@ export function ARPetModal({
     const [ballVelocity, setBallVelocity] = useState({ vx: 0, vy: 0 });
     const [isDraggingBall, setIsDraggingBall] = useState(false);
     const ballDragStart = useRef<{ x: number; y: number; time: number } | null>(null);
+
+    // Sit & Stay state
+    const [interactionMode, setInteractionMode] = useState<'default' | 'menu' | 'placing' | 'sitting'>('default');
+    const [petAnchor, setPetAnchor] = useState({ x: 0, y: 0 });
+    const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+    const lastBallInteraction = useRef<number>(Date.now());
 
     const webcamRef = useRef<Webcam>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -234,6 +241,15 @@ export function ARPetModal({
     const handlePetTouchStart = useCallback((e: React.TouchEvent) => {
         e.stopPropagation();
         setIsDragging(false);
+
+        // Long press detection
+        if (e.touches.length === 1 && !gameActive) {
+            longPressTimer.current = setTimeout(() => {
+                setInteractionMode('menu');
+                if (navigator.vibrate) navigator.vibrate(50);
+            }, 800);
+        }
+
         if (e.touches.length === 1) {
             const rect = containerRef.current?.getBoundingClientRect();
             if (rect) {
@@ -249,17 +265,38 @@ export function ARPetModal({
             );
             touchStartRef.current = { x: 0, y: 0, dist };
         }
-    }, []);
+    }, [gameActive]);
 
     const handlePetTouchMove = useCallback((e: React.TouchEvent) => {
         e.stopPropagation();
+
+        // Cancel long press if moved
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+
         if (!touchStartRef.current) return;
         setIsDragging(true);
 
         if (e.touches.length === 1 && !touchStartRef.current.dist) {
             const deltaX = e.touches[0].clientX - touchStartRef.current.x;
             const deltaY = e.touches[0].clientY - touchStartRef.current.y;
-            setPetPosition({ x: deltaX / 2, y: deltaY / 2 });
+
+            if (interactionMode === 'placing') {
+                // Move the anchor
+                setPetAnchor(prev => ({
+                    x: prev.x + deltaX,
+                    y: prev.y + deltaY
+                }));
+                // Update touch start to avoid jumping
+                touchStartRef.current = {
+                    x: e.touches[0].clientX,
+                    y: e.touches[0].clientY
+                };
+            } else {
+                setPetPosition({ x: deltaX / 2, y: deltaY / 2 });
+            }
         } else if (e.touches.length === 2 && touchStartRef.current.dist) {
             const dist = Math.sqrt(
                 Math.pow(e.touches[1].clientX - e.touches[0].clientX, 2) +
@@ -268,10 +305,22 @@ export function ARPetModal({
             const scale = Math.max(0.8, Math.min(2.5, dist / touchStartRef.current.dist * petScale));
             setPetScale(scale);
         }
-    }, [petScale]);
+    }, [petScale, interactionMode]);
 
     const handlePetTouchEnd = useCallback((e: React.TouchEvent) => {
         e.stopPropagation();
+
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+
+        if (interactionMode === 'placing') {
+            setInteractionMode('sitting');
+            touchStartRef.current = null;
+            setIsDragging(false);
+            return;
+        }
 
         if (touchStartRef.current && !touchStartRef.current.dist && e.touches.length === 0) {
             const now = Date.now();
@@ -299,7 +348,7 @@ export function ARPetModal({
 
         touchStartRef.current = null;
         setTimeout(() => setIsDragging(false), 100);
-    }, [lastTap, doTrick, petPosition, isDragging]);
+    }, [lastTap, doTrick, petPosition, isDragging, interactionMode]);
 
     // Physics loop
     useEffect(() => {
@@ -317,8 +366,8 @@ export function ARPetModal({
                 const newX = orb.x + orb.vx;
                 const newY = orb.y + orb.vy;
                 const dist = Math.sqrt(
-                    Math.pow(newX - (centerX + petPosition.x), 2) +
-                    Math.pow(newY - (centerY + petPosition.y), 2)
+                    Math.pow(newX - (centerX + petAnchor.x + petPosition.x), 2) +
+                    Math.pow(newY - (centerY + petAnchor.y + petPosition.y), 2)
                 );
 
                 if (dist < 50) {
@@ -340,8 +389,8 @@ export function ARPetModal({
             setTreats(prev => prev.map(treat => {
                 const newY = treat.y + treat.vy;
                 const dist = Math.sqrt(
-                    Math.pow(treat.x - (centerX + petPosition.x), 2) +
-                    Math.pow(newY - (centerY + petPosition.y), 2)
+                    Math.pow(treat.x - (centerX + petAnchor.x + petPosition.x), 2) +
+                    Math.pow(newY - (centerY + petAnchor.y + petPosition.y), 2)
                 );
 
                 if (dist < 50) {
@@ -360,8 +409,8 @@ export function ARPetModal({
                 setFallingObjects(prev => prev.map(obj => {
                     const newY = obj.y + obj.velocity;
                     const dist = Math.sqrt(
-                        Math.pow(obj.x - (centerX + petPosition.x), 2) +
-                        Math.pow(newY - (centerY + petPosition.y), 2)
+                        Math.pow(obj.x - (centerX + petAnchor.x + petPosition.x), 2) +
+                        Math.pow(newY - (centerY + petAnchor.y + petPosition.y), 2)
                     );
 
                     if (dist < 45) {
@@ -399,10 +448,20 @@ export function ARPetModal({
             // Ball physics (gravity, bouncing, pet interaction)
             if (!isDraggingBall && rect) {
                 setBallPosition(prev => {
+                    const timeSinceInteraction = Date.now() - lastBallInteraction.current;
                     let newX = prev.x + ballVelocity.vx;
                     let newY = prev.y + ballVelocity.vy;
                     let newVx = ballVelocity.vx * 0.99; // Air resistance
                     let newVy = ballVelocity.vy + 0.5; // Gravity
+
+                    // Sleep mode: after 3 seconds of no interaction, ball settles
+                    if (timeSinceInteraction > 3000) {
+                        newVx *= 0.8; // Strong horizontal friction
+                        if (newY > rect.height - 40) {
+                            newVy = 0; // Stop bouncing
+                            newY = Math.min(newY, rect.height - 30);
+                        }
+                    }
 
                     // Bounce off walls
                     if (newX < 30) {
@@ -429,11 +488,12 @@ export function ARPetModal({
 
                     // Check collision with pet
                     const distToPet = Math.sqrt(
-                        Math.pow(newX - (centerX + petPosition.x), 2) +
-                        Math.pow(newY - (centerY + petPosition.y), 2)
+                        Math.pow(newX - (centerX + petAnchor.x + petPosition.x), 2) +
+                        Math.pow(newY - (centerY + petAnchor.y + petPosition.y), 2)
                     );
 
                     if (distToPet < 80) {
+                        lastBallInteraction.current = Date.now();
                         createParticles(newX, newY, '#ffd700', 15);
                         showSpeechBubble('tap');
                         doTrick('bounce');
@@ -441,7 +501,7 @@ export function ARPetModal({
                         vibrate([20, 10, 20]);
                         onUpdateChallenge?.('play_minigame', 1);
                         // Bounce away from pet
-                        const angle = Math.atan2(newY - (centerY + petPosition.y), newX - (centerX + petPosition.x));
+                        const angle = Math.atan2(newY - (centerY + petAnchor.y + petPosition.y), newX - (centerX + petAnchor.x + petPosition.x));
                         newVx = Math.cos(angle) * 8;
                         newVy = Math.sin(angle) * 8;
                     }
@@ -456,7 +516,7 @@ export function ARPetModal({
 
         frameId = requestAnimationFrame(update);
         return () => cancelAnimationFrame(frameId);
-    }, [open, petPosition, gameActive, combo, petType, createParticles, playSound, vibrate, showSpeechBubble, endGame, onUpdateChallenge, isDraggingBall]);
+    }, [open, petPosition, petAnchor, gameActive, combo, petType, createParticles, playSound, vibrate, showSpeechBubble, endGame, onUpdateChallenge, isDraggingBall]);
 
     // Game timer
     useEffect(() => {
@@ -618,7 +678,7 @@ export function ARPetModal({
                     <div
                         className="relative z-10 transition-all duration-200 drop-shadow-2xl cursor-pointer"
                         style={{
-                            transform: `translate(${petPosition.x}px, ${petPosition.y}px) scale(${petScale * energyState.scale / 1.5 * 0.65}) rotate(${petRotation}deg)`,
+                            transform: `translate(${petAnchor.x + petPosition.x}px, ${petAnchor.y + petPosition.y}px) scale(${petScale * energyState.scale / 1.5 * 0.65}) rotate(${petRotation}deg)`,
                             filter: energyState.glow ? 'drop-shadow(0 0 15px rgba(16, 185, 129, 0.7))' : 'none',
                             pointerEvents: 'auto'
                         }}
@@ -626,6 +686,37 @@ export function ARPetModal({
                         onTouchMove={handlePetTouchMove}
                         onTouchEnd={handlePetTouchEnd}
                     >
+                        {interactionMode === 'menu' && (
+                            <div className="absolute -top-32 left-1/2 -translate-x-1/2 flex gap-4 animate-in fade-in zoom-in duration-200 z-50">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setInteractionMode('placing');
+                                        showSpeechBubble('sit');
+                                    }}
+                                    className="bg-white/90 backdrop-blur text-black px-4 py-2 rounded-full font-bold shadow-lg hover:bg-white active:scale-95 transition-all flex items-center gap-2"
+                                >
+                                    <span>🪑</span> Sit
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setInteractionMode('default');
+                                        setPetAnchor({ x: 0, y: 0 });
+                                    }}
+                                    className="bg-white/90 backdrop-blur text-black px-4 py-2 rounded-full font-bold shadow-lg hover:bg-white active:scale-95 transition-all flex items-center gap-2"
+                                >
+                                    <span>🔄</span> Reset
+                                </button>
+                            </div>
+                        )}
+
+                        {interactionMode === 'placing' && (
+                            <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur text-white px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap animate-pulse">
+                                Drag to place
+                            </div>
+                        )}
+
                         <VirtualPet
                             petType={petType}
                             happiness={petHappiness}
@@ -658,6 +749,7 @@ export function ARPetModal({
                                 y: touch.clientY,
                                 time: Date.now()
                             };
+                            lastBallInteraction.current = Date.now();
                             setBallVelocity({ vx: 0, vy: 0 });
                         }}
                         onTouchMove={(e) => {
@@ -692,6 +784,7 @@ export function ARPetModal({
                             });
 
                             ballDragStart.current = null;
+                            lastBallInteraction.current = Date.now();
                             playSound(523, 0.1);
                             vibrate([15]);
                         }}

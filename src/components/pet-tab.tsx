@@ -46,6 +46,7 @@ export function PetTab({
     lastTaskCompletionTime
 }: PetTabProps) {
     const [isInteracting, setIsInteracting] = useState(false);
+    const [lastLocalInteractionTime, setLastLocalInteractionTime] = useState<number | null>(null);
     const router = useRouter();
     const expToNextLevel = 100 * level;
     const expPercentage = (exp / expToNextLevel) * 100;
@@ -80,6 +81,7 @@ export function PetTab({
         if (interactions > 0 && !isInteracting) {
             onPetInteraction(toast);
             setIsInteracting(true);
+            setLastLocalInteractionTime(Date.now());
             setTimeout(() => {
                 setIsInteracting(false);
             }, 500); // Duration of the jump animation
@@ -121,6 +123,7 @@ export function PetTab({
                         customization={customization}
                         level={level}
                         suggestion={petSuggestion}
+                        lastInteractionTime={lastLocalInteractionTime || lastTaskCompletionTime}
                     />
                 </CardContent>
             </Card>
