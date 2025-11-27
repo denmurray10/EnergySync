@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target } from "lucide-react";
+import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon } from "lucide-react";
 import { VirtualPet, type PetType } from "./virtual-pet";
 import type { PetCustomization, DailyChallenge } from "@/lib/types";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -36,6 +36,7 @@ const SPEECH_BUBBLES = {
     highEnergy: ["You're on fire! 🔥", "Amazing energy! ⚡", "Keep it up! 🌟"],
     gameStart: ["Let's play! 🎮", "Catch time! 🎯", "Here we go! 🚀"],
     gameWin: ["We did it! 🏆", "Great job! 🌟", "You're amazing! 🎉"],
+    ballPlay: ["Throw me the ball! 🎾", "How hard can you throw? 💪", "Wanna play fetch? 🐕", "Bet you can't hit me! 😏", "I'm ready! Throw it! 🎯"],
 };
 
 const TREAT_TYPES = {
@@ -86,6 +87,16 @@ export function ARPetModal({
     const [showAccessories, setShowAccessories] = useState(false);
     const [showChallenges, setShowChallenges] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
+
+    // Background state
+    const [backgroundMode, setBackgroundMode] = useState<'camera' | 'image'>('camera');
+    const [selectedBackground, setSelectedBackground] = useState<'park' | 'living-room' | 'beach' | 'space'>('park');
+
+    // Draggable ball state
+    const [ballPosition, setBallPosition] = useState({ x: 100, y: 100 });
+    const [ballVelocity, setBallVelocity] = useState({ vx: 0, vy: 0 });
+    const [isDraggingBall, setIsDraggingBall] = useState(false);
+    const ballDragStart = useRef<{ x: number; y: number; time: number } | null>(null);
 
     const webcamRef = useRef<Webcam>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -385,12 +396,67 @@ export function ARPetModal({
                 life: p.life - 0.018
             })).filter(p => p.life > 0));
 
+            // Ball physics (gravity, bouncing, pet interaction)
+            if (!isDraggingBall && rect) {
+                setBallPosition(prev => {
+                    let newX = prev.x + ballVelocity.vx;
+                    let newY = prev.y + ballVelocity.vy;
+                    let newVx = ballVelocity.vx * 0.99; // Air resistance
+                    let newVy = ballVelocity.vy + 0.5; // Gravity
+
+                    // Bounce off walls
+                    if (newX < 30) {
+                        newX = 30;
+                        newVx = -newVx * 0.7; // Energy loss on bounce
+                        playSound(440, 0.05);
+                    } else if (newX > rect.width - 30) {
+                        newX = rect.width - 30;
+                        newVx = -newVx * 0.7;
+                        playSound(440, 0.05);
+                    }
+
+                    // Bounce off floor/ceiling
+                    if (newY < 30) {
+                        newY = 30;
+                        newVy = -newVy * 0.7;
+                        playSound(440, 0.05);
+                    } else if (newY > rect.height - 30) {
+                        newY = rect.height - 30;
+                        newVy = -newVy * 0.8; // More bounce on floor
+                        playSound(440, 0.05);
+                        if (Math.abs(newVy) < 1) newVy = 0; // Stop if barely moving
+                    }
+
+                    // Check collision with pet
+                    const distToPet = Math.sqrt(
+                        Math.pow(newX - (centerX + petPosition.x), 2) +
+                        Math.pow(newY - (centerY + petPosition.y), 2)
+                    );
+
+                    if (distToPet < 80) {
+                        createParticles(newX, newY, '#ffd700', 15);
+                        showSpeechBubble('tap');
+                        doTrick('bounce');
+                        playSound(659, 0.15);
+                        vibrate([20, 10, 20]);
+                        onUpdateChallenge?.('play_minigame', 1);
+                        // Bounce away from pet
+                        const angle = Math.atan2(newY - (centerY + petPosition.y), newX - (centerX + petPosition.x));
+                        newVx = Math.cos(angle) * 8;
+                        newVy = Math.sin(angle) * 8;
+                    }
+
+                    setBallVelocity({ vx: newVx, vy: newVy });
+                    return { x: newX, y: newY };
+                });
+            }
+
             frameId = requestAnimationFrame(update);
         };
 
         frameId = requestAnimationFrame(update);
         return () => cancelAnimationFrame(frameId);
-    }, [open, petPosition, gameActive, combo, petType, createParticles, playSound, vibrate, showSpeechBubble, endGame, onUpdateChallenge]);
+    }, [open, petPosition, gameActive, combo, petType, createParticles, playSound, vibrate, showSpeechBubble, endGame, onUpdateChallenge, isDraggingBall]);
 
     // Game timer
     useEffect(() => {
@@ -479,6 +545,18 @@ export function ARPetModal({
         return () => clearInterval(interval);
     }, [open, petHappiness, showSpeechBubble]);
 
+    // Ball play requests
+    useEffect(() => {
+        if (!open || gameActive) return;
+        const interval = setInterval(() => {
+            // Randomly ask to play with the ball (30% chance)
+            if (Math.random() < 0.3) {
+                showSpeechBubble('ballPlay');
+            }
+        }, 15000); // Check every 15 seconds
+        return () => clearInterval(interval);
+    }, [open, gameActive, showSpeechBubble]);
+
     const energyState = getPetEnergyState();
 
     return (
@@ -497,7 +575,7 @@ export function ARPetModal({
                         }
                     }}
                 >
-                    {!cameraError ? (
+                    {backgroundMode === 'camera' && !cameraError ? (
                         <Webcam
                             audio={false}
                             ref={webcamRef}
@@ -505,6 +583,12 @@ export function ARPetModal({
                             className="absolute inset-0 w-full h-full object-cover"
                             onUserMedia={() => setCameraError(false)}
                             onUserMediaError={() => setTimeout(() => setCameraError(true), 3000)}
+                        />
+                    ) : backgroundMode === 'image' ? (
+                        <img
+                            src={`/backgrounds/${selectedBackground}.png`}
+                            alt="Background"
+                            className="absolute inset-0 w-full h-full object-cover"
                         />
                     ) : (
                         <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
@@ -524,7 +608,7 @@ export function ARPetModal({
                     <div
                         className="relative z-10 transition-all duration-200 drop-shadow-2xl cursor-pointer"
                         style={{
-                            transform: `translate(${petPosition.x}px, ${petPosition.y}px) scale(${petScale * energyState.scale / 1.5}) rotate(${petRotation}deg)`,
+                            transform: `translate(${petPosition.x}px, ${petPosition.y}px) scale(${petScale * energyState.scale / 1.5 * 0.65}) rotate(${petRotation}deg)`,
                             filter: energyState.glow ? 'drop-shadow(0 0 15px rgba(16, 185, 129, 0.7))' : 'none',
                             pointerEvents: 'auto'
                         }}
@@ -543,24 +627,74 @@ export function ARPetModal({
                         />
                     </div>
 
-                    {/* Independent Toy - Fixed position on screen */}
-                    {customization.toy && customization.toy !== 'none' && ACCESSORIES[customization.toy] && (
-                        <div
-                            className="absolute bottom-32 right-8 z-20 cursor-pointer transition-transform active:scale-90 hover:scale-110"
-                            onClick={() => {
-                                if (customization.toy === 'ball') doTrick('bounce');
-                                else if (customization.toy === 'bone') throwTreat();
-                                else if (customization.toy === 'frisbee') doTrick('spin');
-                                else if (customization.toy === 'laser') doTrick('sparkle');
-                            }}
-                        >
-                            <div className="bg-white/10 backdrop-blur-sm rounded-full p-4 border-2 border-white/20">
-                                <div className="text-5xl drop-shadow-md animate-bounce">
-                                    {ACCESSORIES[customization.toy].emoji}
-                                </div>
+
+                    {/* Draggable/Throwable Ball */}
+                    <div
+                        className="absolute z-25 cursor-grab active:cursor-grabbing"
+                        style={{
+                            left: ballPosition.x,
+                            top: ballPosition.y,
+                            transform: 'translate(-50%, -50%)',
+                            transition: isDraggingBall ? 'none' : 'transform 0.1s ease-out',
+                            touchAction: 'none'
+                        }}
+                        onTouchStart={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const touch = e.touches[0];
+                            setIsDraggingBall(true);
+                            ballDragStart.current = {
+                                x: touch.clientX,
+                                y: touch.clientY,
+                                time: Date.now()
+                            };
+                            setBallVelocity({ vx: 0, vy: 0 });
+                        }}
+                        onTouchMove={(e) => {
+                            if (!isDraggingBall || !ballDragStart.current) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const touch = e.touches[0];
+                            const rect = containerRef.current?.getBoundingClientRect();
+                            if (rect) {
+                                setBallPosition({
+                                    x: touch.clientX - rect.left,
+                                    y: touch.clientY - rect.top
+                                });
+                            }
+                        }}
+                        onTouchEnd={(e) => {
+                            if (!ballDragStart.current) return;
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsDraggingBall(false);
+
+                            const touch = e.changedTouches[0];
+                            const deltaX = touch.clientX - ballDragStart.current.x;
+                            const deltaY = touch.clientY - ballDragStart.current.y;
+                            const deltaTime = Math.max(1, Date.now() - ballDragStart.current.time);
+
+                            // Calculate throw velocity
+                            const throwSpeed = 0.5; // Multiplier for throw power
+                            setBallVelocity({
+                                vx: (deltaX / deltaTime) * throwSpeed * 16,
+                                vy: (deltaY / deltaTime) * throwSpeed * 16
+                            });
+
+                            ballDragStart.current = null;
+                            playSound(523, 0.1);
+                            vibrate([15]);
+                        }}
+                    >
+                        <div className="relative">
+                            <div className="drop-shadow-2xl filter brightness-110">
+                                <img src="/accessories/tennis-ball.png" alt="Tennis Ball" className="w-16 h-16 object-contain" />
                             </div>
+                            {isDraggingBall && (
+                                <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
+                            )}
                         </div>
-                    )}
+                    </div>
 
                     {energyOrbs.map(orb => (
                         <div key={orb.id} className="absolute w-7 h-7 rounded-full animate-pulse z-20 pointer-events-none"
@@ -646,7 +780,27 @@ export function ARPetModal({
                         <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={() => setSoundEnabled(!soundEnabled)}>
                             {soundEnabled ? <Volume2 className="h-5 w-5 text-white" /> : <VolumeX className="h-5 w-5 text-white" />}
                         </Button>
-                        {!cameraError && (
+
+                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={() => setBackgroundMode(prev => prev === 'camera' ? 'image' : 'camera')}>
+                            <ImageIcon className="h-5 w-5 text-white" />
+                        </Button>
+
+                        {backgroundMode === 'image' && (
+                            <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={() => {
+                                const backgrounds: ('park' | 'living-room' | 'beach' | 'space')[] = ['park', 'living-room', 'beach', 'space'];
+                                const currentIndex = backgrounds.indexOf(selectedBackground);
+                                const nextIndex = (currentIndex + 1) % backgrounds.length;
+                                setSelectedBackground(backgrounds[nextIndex]);
+                            }}>
+                                <span className="text-xs font-bold">
+                                    {selectedBackground === 'park' ? '🌳' :
+                                        selectedBackground === 'living-room' ? '🏠' :
+                                            selectedBackground === 'beach' ? '🏖️' : '🚀'}
+                                </span>
+                            </Button>
+                        )}
+
+                        {backgroundMode === 'camera' && !cameraError && (
                             <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={() => setFacingMode(p => p === "user" ? "environment" : "user")}>
                                 <RefreshCw className="h-5 w-5 text-white" />
                             </Button>
@@ -698,66 +852,79 @@ export function ARPetModal({
                                     </div>
 
                                     {/* Accessories Grid */}
-                                    <div className="grid grid-cols-4 gap-3">
-                                        {/* None option */}
-                                        <button
-                                            onClick={() => {
-                                                if (onCustomizationChange) {
-                                                    onCustomizationChange({ [selectedSlot]: 'none' });
-                                                }
-                                            }}
-                                            className={`p-4 rounded-xl border-2 transition-all ${customization[selectedSlot] === 'none'
-                                                ? 'border-white bg-white/20'
-                                                : 'border-white/20 bg-white/5 hover:bg-white/10'
-                                                }`}
-                                        >
-                                            <div className="text-3xl mb-1">❌</div>
-                                            <div className="text-white/80 text-xs">None</div>
-                                        </button>
-
-                                        {/* Unlocked accessories */}
-                                        {getUnlockedAccessories(selectedSlot, level, achievements || [], isPro || false).map(acc => (
+                                    {selectedSlot === 'toy' ? (
+                                        <div className="grid grid-cols-4 gap-3">
+                                            {/* None option */}
                                             <button
-                                                key={acc.id}
                                                 onClick={() => {
                                                     if (onCustomizationChange) {
-                                                        onCustomizationChange({ [selectedSlot]: acc.id });
+                                                        onCustomizationChange({ [selectedSlot]: 'none' } as any);
                                                     }
                                                 }}
-                                                className={`p-4 rounded-xl border-2 transition-all ${customization[selectedSlot] === acc.id
+                                                className={`p-4 rounded-xl border-2 transition-all ${customization[selectedSlot] === 'none'
                                                     ? 'border-white bg-white/20'
                                                     : 'border-white/20 bg-white/5 hover:bg-white/10'
                                                     }`}
-                                                title={acc.description}
                                             >
-                                                <div className="text-3xl mb-1">{acc.emoji}</div>
-                                                <div className="text-white/80 text-xs truncate">{acc.name.split(' ')[0]}</div>
+                                                <div className="text-3xl mb-1">❌</div>
+                                                <div className="text-white/80 text-xs">None</div>
                                             </button>
-                                        ))}
 
-                                        {/* Locked accessories (preview) */}
-                                        {Object.values(ACCESSORIES)
-                                            .filter(acc =>
-                                                acc.slot === selectedSlot &&
-                                                !getUnlockedAccessories(selectedSlot, level, achievements || [], isPro || false)
-                                                    .some(unlocked => unlocked.id === acc.id)
-                                            )
-                                            .slice(0, 3)
-                                            .map(acc => (
-                                                <div
+                                            {/* Unlocked accessories */}
+                                            {getUnlockedAccessories(selectedSlot, level, achievements || [], isPro || false).map(acc => (
+                                                <button
                                                     key={acc.id}
-                                                    className="p-4 rounded-xl border-2 border-white/10 bg-black/40 relative opacity-50"
-                                                    title={`Unlock at ${acc.unlockCondition.type}: ${acc.unlockCondition.value || 'special'}`}
+                                                    onClick={() => {
+                                                        if (onCustomizationChange) {
+                                                            onCustomizationChange({ [selectedSlot]: acc.id } as any);
+                                                        }
+                                                    }}
+                                                    className={`p-4 rounded-xl border-2 transition-all ${customization[selectedSlot] === acc.id
+                                                        ? 'border-white bg-white/20'
+                                                        : 'border-white/20 bg-white/5 hover:bg-white/10'
+                                                        }`}
+                                                    title={acc.description}
                                                 >
-                                                    <div className="text-3xl mb-1 grayscale">{acc.emoji}</div>
-                                                    <div className="text-white/50 text-xs">🔒</div>
-                                                    <div className="absolute top-1 right-1 text-xs bg-yellow-500 text-black px-1 rounded">
-                                                        {acc.unlockCondition.type === 'level' ? `L${acc.unlockCondition.value}` : '⭐'}
+                                                    <div className="text-3xl mb-1">
+                                                        {acc.id === 'ball' ? (
+                                                            <img src="/accessories/tennis-ball.png" alt="Tennis Ball" className="w-8 h-8 object-contain" />
+                                                        ) : (
+                                                            acc.emoji
+                                                        )}
                                                     </div>
-                                                </div>
-                                            ))
-                                        }
-                                    </div>
+                                                    <div className="text-white/80 text-xs truncate">{acc.name}</div>
+                                                </button>
+                                            ))}
+
+                                            {/* Locked accessories (preview) */}
+                                            {Object.values(ACCESSORIES)
+                                                .filter(acc =>
+                                                    acc.slot === selectedSlot &&
+                                                    !getUnlockedAccessories(selectedSlot, level, achievements || [], isPro || false)
+                                                        .some(unlocked => unlocked.id === acc.id)
+                                                )
+                                                .slice(0, 3)
+                                                .map(acc => (
+                                                    <div
+                                                        key={acc.id}
+                                                        className="p-4 rounded-xl border-2 border-white/10 bg-black/40 relative opacity-50"
+                                                        title={`Unlock at ${acc.unlockCondition.type}: ${acc.unlockCondition.value || 'special'}`}
+                                                    >
+                                                        <div className="absolute top-1 right-1 text-xs">🔒</div>
+                                                        <div className="text-3xl mb-1 grayscale">{acc.emoji}</div>
+                                                        <div className="text-white/60 text-xs truncate">{acc.name}</div>
+                                                    </div>
+                                                ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center py-8 text-white/80">
+                                            <div className="text-4xl mb-2">🚧</div>
+                                            <p className="font-bold">Coming Soon!</p>
+                                            <p className="text-sm text-white/60 text-center mt-1">
+                                                We're working on new {selectedSlot}s for your pet.
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </>
@@ -827,6 +994,6 @@ export function ARPetModal({
                     </div>
                 </div>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
