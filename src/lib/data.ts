@@ -47,22 +47,25 @@ export const INITIAL_UPCOMING_EVENTS: UpcomingEvent[] = [
 ];
 
 export const INITIAL_ACHIEVEMENTS: Achievement[] = [
-    { id: 1, name: 'First Recharge', unlocked: true, icon: '🔋' },
-    { id: 2, name: 'Self-Care Pro', unlocked: false, icon: '🧘‍♀️' },
-    { id: 3, name: 'Social Butterfly', unlocked: true, icon: '🦋' },
-    { id: 4, name: 'Mindful Logger', unlocked: false, icon: '📝' },
-    { id: 5, name: 'Scheduler Supreme', unlocked: false, icon: '📅' },
-    { id: 6, name: 'Bio-Scanner', unlocked: false, icon: '❤️' },
-    { id: 7, name: 'Community Member', unlocked: false, icon: '🤝' },
-    { id: 8, name: 'Goal Getter', unlocked: false, icon: '🎯' },
-    { id: 9, name: 'Storyteller', unlocked: false, icon: '📖' },
-    { id: 10, name: 'Chatterbox', unlocked: false, icon: '💬' },
-    { id: 11, name: 'Pixel Perfect', unlocked: false, icon: '📸' },
-    { id: 12, name: 'Goal Setter', unlocked: false, icon: '💡' },
-    { id: 13, name: 'Pet Pal', unlocked: false, icon: '🐾' },
-    { id: 14, name: 'Pet Customizer', unlocked: false, icon: '🎨' },
-    { id: 15, name: 'Pet Trainer', unlocked: false, icon: '🏆' },
-    { id: 16, name: 'Upgraded to Pro!', unlocked: false, icon: '🌟' }
+    { id: 1, name: 'First Recharge', description: "Complete your first recharge activity.", unlocked: true, icon: '🔋' },
+    { id: 2, name: 'Self-Care Pro', description: "Clear your energy debt completely.", unlocked: false, icon: '🧘‍♀️' },
+    { id: 3, name: 'Social Butterfly', description: "Log 3 social activities in a week.", unlocked: true, icon: '🦋' },
+    { id: 4, name: 'Mindful Logger', description: "Log an activity manually.", unlocked: false, icon: '📝' },
+    { id: 5, name: 'Scheduler Supreme', description: "Schedule an AI-suggested event.", unlocked: false, icon: '📅' },
+    { id: 6, name: 'Bio-Scanner', description: "Complete a readiness survey.", unlocked: false, icon: '❤️' },
+    { id: 7, name: 'Community Member', description: "Join the community mode.", unlocked: false, icon: '🤝' },
+    { id: 8, name: 'Goal Getter', description: "Complete a personal goal.", unlocked: false, icon: '🎯' },
+    { id: 9, name: 'Storyteller', description: "View your daily energy story.", unlocked: false, icon: '📖' },
+    { id: 10, name: 'Chatterbox', description: "Chat with the AI coach.", unlocked: false, icon: '💬' },
+    { id: 11, name: 'Pixel Perfect', description: "Upload a photo check-in.", unlocked: false, icon: '📸' },
+    { id: 12, name: 'Goal Setter', description: "Accept a new goal suggestion.", unlocked: false, icon: '💡' },
+    { id: 13, name: 'Pet Pal', description: "Interact with your pet 10 times.", unlocked: false, icon: '🐾' },
+    { id: 14, name: 'Pet Customizer', description: "Buy an accessory for your pet.", unlocked: false, icon: '🎨' },
+    { id: 15, name: 'Pet Trainer', description: "Teach your pet a trick.", unlocked: false, icon: '🏆' },
+    { id: 16, name: 'Upgraded to Pro!', description: "Subscribe to the Pro plan.", unlocked: false, icon: '🌟' },
+    { id: 17, name: 'First Steps', description: "Enter AR mode for the first time.", unlocked: false, icon: '🦶' },
+    { id: 18, name: 'Master Catcher', description: "Score 500+ points in the catch game.", unlocked: false, icon: '🥎' },
+    { id: 19, name: 'Pet Whisperer', description: "Perform 50 interactions in AR.", unlocked: false, icon: '🗣️' }
 ];
 
 export const INITIAL_GOALS: Goal[] = [

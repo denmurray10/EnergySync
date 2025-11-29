@@ -6,8 +6,8 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback,
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
-import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder, MessengerChat } from '@/lib/types';
-import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS } from '@/lib/data';
+import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder, MessengerChat, Achievement } from '@/lib/types';
+import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS } from '@/lib/data';
 import { generateDailyChallenges } from '@/lib/daily-challenges';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,6 +34,8 @@ interface AuthContextType {
   messengerHistory: MessengerChat[];
   setMessengerHistory: (history: MessengerChat[]) => void;
   updateDailyChallengeProgress: (type: string, amount: number) => void;
+  achievements: Achievement[];
+  unlockAchievement: (name: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [localAppUser, setLocalAppUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const [achievements, setAchievements] = useState<Achievement[]>(INITIAL_ACHIEVEMENTS);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -103,8 +106,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!userData.chatHistory) userData.chatHistory = [];
             if (!userData.journeys) userData.journeys = [];
             if (!userData.reminders) userData.reminders = [];
-            if (!userData.reminders) userData.reminders = [];
             if (!userData.messengerHistory) userData.messengerHistory = [];
+            if (!userData.achievements) userData.achievements = INITIAL_ACHIEVEMENTS; // Initialize achievements
 
             // Initialize Daily Challenges
             if (!userData.dailyChallenges || isNewDay(userData.lastChallengeReset)) {
@@ -118,6 +121,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
 
             setLocalAppUser(userData);
+            if (userData.achievements) {
+              setAchievements(userData.achievements);
+            }
           } else {
             // This path is now only hit if the user exists in Auth but truly has no profile document.
             console.error(`Profile document not found for existing user ${'user.uid'}.`);
@@ -182,6 +188,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         await setDoc(userRef, cleanedSetData);
       }
       setLocalAppUser(prev => prev ? { ...prev, ...userData } : (userData as User));
+      if (userData.achievements) {
+        setAchievements(userData.achievements);
+      }
 
     } catch (error: any) {
       console.error("Firestore operation failed in setAppUser:", error);
@@ -359,6 +368,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const reminders = localAppUser?.reminders ?? [];
   const messengerHistory = localAppUser?.messengerHistory ?? [];
 
+  const unlockAchievement = useCallback((name: string) => {
+    if (!localAppUser) return;
+
+    const achievementIndex = achievements.findIndex(a => a.name === name);
+    if (achievementIndex === -1) return;
+
+    const achievement = achievements[achievementIndex];
+    if (achievement.unlocked) return;
+
+    const newAchievements = [...achievements];
+    newAchievements[achievementIndex] = { ...achievement, unlocked: true };
+
+    setAchievements(newAchievements);
+    setAppUser({ achievements: newAchievements });
+
+    toast({
+      title: 'Achievement Unlocked! 🏆',
+      description: `You've earned: ${achievement.name}`,
+    });
+  }, [achievements, localAppUser, setAppUser, toast]);
+
+
   const value = {
     firebaseUser,
     appUser: localAppUser,
@@ -381,7 +412,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setReminders,
     messengerHistory,
     setMessengerHistory,
-    updateDailyChallengeProgress
+    updateDailyChallengeProgress,
+    achievements,
+    unlockAchievement
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -9,6 +9,7 @@ import { VirtualPet, type PetType } from "./virtual-pet";
 import type { PetCustomization, DailyChallenge } from "@/lib/types";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { getUnlockedAccessories, type AccessorySlot, ACCESSORIES } from "@/lib/accessories";
+import { useAuth } from "@/context/AuthContext";
 
 type ARPetModalProps = {
     open: boolean;
@@ -88,6 +89,33 @@ export function ARPetModal({
     const [showAccessories, setShowAccessories] = useState(false);
     const [showChallenges, setShowChallenges] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
+    const [showAchievements, setShowAchievements] = useState(false);
+    const { achievements: allAchievements, unlockAchievement } = useAuth();
+    const interactionCount = useRef(0);
+
+    // Unlock 'First Steps' on mount
+    useEffect(() => {
+        if (open) {
+            unlockAchievement('First Steps');
+        }
+    }, [open, unlockAchievement]);
+
+    // Unlock 'Master Catcher' if score > 500
+    useEffect(() => {
+        if (score >= 500) {
+            unlockAchievement('Master Catcher');
+        }
+    }, [score, unlockAchievement]);
+
+    // Track interactions for 'Pet Whisperer'
+    useEffect(() => {
+        if (isAnimating) {
+            interactionCount.current += 1;
+            if (interactionCount.current >= 50) {
+                unlockAchievement('Pet Whisperer');
+            }
+        }
+    }, [isAnimating, unlockAchievement]);
 
     // Background state
     const [backgroundMode, setBackgroundMode] = useState<'camera' | 'image'>('camera');
@@ -882,6 +910,14 @@ export function ARPetModal({
                         >
                             <Target className="h-5 w-5 text-white" />
                         </Button>
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                            onClick={() => setShowAchievements(!showAchievements)}
+                        >
+                            <Trophy className="h-5 w-5 text-white" />
+                        </Button>
                     </div>
 
                     <div className="absolute top-4 right-4 z-20 flex gap-2">
@@ -1087,6 +1123,52 @@ export function ARPetModal({
                                                         style={{ width: `${(challenge.progress / challenge.target) * 100}%` }}
                                                     />
                                                 </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Achievements Drawer */}
+                    {showAchievements && allAchievements && (
+                        <>
+                            {/* Backdrop */}
+                            <div
+                                className="absolute inset-0 z-20 bg-black/20"
+                                onClick={() => setShowAchievements(false)}
+                            />
+                            <div
+                                className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-lg border-t-2 border-purple-400/30 rounded-t-3xl transition-all duration-300 animate-in slide-in-from-bottom"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="p-4 max-h-[40vh] overflow-y-auto scrollbar-hide">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-white font-bold text-lg">Achievements</h3>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowAchievements(false)}
+                                            className="text-white"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {allAchievements.map(achievement => (
+                                            <div key={achievement.id} className={`flex items-center gap-4 p-3 rounded-xl border ${achievement.unlocked ? 'bg-white/10 border-white/20' : 'bg-black/20 border-white/5 opacity-60'}`}>
+                                                <div className="text-3xl">{achievement.icon}</div>
+                                                <div className="flex-1">
+                                                    <div className="font-bold text-white">{achievement.name}</div>
+                                                    <div className="text-xs text-white/70">{achievement.description}</div>
+                                                </div>
+                                                {achievement.unlocked && (
+                                                    <div className="text-green-400">
+                                                        <Trophy className="h-5 w-5" />
+                                                    </div>
+                                                )}
                                             </div>
                                         ))}
                                     </div>

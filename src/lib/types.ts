@@ -30,6 +30,7 @@ export interface UpcomingEvent {
 export interface Achievement {
   id: number;
   name: string;
+  description: string;
   unlocked: boolean;
   icon: string;
 }
@@ -105,6 +106,7 @@ export interface User {
   messengerHistory: MessengerChat[];
   dailyChallenges: DailyChallenge[];
   lastChallengeReset: string;
+  achievements: Achievement[];
 }
 
 export interface DailyChallenge {

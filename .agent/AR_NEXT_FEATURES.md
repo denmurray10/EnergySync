@@ -111,8 +111,8 @@
 
 ## 🔥 Top 5 to Implement Next (Impact vs Effort)
 
-1. **Pet Accessories** - High impact, medium effort, huge engagement
-2. **Daily Challenges** - Medium effort, drives daily active users
-3. **Achievements** - Medium effort, great retention
-4. **Power-Ups in Game** - Low effort, gameplay variety
-5. **Pet Companions** - High effort, high reward
+1. **Achievements** - Medium effort, great retention
+2. **Power-Ups in Game** - Low effort, gameplay variety
+3. **Pet Companions** - High effort, high reward
+4. **Environmental Objects** - High effort, immersive
+5. **Photo & Share Mode** - Low effort, viral potential
