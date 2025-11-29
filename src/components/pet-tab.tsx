@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings, Gamepad2, Camera } from "lucide-react";
+import { PawPrint, Utensils, Bed, Paintbrush, Star, Settings, Gamepad2 } from "lucide-react";
 import { VirtualPet, type PetType } from "./virtual-pet";
 
 type PetTabProps = {
@@ -62,9 +62,36 @@ export function PetTab({
             }
         }
 
-        if (!shouldShowSuggestion || !uncompletedTask) {
-            return null;
+        // AR play suggestions (no task required)
+        const arPlaySuggestions = [
+            "Wanna play in AR? Tap me! 🎮",
+            "Let's explore in AR! Touch me! 🌟",
+            "Ready for an AR adventure? 🚀",
+            "Tap me to enter AR mode! ✨",
+            "Let's play some AR games! 🎯"
+        ];
+
+        // Determine if we should show task or AR suggestion
+        const now = Date.now();
+        const hourOfDay = new Date().getHours();
+        const suggestionSeed = Math.floor(now / (10 * 60 * 1000)); // Changes every 10 minutes
+
+        // 50% chance for AR suggestion, 50% for task suggestion
+        const showARSuggestion = suggestionSeed % 2 === 0;
+
+        if (showARSuggestion) {
+            // Show AR play invitation
+            const arIndex = suggestionSeed % arPlaySuggestions.length;
+            return arPlaySuggestions[arIndex];
         }
+
+        // Show task suggestion if there's an uncompleted task
+        if (!shouldShowSuggestion || !uncompletedTask) {
+            // Fallback to AR suggestion if no tasks
+            const arIndex = suggestionSeed % arPlaySuggestions.length;
+            return arPlaySuggestions[arIndex];
+        }
+
         // Use the task ID to create a semi-stable random-like suggestion
         const suggestionType = uncompletedTask.id % 3;
         if (suggestionType === 0) {
@@ -94,27 +121,9 @@ export function PetTab({
                 <h2 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-teal-600 bg-clip-text text-transparent">
                     {petName}
                 </h2>
-                <div className="flex items-center gap-1">
-                    <Button onClick={onOpenAR} size="icon" variant="ghost" className="text-primary">
-                        <Camera className="h-6 w-6" />
-                        <span className="sr-only">AR Mode</span>
-                    </Button>
-                    <Button onClick={() => router.push('/game')} size="icon" variant="ghost" className="text-primary">
-                        <Gamepad2 className="h-6 w-6" />
-                        <span className="sr-only">Play Game</span>
-                    </Button>
-                    <Button onClick={openCustomization} size="icon" variant="ghost" className="text-primary">
-                        <Paintbrush className="h-6 w-6" />
-                        <span className="sr-only">Customize Pet</span>
-                    </Button>
-                    <Button onClick={openSettings} size="icon" variant="ghost" className="text-primary">
-                        <Settings className="h-6 w-6" />
-                        <span className="sr-only">Pet Settings</span>
-                    </Button>
-                </div>
             </div>
 
-            <Card className="bg-card/80 backdrop-blur-sm overflow-hidden">
+            <Card className="bg-card/80 backdrop-blur-sm overflow-hidden cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200" onClick={onOpenAR}>
                 <CardContent className="p-0">
                     <VirtualPet
                         petType={petType}

@@ -1025,6 +1025,8 @@ export default function HomePage() {
             achievements={achievements.filter(a => a.unlocked).map(a => a.name)}
             dailyChallenges={appUser.dailyChallenges}
             onUpdateChallenge={updateDailyChallengeProgress}
+            petName={appUser.petName}
+            onSavePetSettings={handleSavePetSettings}
           />
         )}
         {appUser && (

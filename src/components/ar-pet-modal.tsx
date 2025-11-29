@@ -4,7 +4,10 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon, Mic, MicOff } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon, Mic, MicOff, Settings } from "lucide-react";
 import { VirtualPet, type PetType } from "./virtual-pet";
 import type { PetCustomization, DailyChallenge } from "@/lib/types";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -23,6 +26,8 @@ type ARPetModalProps = {
     achievements?: string[];
     dailyChallenges?: DailyChallenge[];
     onUpdateChallenge?: (type: string, amount: number) => void;
+    petName: string;
+    onSavePetSettings?: (name: string, type: PetType) => void;
 };
 
 const SPEECH_BUBBLES = {
@@ -64,7 +69,9 @@ export function ARPetModal({
     isPro,
     achievements,
     dailyChallenges,
-    onUpdateChallenge
+    onUpdateChallenge,
+    petName,
+    onSavePetSettings
 }: ARPetModalProps) {
     const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
     const [petPosition, setPetPosition] = useState({ x: 0, y: 0 });
@@ -90,6 +97,9 @@ export function ARPetModal({
     const [showChallenges, setShowChallenges] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
     const [showAchievements, setShowAchievements] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [tempPetName, setTempPetName] = useState(petName);
+    const [tempPetType, setTempPetType] = useState<PetType>(petType);
     const { achievements: allAchievements, unlockAchievement } = useAuth();
     const interactionCount = useRef(0);
 
@@ -251,7 +261,7 @@ export function ARPetModal({
             playSound(880, 0.2);
             showSpeechBubble('sparkle');
         }
-        onUpdateChallenge?.('perform_tricks', 1);
+        setTimeout(() => onUpdateChallenge?.('perform_tricks', 1), 0);
         vibrate([30, 10, 30]);
         setTimeout(() => setIsAnimating(false), 700);
     }, [playSound, showSpeechBubble, vibrate, createParticles, petPosition, onUpdateChallenge]);
@@ -271,7 +281,7 @@ export function ARPetModal({
         setFallingObjects([]);
         if (score > 0) {
             showSpeechBubble('gameWin');
-            onUpdateChallenge?.('play_minigame', 1);
+            setTimeout(() => onUpdateChallenge?.('play_minigame', 1), 0);
         }
     }, [score, showSpeechBubble, onUpdateChallenge]);
 
@@ -477,7 +487,7 @@ export function ARPetModal({
                     playSound(880, 0.1);
                     vibrate([15]);
                     showSpeechBubble('orbCaught');
-                    onUpdateChallenge?.('catch_items', 1);
+                    setTimeout(() => onUpdateChallenge?.('catch_items', 1), 0);
                     return null;
                 }
 
@@ -498,7 +508,7 @@ export function ARPetModal({
                     playSound(659, 0.15);
                     vibrate([25]);
                     showSpeechBubble('treatEaten');
-                    onUpdateChallenge?.('feed_treats', 1);
+                    setTimeout(() => onUpdateChallenge?.('feed_treats', 1), 0);
                     return null;
                 }
 
@@ -520,7 +530,7 @@ export function ARPetModal({
                         createParticles(obj.x, newY, '#ffd700', 8);
                         playSound(880 + combo * 40, 0.1);
                         vibrate([10]);
-                        onUpdateChallenge?.('catch_items', 1);
+                        setTimeout(() => onUpdateChallenge?.('catch_items', 1), 0);
                         return null;
                     }
 
@@ -599,7 +609,7 @@ export function ARPetModal({
                         doTrick('bounce');
                         playSound(659, 0.15);
                         vibrate([20, 10, 20]);
-                        onUpdateChallenge?.('play_minigame', 1);
+                        setTimeout(() => onUpdateChallenge?.('play_minigame', 1), 0);
                         // Bounce away from pet
                         const angle = Math.atan2(newY - (centerY + petAnchor.y + petPosition.y), newX - (centerX + petAnchor.x + petPosition.x));
                         newVx = Math.cos(angle) * 8;
@@ -998,6 +1008,14 @@ export function ARPetModal({
                         >
                             <Trophy className="h-5 w-5 text-white" />
                         </Button>
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                            onClick={() => setShowSettings(!showSettings)}
+                        >
+                            <Settings className="h-5 w-5 text-white" />
+                        </Button>
                     </div>
 
                     <div className="absolute top-4 right-4 z-20 flex gap-2">
@@ -1251,6 +1269,91 @@ export function ARPetModal({
                                                 )}
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Settings Drawer */}
+                    {showSettings && (
+                        <>
+                            {/* Backdrop */}
+                            <div
+                                className="absolute inset-0 z-20 bg-black/20"
+                                onClick={() => setShowSettings(false)}
+                            />
+                            <div
+                                className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-br from-purple-900/95 via-blue-900/95 to-indigo-900/95 backdrop-blur-lg border-t-2 border-purple-400/30 rounded-t-3xl transition-all duration-300 animate-in slide-in-from-bottom"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="p-4 max-h-[50vh] overflow-y-auto scrollbar-hide">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-white font-bold text-lg">Pet Settings</h3>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setShowSettings(false)}
+                                            className="text-white"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor="pet-name" className="text-white/90 text-sm font-medium mb-2 block">
+                                                Pet's Name
+                                            </Label>
+                                            <Input
+                                                id="pet-name"
+                                                value={tempPetName}
+                                                onChange={(e) => setTempPetName(e.target.value)}
+                                                placeholder="e.g., Buddy"
+                                                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label className="text-white/90 text-sm font-medium mb-3 block">Pet Type</Label>
+                                            <RadioGroup
+                                                value={tempPetType}
+                                                onValueChange={(value) => setTempPetType(value as PetType)}
+                                                className="grid grid-cols-2 gap-3"
+                                            >
+                                                <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg border border-white/20">
+                                                    <RadioGroupItem value="cat" id="pet-cat" className="border-white/40" />
+                                                    <Label htmlFor="pet-cat" className="text-white cursor-pointer flex items-center gap-2">
+                                                        🐱 Cat
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg border border-white/20">
+                                                    <RadioGroupItem value="dog" id="pet-dog" className="border-white/40" />
+                                                    <Label htmlFor="pet-dog" className="text-white cursor-pointer flex items-center gap-2">
+                                                        🐶 Dog
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg border border-white/20">
+                                                    <RadioGroupItem value="horse" id="pet-horse" className="border-white/40" />
+                                                    <Label htmlFor="pet-horse" className="text-white cursor-pointer flex items-center gap-2">
+                                                        🐴 Horse
+                                                    </Label>
+                                                </div>
+                                                <div className="flex items-center space-x-3 p-3 bg-white/10 rounded-lg border border-white/20">
+                                                    <RadioGroupItem value="chicken" id="pet-chicken" className="border-white/40" />
+                                                    <Label htmlFor="pet-chicken" className="text-white cursor-pointer flex items-center gap-2">
+                                                        🐔 Chicken
+                                                    </Label>
+                                                </div>
+                                            </RadioGroup>
+                                        </div>
+                                        <Button
+                                            onClick={() => {
+                                                onSavePetSettings?.(tempPetName, tempPetType);
+                                                setShowSettings(false);
+                                            }}
+                                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white"
+                                        >
+                                            Save Changes
+                                        </Button>
                                     </div>
                                 </div>
                             </div>
