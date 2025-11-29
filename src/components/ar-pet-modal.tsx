@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Webcam from "react-webcam";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon } from "lucide-react";
+import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon, Mic, MicOff } from "lucide-react";
 import { VirtualPet, type PetType } from "./virtual-pet";
 import type { PetCustomization, DailyChallenge } from "@/lib/types";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -93,12 +93,7 @@ export function ARPetModal({
     const { achievements: allAchievements, unlockAchievement } = useAuth();
     const interactionCount = useRef(0);
 
-    // Unlock 'First Steps' on mount
-    useEffect(() => {
-        if (open) {
-            unlockAchievement('First Steps');
-        }
-    }, [open, unlockAchievement]);
+
 
     // Unlock 'Master Catcher' if score > 500
     useEffect(() => {
@@ -151,12 +146,27 @@ export function ARPetModal({
         return { scale: 1.3, glow: false };
     }, [petHappiness]);
 
+    const isSpeechBubbleVisible = useRef(false);
+
     const showSpeechBubble = useCallback((category: keyof typeof SPEECH_BUBBLES) => {
-        if (isDragging || speechBubble !== null) return;
+        if (isDragging || isSpeechBubbleVisible.current) return;
         const messages = SPEECH_BUBBLES[category];
         setSpeechBubble(messages[Math.floor(Math.random() * messages.length)]);
-        setTimeout(() => setSpeechBubble(null), 3000);
-    }, [isDragging, speechBubble]);
+        isSpeechBubbleVisible.current = true;
+        setTimeout(() => {
+            setSpeechBubble(null);
+            isSpeechBubbleVisible.current = false;
+        }, 3000);
+    }, [isDragging]);
+
+    // Initial greeting and unlock 'First Steps'
+    useEffect(() => {
+        if (open) {
+            unlockAchievement('First Steps');
+            const t = setTimeout(() => showSpeechBubble('greeting'), 500);
+            return () => clearTimeout(t);
+        }
+    }, [open, unlockAchievement, showSpeechBubble]);
 
     const playSound = useCallback((freq: number, dur: number) => {
         if (!soundEnabled) return;
@@ -264,6 +274,68 @@ export function ARPetModal({
             onUpdateChallenge?.('play_minigame', 1);
         }
     }, [score, showSpeechBubble, onUpdateChallenge]);
+
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef<any>(null);
+
+    const toggleListening = useCallback(() => {
+        if (isListening) {
+            recognitionRef.current?.stop();
+            setIsListening(false);
+            return;
+        }
+
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Voice commands are not supported in this browser.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onend = () => setIsListening(false);
+        recognition.onerror = (event: any) => {
+            console.error("Speech recognition error", event.error);
+            setIsListening(false);
+        };
+
+        recognition.onresult = (event: any) => {
+            const lastResult = event.results[event.results.length - 1];
+            const command = lastResult[0].transcript.trim().toLowerCase();
+            console.log("Voice command:", command);
+
+            if (command.includes('sit') || command.includes('stay')) {
+                setInteractionMode('sitting');
+                showSpeechBubble('sit');
+            } else if (command.includes('spin') || command.includes('turn')) {
+                doTrick('spin');
+            } else if (command.includes('jump') || command.includes('bounce') || command.includes('up')) {
+                doTrick('bounce');
+            } else if (command.includes('sparkle') || command.includes('magic') || command.includes('glow')) {
+                doTrick('sparkle');
+            } else if (command.includes('play') || command.includes('game') || command.includes('catch')) {
+                if (!gameActive) startGame();
+            } else if (command.includes('stop') || command.includes('end') || command.includes('quit')) {
+                if (gameActive) endGame();
+            }
+        };
+
+        recognition.start();
+        recognitionRef.current = recognition;
+    }, [isListening, gameActive, showSpeechBubble, doTrick, startGame, endGame]);
+
+    // Clean up recognition on unmount
+    useEffect(() => {
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+    }, []);
 
     // Touch handlers for pet
     const handlePetTouchStart = useCallback((e: React.TouchEvent) => {
@@ -618,7 +690,7 @@ export function ARPetModal({
             window.addEventListener('deviceorientation', handleOrientation);
         }
 
-        setTimeout(() => showSpeechBubble('greeting'), 500);
+
 
         return () => window.removeEventListener('deviceorientation', handleOrientation);
     }, [open, doTrick, showSpeechBubble, isAnimating, gameActive]);
@@ -888,6 +960,14 @@ export function ARPetModal({
                     )}
 
                     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
+                        <Button
+                            variant="secondary"
+                            size="icon"
+                            className={`rounded-full backdrop-blur text-white border-white/20 ${isListening ? 'bg-red-500/80 hover:bg-red-600/80 animate-pulse' : 'bg-black/50 hover:bg-black/70'}`}
+                            onClick={toggleListening}
+                        >
+                            {isListening ? <Mic className="h-5 w-5 text-white" /> : <MicOff className="h-5 w-5 text-white" />}
+                        </Button>
                         <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={throwTreat}>
                             <Cookie className="h-5 w-5 text-white" />
                         </Button>
