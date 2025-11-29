@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon, Mic, MicOff, Settings } from "lucide-react";
+import { X, RefreshCw, Volume2, VolumeX, AlertCircle, Cookie, Star, Trophy, Shirt, Target, Image as ImageIcon, Mic, MicOff, Settings, Menu } from "lucide-react";
 import { VirtualPet, type PetType } from "./virtual-pet";
 import type { PetCustomization, DailyChallenge } from "@/lib/types";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
@@ -31,19 +31,110 @@ type ARPetModalProps = {
 };
 
 const SPEECH_BUBBLES = {
-    greeting: ["Hey there! 👋", "Ready to explore? 🌟", "Let's have fun! 🎉"],
-    tap: ["That tickles! 😄", "Hehe! Again! 🎈", "Wheee! 🌈"],
-    spin: ["Watch me spin! ✨", "Wheeee! 🎪", "So dizzy! 😵"],
-    orbCaught: ["Yum! Energy! ⚡", "Got it! 🎯", "Nom nom! 💫"],
-    treatEaten: ["Delicious! 😋", "Mmm! Tasty! 🍖", "More please! 🤤"],
-    sparkle: ["Sparkle power! ✨", "Magic! 🌟", "Wow! 💫"],
-    energyTip: ["Remember to rest! 😴", "Stay hydrated! 💧", "You're doing great! 💪"],
-    lowEnergy: ["You seem tired... 🥱", "Time for a break? ☕", "Let's recharge! 🔋"],
-    highEnergy: ["You're on fire! 🔥", "Amazing energy! ⚡", "Keep it up! 🌟"],
-    gameStart: ["Let's play! 🎮", "Catch time! 🎯", "Here we go! 🚀"],
-    gameWin: ["We did it! 🏆", "Great job! 🌟", "You're amazing! 🎉"],
-    ballPlay: ["Throw me the ball! 🎾", "How hard can you throw? 💪", "Wanna play fetch? 🐕", "Bet you can't hit me! 😏", "I'm ready! Throw it! 🎯"],
-    sit: ["Where should I sit? 🪑", "Find me a good spot! 📍", "I'll stay right there! 🐕"],
+    greeting: [
+        "Hey there! 👋",
+        "Ready to explore? 🌟",
+        "Let's have fun! 🎉",
+        "You came back! 😊",
+        "I missed you! 💙",
+        "Adventure time! 🚀"
+    ],
+    tap: [
+        "That tickles! 😄",
+        "Hehe! Again! 🎈",
+        "Wheee! 🌈",
+        "I love that! 💕",
+        "So fun! 🎪",
+        "Keep going! ✨",
+        "Yay! More! 🎊"
+    ],
+    spin: [
+        "Watch me spin! ✨",
+        "Wheeee! 🎪",
+        "So dizzy! 😵",
+        "Round and round! 🌪️",
+        "Look at me go! 🎯",
+        "Spinning star! ⭐"
+    ],
+    orbCaught: [
+        "Yum! Energy! ⚡",
+        "Got it! 🎯",
+        "Nom nom! 💫",
+        "Caught it! 🌟",
+        "Score! 🏆",
+        "My favorite! 😋",
+        "So tasty! 🤤"
+    ],
+    treatEaten: [
+        "Delicious! 😋",
+        "Mmm! Tasty! 🍖",
+        "More please! 🤤",
+        "Best snack ever! 😍",
+        "So good! 🌟",
+        "Thank you! 💝"
+    ],
+    sparkle: [
+        "Sparkle power! ✨",
+        "Magic! 🌟",
+        "Wow! 💫",
+        "I'm glowing! ✨",
+        "Magical vibes! 🪄",
+        "Shiny! 💎"
+    ],
+    energyTip: [
+        "Remember to rest! 😴",
+        "Stay hydrated! 💧",
+        "You're doing great! 💪",
+        "Take care of yourself! 💚",
+        "Listen to your body! 🧘",
+        "You've got this! 🌈"
+    ],
+    lowEnergy: [
+        "You seem tired... 🥱",
+        "Time for a break? ☕",
+        "Let's recharge! 🔋",
+        "Rest is important! 😴",
+        "Take it easy! 🛋️"
+    ],
+    highEnergy: [
+        "You're on fire! 🔥",
+        "Amazing energy! ⚡",
+        "Keep it up! 🌟",
+        "Unstoppable! 💪",
+        "Peak performance! 🚀",
+        "You're glowing! ✨"
+    ],
+    gameStart: [
+        "Let's play! 🎮",
+        "Catch time! 🎯",
+        "Here we go! 🚀",
+        "Game on! 🕹️",
+        "Ready, set, go! 🏁"
+    ],
+    gameWin: [
+        "We did it! 🏆",
+        "Great job! 🌟",
+        "You're amazing! 🎉",
+        "Victory! 🎊",
+        "Champions! 👑",
+        "Perfect! 💯"
+    ],
+    ballPlay: [
+        "Throw me the ball! 🎾",
+        "How hard can you throw? 💪",
+        "Wanna play fetch? 🐕",
+        "Bet you can't hit me! 😏",
+        "I'm ready! Throw it! 🎯",
+        "Let's play ball! ⚾",
+        "Catch me if you can! 🏃"
+    ],
+    sit: [
+        "Where should I sit? 🪑",
+        "Find me a good spot! 📍",
+        "I'll stay right there! 🐕",
+        "Perfect spot! 🎯",
+        "Comfy! 😌"
+    ],
 };
 
 const TREAT_TYPES = {
@@ -98,6 +189,7 @@ export function ARPetModal({
     const [selectedSlot, setSelectedSlot] = useState<AccessorySlot>('hat');
     const [showAchievements, setShowAchievements] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showLeftMenu, setShowLeftMenu] = useState(false);
     const [tempPetName, setTempPetName] = useState(petName);
     const [tempPetType, setTempPetType] = useState<PetType>(petType);
     const { achievements: allAchievements, unlockAchievement } = useAuth();
@@ -938,11 +1030,12 @@ export function ARPetModal({
 
                     {speechBubble && (
                         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 z-20 pointer-events-none animate-in fade-in zoom-in-95 duration-200"
-                            style={{ transform: `translate(calc(-50% + ${petPosition.x}px), calc(-110px + ${petPosition.y}px))` }}>
-                            <div className="relative bg-white text-black px-5 py-2.5 rounded-xl shadow-xl max-w-xs">
-                                <p className="text-center font-medium">{speechBubble}</p>
-                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-full">
-                                    <div className="w-0 h-0 border-l-6 border-r-6 border-t-6 border-l-transparent border-r-transparent border-t-white"></div>
+                            style={{ transform: `translate(calc(-50% + ${petAnchor.x + petPosition.x}px), calc(-50px + ${petAnchor.y + petPosition.y}px))` }}>
+                            <div className="relative bg-white text-black p-3 rounded-2xl shadow-xl max-w-[160px] min-h-[50px] flex items-center justify-center">
+                                <p className="text-center font-medium text-xs leading-tight">{speechBubble}</p>
+                                {/* Speech bubble tail pointing at the pet */}
+                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2">
+                                    <div className="w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-white"></div>
                                 </div>
                             </div>
                         </div>
@@ -970,52 +1063,67 @@ export function ARPetModal({
                     )}
 
                     <div className="absolute top-4 left-4 z-20 flex flex-col gap-2">
-                        <Button
-                            variant="secondary"
-                            size="icon"
-                            className={`rounded-full backdrop-blur text-white border-white/20 ${isListening ? 'bg-red-500/80 hover:bg-red-600/80 animate-pulse' : 'bg-black/50 hover:bg-black/70'}`}
-                            onClick={toggleListening}
-                        >
-                            {isListening ? <Mic className="h-5 w-5 text-white" /> : <MicOff className="h-5 w-5 text-white" />}
-                        </Button>
-                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={throwTreat}>
-                            <Cookie className="h-5 w-5 text-white" />
-                        </Button>
-                        <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={gameActive ? endGame : startGame}>
-                            <Star className="h-5 w-5 text-white" />
-                        </Button>
+                        {/* Menu Toggle Button */}
                         <Button
                             variant="secondary"
                             size="icon"
                             className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
-                            onClick={() => setShowAccessories(!showAccessories)}
+                            onClick={() => setShowLeftMenu(!showLeftMenu)}
                         >
-                            <Shirt className="h-5 w-5 text-white" />
+                            <Menu className="h-5 w-5 text-white" />
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="icon"
-                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
-                            onClick={() => setShowChallenges(!showChallenges)}
-                        >
-                            <Target className="h-5 w-5 text-white" />
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="icon"
-                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
-                            onClick={() => setShowAchievements(!showAchievements)}
-                        >
-                            <Trophy className="h-5 w-5 text-white" />
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="icon"
-                            className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
-                            onClick={() => setShowSettings(!showSettings)}
-                        >
-                            <Settings className="h-5 w-5 text-white" />
-                        </Button>
+
+                        {/* Expandable Menu Items */}
+                        {showLeftMenu && (
+                            <div className="flex flex-col gap-2 animate-in slide-in-from-left duration-200">
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className={`rounded-full backdrop-blur text-white border-white/20 ${isListening ? 'bg-red-500/80 hover:bg-red-600/80 animate-pulse' : 'bg-black/50 hover:bg-black/70'}`}
+                                    onClick={toggleListening}
+                                >
+                                    {isListening ? <Mic className="h-5 w-5 text-white" /> : <MicOff className="h-5 w-5 text-white" />}
+                                </Button>
+                                <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={throwTreat}>
+                                    <Cookie className="h-5 w-5 text-white" />
+                                </Button>
+                                <Button variant="secondary" size="icon" className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20" onClick={gameActive ? endGame : startGame}>
+                                    <Star className="h-5 w-5 text-white" />
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                                    onClick={() => setShowAccessories(!showAccessories)}
+                                >
+                                    <Shirt className="h-5 w-5 text-white" />
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                                    onClick={() => setShowChallenges(!showChallenges)}
+                                >
+                                    <Target className="h-5 w-5 text-white" />
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                                    onClick={() => setShowAchievements(!showAchievements)}
+                                >
+                                    <Trophy className="h-5 w-5 text-white" />
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="rounded-full bg-black/50 hover:bg-black/70 backdrop-blur text-white border-white/20"
+                                    onClick={() => setShowSettings(!showSettings)}
+                                >
+                                    <Settings className="h-5 w-5 text-white" />
+                                </Button>
+                            </div>
+                        )}
                     </div>
 
                     <div className="absolute top-4 right-4 z-20 flex gap-2">
