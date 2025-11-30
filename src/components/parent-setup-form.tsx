@@ -6,8 +6,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, getAuth } from 'firebase/auth';
+import { auth, firebaseConfig } from '@/lib/firebase';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { useToast } from '@/hooks/use-toast';
 import { addDays, formatISO } from 'date-fns';
 import { useAuth } from '@/context/AuthContext';
@@ -42,32 +43,37 @@ const parentWhatToGetOptions = [
 ];
 
 const parentSetupSchema = z.object({
-  parentEmail: z.string().email("Please enter a valid parent email address."),
-  parentalPin: z.string().length(4, "PIN must be 4 digits."),
-  confirmPin: z.string().length(4, "PIN must be 4 digits."),
-  ageGroup: z.enum(['under14', '14to17']),
-  featureVisibility: z.object({
-    insights: z.boolean().default(true),
-    friends: z.boolean().default(true),
-    communityMode: z.boolean().default(true),
-  }).default({ insights: true, friends: true, communityMode: true }),
-  childName: z.string().min(2, "Child's name must be at least 2 characters."),
-  childUsername: z.string().min(3, "Username must be at least 3 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
-  childPassword: z.string().min(6, "Password must be at least 6 characters."),
-  confirmChildPassword: z.string(),
-  howDidYouHear: z.enum(["social", "friend", "app_store", "advertisement", "other"], {
-    errorMap: () => ({ message: "Please select an option." }),
-  }),
-  whatDoYouExpect: z.enum(["track_energy", "mental_wellbeing", "understand_routine", "get_suggestions", "other"], {
-    errorMap: () => ({ message: "Please select an option." }),
-  }),
-  acceptTrial: z.boolean().default(false),
+    parentEmail: z.string().email("Please enter a valid parent email address."),
+    parentPassword: z.string().min(6, "Password must be at least 6 characters."),
+    confirmParentPassword: z.string(),
+    parentalPin: z.string().length(4, "PIN must be 4 digits."),
+    confirmPin: z.string().length(4, "PIN must be 4 digits."),
+    ageGroup: z.enum(['under14', '14to17']),
+    featureVisibility: z.object({
+        insights: z.boolean().default(true),
+        friends: z.boolean().default(true),
+        communityMode: z.boolean().default(true),
+    }).default({ insights: true, friends: true, communityMode: true }),
+    childName: z.string().min(2, "Child's name must be at least 2 characters."),
+    childUsername: z.string().min(3, "Username must be at least 3 characters.").regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores."),
+    childPassword: z.string().min(6, "Password must be at least 6 characters."),
+    confirmChildPassword: z.string(),
+    howDidYouHear: z.enum(["social", "friend", "app_store", "advertisement", "other"], {
+        errorMap: () => ({ message: "Please select an option." }),
+    }),
+    whatDoYouExpect: z.enum(["track_energy", "mental_wellbeing", "understand_routine", "get_suggestions", "other"], {
+        errorMap: () => ({ message: "Please select an option." }),
+    }),
+    acceptTrial: z.boolean().default(false),
 }).refine(data => data.parentalPin === data.confirmPin, {
-  message: "PINs do not match.",
-  path: ["confirmPin"],
+    message: "PINs do not match.",
+    path: ["confirmPin"],
 }).refine(data => data.childPassword === data.confirmChildPassword, {
-  message: "Child's passwords do not match.",
-  path: ["confirmChildPassword"],
+    message: "Child's passwords do not match.",
+    path: ["confirmChildPassword"],
+}).refine(data => data.parentPassword === data.confirmParentPassword, {
+    message: "Parent's passwords do not match.",
+    path: ["confirmParentPassword"],
 });
 
 type ParentSetupFormValues = z.infer<typeof parentSetupSchema>;
@@ -83,6 +89,8 @@ export function ParentSetupForm() {
         resolver: zodResolver(parentSetupSchema),
         defaultValues: {
             parentEmail: '',
+            parentPassword: '',
+            confirmParentPassword: '',
             parentalPin: '',
             confirmPin: '',
             ageGroup: 'under14',
@@ -104,7 +112,7 @@ export function ParentSetupForm() {
     const handleNext = async () => {
         let fieldsToValidate: (keyof ParentSetupFormValues)[] = [];
         switch (step) {
-            case 0: fieldsToValidate = ['parentEmail', 'parentalPin', 'confirmPin']; break;
+            case 0: fieldsToValidate = ['parentEmail', 'parentPassword', 'confirmParentPassword', 'parentalPin', 'confirmPin']; break;
             case 1: fieldsToValidate = ['ageGroup']; break;
             case 2: fieldsToValidate = ['featureVisibility']; break;
             case 3: fieldsToValidate = ['childName', 'childUsername', 'childPassword', 'confirmChildPassword']; break;
@@ -117,12 +125,12 @@ export function ParentSetupForm() {
             setStep(s => s + 1);
         }
     };
-    
+
     const handleBack = () => {
         if (step === 0) {
             router.push('/welcome');
         } else {
-             setStep(s => s - 1)
+            setStep(s => s - 1)
         }
     };
 
@@ -143,27 +151,70 @@ export function ParentSetupForm() {
         const email = `${data.childUsername.toLowerCase().trim()}@${projectId}.fake-user.com`;
 
         try {
+            // 1. Create Parent Account (if it doesn't exist)
+            let secondaryApp;
+            const appName = "Secondary";
+            if (getApps().some(app => app.name === appName)) {
+                secondaryApp = getApp(appName);
+            } else {
+                secondaryApp = initializeApp(firebaseConfig, appName);
+            }
+            const secondaryAuth = getAuth(secondaryApp);
+
+            try {
+                await createUserWithEmailAndPassword(secondaryAuth, data.parentEmail.trim(), data.parentPassword);
+                console.log("Parent account created successfully.");
+            } catch (parentError: any) {
+                if (parentError.code === 'auth/email-already-in-use') {
+                    console.log("Parent account already exists. Verifying password...");
+                    try {
+                        await signInWithEmailAndPassword(secondaryAuth, data.parentEmail.trim(), data.parentPassword);
+                        console.log("Parent password verified.");
+                    } catch (signInError: any) {
+                        console.error("Parent login failed:", signInError);
+                        if (signInError.code === 'auth/wrong-password' || signInError.code === 'auth/invalid-credential') {
+                            form.setError('parentEmail', {
+                                type: 'manual',
+                                message: 'This email is already registered with a different password.'
+                            });
+                            setStep(0);
+                            toast({ title: "Account Exists", description: "This email is already registered with a different password.", variant: "destructive" });
+                            setLoading(false);
+                            return;
+                        }
+                        throw signInError;
+                    }
+                } else {
+                    console.error("Error creating parent account:", parentError);
+                    throw parentError;
+                }
+            }
+
+            // 2. Create Child Account
             const userCredential = await createUserWithEmailAndPassword(auth, email, data.childPassword);
             const user = userCredential.user;
 
             await updateProfile(user, { displayName: data.childName });
-            
+
             const trialEndDate = data.acceptTrial ? formatISO(addDays(new Date(), 3)) : null;
 
             const initialUser: User = {
                 userId: user.uid,
-                name: data.childName,
-                username: data.childUsername,
+                name: data.childName.trim(),
+                username: data.childUsername.trim(),
+                email: email,
                 avatar: placeholderImages.default_avatar.src,
                 membershipTier: data.acceptTrial ? 'pro' : 'free',
                 proTrialEndDate: trialEndDate,
                 petCustomization: {
                     color: '#a8a29e', outlineColor: '#4c51bf', accessory: 'none', background: 'default',
+                    hat: 'none', glasses: 'none', collar: 'none',
                     unlockedColors: ['#a8a29e'], unlockedOutlineColors: ['#4c51bf'], unlockedAccessories: ['none'], unlockedBackgrounds: ['default'],
+                    unlockedHats: ['none'], unlockedGlasses: ['none'], unlockedCollars: ['none'],
                 },
-                petLevel: 1, petExp: 0, petName: 'Buddy', petType: 'dog', petEnabled: true,
+                level: 1, xp: 0, petName: 'Buddy', petType: 'dog', petEnabled: true,
                 parentalPin: data.parentalPin,
-                parentEmail: data.parentEmail,
+                parentEmail: data.parentEmail.trim(),
                 featureVisibility: data.featureVisibility,
                 howDidYouHear: data.howDidYouHear,
                 whatDoYouExpect: data.whatDoYouExpect,
@@ -177,17 +228,23 @@ export function ParentSetupForm() {
                 activities: INITIAL_ACTIVITIES,
                 upcomingEvents: INITIAL_UPCOMING_EVENTS,
                 reminders: [],
+                messengerHistory: [],
+                dailyChallenges: [],
+                lastChallengeReset: new Date().toISOString(),
+                achievements: [],
+                energy: 100,
+                maxEnergy: 100,
             };
-            
+
             await setAppUser(initialUser);
-            
+
             localStorage.setItem('energysync_autologin_email', email);
             localStorage.setItem('energysync_autologin_password', data.childPassword);
-            
+
             router.push('/signup-success');
 
         } catch (error: any) {
-             if (error.code === 'auth/email-already-in-use') {
+            if (error.code === 'auth/email-already-in-use') {
                 form.setError('childUsername', {
                     type: 'manual',
                     message: 'This username is already taken. Please choose another one.'
@@ -196,45 +253,51 @@ export function ParentSetupForm() {
                 toast({ title: 'Username Taken', description: 'That username is unavailable. Please try another.', variant: 'destructive' });
             } else {
                 console.error("Account creation error:", error);
-                toast({ 
-                    title: 'Account Creation Failed', 
-                    description: "An unexpected error occurred. Please try again.", 
-                    variant: 'destructive' 
+                toast({
+                    title: 'Account Creation Failed',
+                    description: "An unexpected error occurred. Please try again.",
+                    variant: 'destructive'
                 });
             }
         } finally {
             setLoading(false);
         }
     }
-    
+
     const getStepContent = () => {
-         switch (step) {
+        switch (step) {
             case 0: return (
                 <div className="space-y-4" key="step-0-parent">
                     <FormField control={form.control} name="parentEmail" render={({ field }) => (
                         <FormItem><FormLabel>Your Email Address</FormLabel><FormControl><Input type="email" placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    )} />
+                    <FormField control={form.control} name="parentPassword" render={({ field }) => (
+                        <FormItem><FormLabel>Create a Parent Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <FormField control={form.control} name="confirmParentPassword" render={({ field }) => (
+                        <FormItem><FormLabel>Confirm Parent Password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                     <FormField control={form.control} name="parentalPin" render={({ field }) => (
-                         <FormItem><FormLabel>Create a 4-Digit PIN</FormLabel><FormControl><Input type="password" autoComplete="new-password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                        <FormItem><FormLabel>Create a 4-Digit PIN</FormLabel><FormControl><Input type="password" autoComplete="new-password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
                     <FormField control={form.control} name="confirmPin" render={({ field }) => (
                         <FormItem><FormLabel>Confirm PIN</FormLabel><FormControl><Input type="password" autoComplete="new-password" maxLength={4} placeholder="••••" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    )} />
                 </div>
             );
             case 1: return (
-                 <div key="step-1-parent">
-                     <FormField control={form.control} name="ageGroup" render={({ field }) => (
-                         <FormItem>
+                <div key="step-1-parent">
+                    <FormField control={form.control} name="ageGroup" render={({ field }) => (
+                        <FormItem>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
-                                     <Label htmlFor="under14" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>Under 14</p><RadioGroupItem value="under14" id="under14" /></Label>
-                                     <Label htmlFor="14to17" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>14 - 17</p><RadioGroupItem value="14to17" id="14to17" /></Label>
+                                    <Label htmlFor="under14" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>Under 14</p><RadioGroupItem value="under14" id="under14" /></Label>
+                                    <Label htmlFor="14to17" className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>14 - 17</p><RadioGroupItem value="14to17" id="14to17" /></Label>
                                 </RadioGroup>
                             </FormControl>
-                         </FormItem>
-                     )}/>
-                 </div>
+                        </FormItem>
+                    )} />
+                </div>
             );
             case 2: return (
                 <div className="space-y-4" key="step-2-parent">
@@ -243,68 +306,68 @@ export function ParentSetupForm() {
                             <Label htmlFor="insights-toggle" className="flex items-center gap-2 font-normal"><BrainCircuit /> Insights Tab</Label>
                             <Switch id="insights-toggle" checked={field.value} onCheckedChange={field.onChange} />
                         </div>
-                    )}/>
-                     <FormField control={form.control} name="featureVisibility.friends" render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="featureVisibility.friends" render={({ field }) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="friends-toggle" className="flex items-center gap-2 font-normal"><Users /> Friend Network</Label>
                             <Switch id="friends-toggle" checked={field.value} onCheckedChange={field.onChange} />
                         </div>
-                    )}/>
-                     <FormField control={form.control} name="featureVisibility.communityMode" render={({ field }) => (
+                    )} />
+                    <FormField control={form.control} name="featureVisibility.communityMode" render={({ field }) => (
                         <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="community-toggle" className="flex items-center gap-2 font-normal"><MessageSquare /> Social Mode</Label>
                             <Switch id="community-toggle" checked={field.value} onCheckedChange={field.onChange} />
                         </div>
-                    )}/>
+                    )} />
                 </div>
             );
-             case 3: return (
-                 <div className="space-y-4" key="step-3-parent">
+            case 3: return (
+                <div className="space-y-4" key="step-3-parent">
                     <FormField control={form.control} name="childName" render={({ field }) => (
                         <FormItem><FormLabel>What's your child's name?</FormLabel><FormControl><Input placeholder="e.g., Alex" autoComplete="new-password" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    )} />
                     <FormField control={form.control} name="childUsername" render={({ field }) => (
                         <FormItem><FormLabel>Create a username for your child</FormLabel><FormControl><Input placeholder="e.g., alex_sync" autoComplete="new-password" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    )} />
                     <FormField control={form.control} name="childPassword" render={({ field }) => (
                         <FormItem><FormLabel>Create a password for your child</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    )} />
                     <FormField control={form.control} name="confirmChildPassword" render={({ field }) => (
                         <FormItem><FormLabel>Confirm child's password</FormLabel><FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl><FormMessage /></FormItem>
-                    )}/>
+                    )} />
                 </div>
             );
             case 4: return (
-                 <div key="step-4-parent">
-                     <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
-                         <FormItem>
+                <div key="step-4-parent">
+                    <FormField control={form.control} name="howDidYouHear" render={({ field }) => (
+                        <FormItem>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
                                     {hearOptions.map(opt => (
-                                         <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>{opt.label}</p><RadioGroupItem value={opt.value} id={`hear-${opt.value}`} /></Label>
+                                        <Label key={opt.value} htmlFor={`hear-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>{opt.label}</p><RadioGroupItem value={opt.value} id={`hear-${opt.value}`} /></Label>
                                     ))}
                                 </RadioGroup>
                             </FormControl>
                             <FormMessage className="pt-2" />
-                         </FormItem>
-                     )}/>
-                 </div>
+                        </FormItem>
+                    )} />
+                </div>
             );
             case 5: return (
-                 <div key="step-5-parent">
-                     <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
-                         <FormItem>
+                <div key="step-5-parent">
+                    <FormField control={form.control} name="whatDoYouExpect" render={({ field }) => (
+                        <FormItem>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} value={field.value} className="grid grid-cols-1 gap-4">
                                     {parentWhatToGetOptions.map(opt => (
-                                         <Label key={opt.value} htmlFor={`expect-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>{opt.label}</p><RadioGroupItem value={opt.value} id={`expect-${opt.value}`} /></Label>
+                                        <Label key={opt.value} htmlFor={`expect-${opt.value}`} className="flex items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"><p>{opt.label}</p><RadioGroupItem value={opt.value} id={`expect-${opt.value}`} /></Label>
                                     ))}
                                 </RadioGroup>
                             </FormControl>
                             <FormMessage className="pt-2" />
-                         </FormItem>
-                     )}/>
-                 </div>
+                        </FormItem>
+                    )} />
+                </div>
             );
             case 6: return (
                 <div className="text-center" key="step-6-parent">
@@ -313,16 +376,16 @@ export function ParentSetupForm() {
                 </div>
             );
             case totalSteps: return (
-                 <div className="text-center space-y-4" key="step-final-parent">
-                    <PartyPopper className="h-16 w-16 text-primary mx-auto"/>
+                <div className="text-center space-y-4" key="step-final-parent">
+                    <PartyPopper className="h-16 w-16 text-primary mx-auto" />
                     <p className="text-lg font-semibold">Account Created Successfully!</p>
                     <p className="text-sm text-muted-foreground">Your child's account is ready. You will be logged in automatically.</p>
                 </div>
             )
             default: return null;
-         }
+        }
     };
-    
+
     const getStepTitle = () => {
         const titles = [
             "Set Up Parental Controls",
@@ -338,7 +401,7 @@ export function ParentSetupForm() {
     };
 
     const getStepDescription = () => {
-         const descriptions = [
+        const descriptions = [
             "Your email is for receiving important updates. The PIN protects access to sensitive settings and the Parent Dashboard.",
             "This helps us tailor the app experience.",
             "Choose which major features your child can access. You can change these later from the Parent Dashboard.",
@@ -361,20 +424,20 @@ export function ParentSetupForm() {
                     <CardTitle className="text-2xl">{getStepTitle()}</CardTitle>
                     <CardDescription>{getStepDescription()}</CardDescription>
                 </CardHeader>
-                
+
                 {step < totalSteps && <Progress value={progress} className="w-[90%] mx-auto mb-4" />}
 
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
                         <CardContent className="min-h-[300px]">
-                          {getStepContent()}
+                            {getStepContent()}
                         </CardContent>
 
                         <CardFooter className="flex flex-col gap-2 pt-4">
                             {step < totalSteps ? (
-                                <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4"/></Button>
+                                <Button type="button" onClick={handleNext} className="w-full">Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
                             ) : null}
-                            
+
                             {step === totalSteps && (
                                 <div className="flex flex-col gap-2 w-full">
                                     <Button type="button" onClick={() => handleTrialDecisionAndSubmit(true)} className="w-full" disabled={loading}>
@@ -389,13 +452,13 @@ export function ParentSetupForm() {
 
                             {step > 0 && step <= totalSteps && (
                                 <Button type="button" variant="outline" onClick={handleBack} className="w-full" disabled={loading}>
-                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
                                 </Button>
                             )}
 
                             {step === 0 && (
-                                 <Button type="button" variant="outline" onClick={handleBack} className="w-full">
-                                    <ArrowLeft className="mr-2 h-4 w-4"/> Back to Welcome
+                                <Button type="button" variant="outline" onClick={handleBack} className="w-full">
+                                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Welcome
                                 </Button>
                             )}
                         </CardFooter>

@@ -208,6 +208,12 @@ export default function HomePage() {
   }, [firebaseUser, authLoading, router]);
 
   useEffect(() => {
+    if (!authLoading && firebaseUser && !appUser) {
+      router.push('/parent-home');
+    }
+  }, [firebaseUser, appUser, authLoading, router]);
+
+  useEffect(() => {
     if (appUser && !appUser.tutorialSeen) {
       setShowTutorial(true);
     }
@@ -628,7 +634,7 @@ export default function HomePage() {
           activities: JSON.stringify(activities.slice(0, 10)),
           events: JSON.stringify(upcomingEvents),
           goals: JSON.stringify(goals),
-          petStatus: `Happiness: ${petHappiness}, Level: ${appUser.petLevel}`,
+          petStatus: `Happiness: ${petHappiness}, Level: ${appUser.level}`,
         });
 
         addChatMessage({ role: 'model', content: result.response });
@@ -904,9 +910,9 @@ export default function HomePage() {
               customization={appUser.petCustomization}
               openCustomization={() => openModal('petCustomization')}
               openSettings={() => openModal('petSettings')}
-              level={appUser.petLevel}
-              exp={appUser.petExp}
-              petName={appUser.petName}
+              level={appUser.level}
+              exp={appUser.xp}
+              petName={appUser.petName ?? 'Pet'}
               petType={appUser.petType}
               lastTaskCompletionTime={appUser.lastTaskCompletionTime}
               onOpenAR={() => openModal('arPet')}
@@ -1007,7 +1013,7 @@ export default function HomePage() {
           <PetSettingsModal
             open={modals.petSettings}
             onOpenChange={() => closeModal('petSettings')}
-            currentName={appUser.petName}
+            currentName={appUser.petName ?? 'Pet'}
             currentType={appUser.petType}
             onSave={handleSavePetSettings}
           />
@@ -1019,13 +1025,13 @@ export default function HomePage() {
             petType={appUser.petType}
             petHappiness={petHappiness}
             customization={appUser.petCustomization}
-            level={appUser.petLevel}
+            level={appUser.level}
             onCustomizationChange={handleARCustomizationChange}
             isPro={isProMember}
             achievements={achievements.filter(a => a.unlocked).map(a => a.name)}
             dailyChallenges={appUser.dailyChallenges}
             onUpdateChallenge={updateDailyChallengeProgress}
-            petName={appUser.petName}
+            petName={appUser.petName ?? 'Pet'}
             onSavePetSettings={handleSavePetSettings}
           />
         )}

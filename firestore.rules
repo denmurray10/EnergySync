@@ -2,7 +2,13 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{userId} {
+      // Users can read and write their own documents
       allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Parents can read child documents where the child's parentEmail matches the parent's email
+      allow read: if request.auth != null && 
+                     request.auth.token.email != null &&
+                     resource.data.parentEmail == request.auth.token.email;
     }
   }
 }

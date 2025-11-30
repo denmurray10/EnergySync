@@ -1,4 +1,3 @@
-
 // src/context/AuthContext.tsx
 'use client';
 
@@ -107,7 +106,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             if (!userData.journeys) userData.journeys = [];
             if (!userData.reminders) userData.reminders = [];
             if (!userData.messengerHistory) userData.messengerHistory = [];
-            if (!userData.achievements) userData.achievements = INITIAL_ACHIEVEMENTS; // Initialize achievements
+            if (!userData.achievements) userData.achievements = INITIAL_ACHIEVEMENTS;
 
             // Initialize Daily Challenges
             if (!userData.dailyChallenges || isNewDay(userData.lastChallengeReset)) {
@@ -125,15 +124,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               setAchievements(userData.achievements);
             }
           } else {
-            // This path is now only hit if the user exists in Auth but truly has no profile document.
-            console.error(`Profile document not found for existing user ${'user.uid'}.`);
-            toast({
-              title: 'Profile Not Found',
-              description: "We couldn't find your user profile. Please try signing up again.",
-              variant: 'destructive',
-            });
-            await auth.signOut();
+            // User exists in Auth but has no Firestore profile
+            // This is expected for parent accounts (they only need Auth, not Firestore)
+            console.log("User authenticated without Firestore profile (likely a parent account)");
             setLocalAppUser(null);
+            // Don't sign them out - they can still access parent-specific pages
           }
         } catch (error: any) {
           console.error("Error fetching user document from Firestore:", error);
@@ -144,15 +139,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               variant: 'destructive',
               duration: 10000,
             });
+            await auth.signOut();
+            setLocalAppUser(null);
           } else {
             toast({
               title: 'Could not load profile',
               description: `There was a problem fetching your user data. Please try logging in again.`,
               variant: 'destructive',
             });
+            await auth.signOut();
+            setLocalAppUser(null);
           }
-          await auth.signOut();
-          setLocalAppUser(null);
         } finally {
           setLoading(false);
         }
@@ -300,19 +297,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const gainPetExp = useCallback((amount: number) => {
     if (!localAppUser || !localAppUser.petEnabled) return;
 
-    const newExp = (localAppUser.petExp || 0) + amount;
-    const expToNextLevel = 100 * (localAppUser.petLevel || 1);
+    const newExp = (localAppUser.xp || 0) + amount;
+    const expToNextLevel = 100 * (localAppUser.level || 1);
 
     if (newExp >= expToNextLevel) {
-      const newLevel = localAppUser.petLevel + 1;
+      const newLevel = localAppUser.level + 1;
       const remainingExp = newExp - expToNextLevel;
       toast({
         title: '🎉 Pet Level Up! 🎉',
         description: `Your energy companion grew to Level ${newLevel}!`,
       });
-      setAppUser({ petLevel: newLevel, petExp: remainingExp });
+      setAppUser({ level: newLevel, xp: remainingExp });
     } else {
-      setAppUser({ petExp: newExp });
+      setAppUser({ xp: newExp });
     }
   }, [localAppUser, setAppUser, toast]);
 

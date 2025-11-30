@@ -68,20 +68,16 @@ export interface JourneyEntry {
 
 export interface Reminder {
   eventId: number;
-  triggeredAt: Date;
+  triggeredAt: string | Date;
 }
 
 export interface User {
   userId: string;
   name: string;
   username: string;
+  email: string;
   avatar?: string;
-  membershipTier: 'free' | 'pro';
-  proTrialEndDate?: string | null;
-  petCustomization: PetCustomization;
-  petLevel: number;
-  petExp: number;
-  petName: string;
+  petName?: string;
   petType: 'cat' | 'dog' | 'horse' | 'chicken';
   petEnabled: boolean;
   parentalPin?: string | null;
@@ -107,6 +103,13 @@ export interface User {
   dailyChallenges: DailyChallenge[];
   lastChallengeReset: string;
   achievements: Achievement[];
+  membershipTier: 'free' | 'pro';
+  proTrialEndDate?: string | null;
+  petCustomization: PetCustomization;
+  energy: number;
+  maxEnergy: number;
+  xp: number;
+  level: number;
 }
 
 export interface DailyChallenge {

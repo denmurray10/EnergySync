@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,78 +28,172 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { differenceInDays } from 'date-fns';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { firestore } from '@/lib/firebase';
 
 
 export default function ParentDashboardPage() {
-    const { appUser, setAppUser, chatHistory, messengerHistory, loading: authLoading } = useAuth();
+    const { appUser, firebaseUser, loading: authLoading } = useAuth();
+    const searchParams = useSearchParams();
+    const childId = searchParams.get('childId');
     const router = useRouter();
     const { toast } = useToast();
     const [isMembershipModalOpen, setIsMembershipModalOpen] = useState(false);
+    const [childData, setChildData] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const [isConfirmingAgeChange, setIsConfirmingAgeChange] = useState(false);
     const [pendingAgeGroup, setPendingAgeGroup] = useState<'under14' | '14to17' | 'over18' | null>(null);
     const [messengerSearchQuery, setMessengerSearchQuery] = useState("");
 
     const filteredMessengerHistory = useMemo(() => {
-        if (!messengerHistory) return [];
-        if (!messengerSearchQuery) return messengerHistory;
+        if (!childData?.messengerHistory) return [];
+        if (!messengerSearchQuery) return childData.messengerHistory;
 
         const query = messengerSearchQuery.toLowerCase();
-        return messengerHistory.filter(chat => {
-            const friendName = appUser?.friends.find(f => f.id === chat.friendId)?.name || '';
+        return childData.messengerHistory.filter((chat: any) => {
+            const friendName = childData?.friends.find(f => f.id === chat.friendId)?.name || '';
             const nameMatch = friendName.toLowerCase().includes(query);
-            const contentMatch = chat.messages.some(msg => msg.content.toLowerCase().includes(query));
+            const contentMatch = chat.messages.some((msg: any) => msg.content.toLowerCase().includes(query));
             return nameMatch || contentMatch;
         });
-    }, [messengerHistory, messengerSearchQuery, appUser]);
+    }, [childData, messengerSearchQuery]);
 
     const isProMember = useMemo(() => {
-        if (!appUser) return false;
-        if (appUser.membershipTier === 'pro') return true;
-        if (appUser.proTrialEndDate) {
-            return new Date(appUser.proTrialEndDate) > new Date();
+        if (!childData) return false;
+        if (childData.membershipTier === 'pro') return true;
+        if (childData.proTrialEndDate) {
+            return new Date(childData.proTrialEndDate) > new Date();
         }
         return false;
-    }, [appUser]);
+    }, [childData]);
 
-    const daysLeftOnTrial = appUser?.proTrialEndDate && new Date(appUser.proTrialEndDate) > new Date()
-        ? differenceInDays(new Date(appUser.proTrialEndDate), new Date()) + 1
+    const daysLeftOnTrial = childData?.proTrialEndDate && new Date(childData.proTrialEndDate) > new Date()
+        ? differenceInDays(new Date(childData.proTrialEndDate), new Date()) + 1
         : null;
 
-
+    // Fetch child data
     useEffect(() => {
-        if (!authLoading && !appUser?.parentalPin) {
-            router.push('/');
-        }
-    }, [appUser, authLoading, router]);
+        async function fetchChildData() {
+            if (!childId) {
+                // If no childId, check if we are logged in as a child (appUser)
+                // This handles the "PIN from within the app" flow
+                if (appUser) {
+                    setChildData(appUser);
+                    setLoading(false);
+                    return;
+                }
 
-    const handleVisibilityChange = (feature: keyof NonNullable<User['featureVisibility']>, isVisible: boolean) => {
-        if (appUser) {
-            const currentVisibility = appUser.featureVisibility ?? { insights: true, friends: true, communityMode: true };
+                // If no childId and no appUser, redirect to parent home
+                router.push('/parent-home');
+                return;
+            }
+
+            // If we have a childId, we are likely in "Parent Mode" (adult logged in)
+            // We need to verify we are allowed to see this child.
+
+            if (!authLoading && !firebaseUser) {
+                // If not authenticated at all, redirect to login
+                router.push('/login');
+                return;
+            }
+
+            try {
+                const childRef = doc(firestore, 'users', childId);
+                const childSnap = await getDoc(childRef);
+
+                if (childSnap.exists()) {
+                    const data = childSnap.data() as User;
+                    // Verify this child belongs to this parent
+                    if (data.parentEmail === firebaseUser?.email) {
+                        setChildData(data);
+                    } else {
+                        toast({
+                            title: "Access Denied",
+                            description: "You don't have permission to view this child's dashboard.",
+                            variant: "destructive"
+                        });
+                        router.push('/parent-home');
+                    }
+                } else {
+                    toast({
+                        title: "Child Not Found",
+                        description: "The requested child account could not be found.",
+                        variant: "destructive"
+                    });
+                    router.push('/parent-home');
+                }
+            } catch (error) {
+                console.error("Error fetching child data:", error);
+                toast({
+                    title: "Error",
+                    description: "Failed to load child data.",
+                    variant: "destructive"
+                });
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchChildData();
+    }, [childId, appUser, firebaseUser, authLoading, router, toast]);
+
+    const updateChildData = async (updates: Partial<User>) => {
+        const targetId = childId || childData?.userId;
+        if (!targetId || !childData) return;
+
+        try {
+            const childRef = doc(firestore, 'users', targetId);
+            await updateDoc(childRef, updates);
+
+            setChildData(prev => prev ? { ...prev, ...updates } : null);
+
+            // If age group changed to over 18, we might need to redirect or show a message
+            if (updates.ageGroup === 'over18') {
+                toast({
+                    title: "Age Group Updated",
+                    description: "Experience set for users 18 and over. Parental controls will be disabled.",
+                });
+                router.push('/parent-home');
+            }
+
+        } catch (error) {
+            console.error("Error updating child data:", error);
+            toast({
+                title: "Update Failed",
+                description: "Could not update settings. Please try again.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    const handleVisibilityChange = async (feature: keyof NonNullable<User['featureVisibility']>, isVisible: boolean) => {
+        if (childData) {
+            const currentVisibility = childData.featureVisibility ?? { insights: true, friends: true, communityMode: true };
             const newVisibility = {
                 ...currentVisibility,
                 [feature]: isVisible,
             };
-            setAppUser({ featureVisibility: newVisibility });
+            await updateChildData({ featureVisibility: newVisibility });
         }
     };
 
-    const handleAgeGroupChange = (newAgeGroup: 'under14' | '14to17' | 'over18') => {
-        setAppUser({ ageGroup: newAgeGroup });
-
+    const handleAgeGroupChange = async (newAgeGroup: 'under14' | '14to17' | 'over18') => {
         let ageDescription = `Your child's app experience has been updated.`;
         if (newAgeGroup === 'under14') ageDescription = "Experience set for users under 14.";
         if (newAgeGroup === '14to17') ageDescription = "Experience set for users 14-17.";
-        if (newAgeGroup === 'over18') ageDescription = "Experience set for users 18 and over. Parental controls will be disabled.";
 
-        toast({
-            title: "Age Group Updated",
-            description: ageDescription,
-        });
+        if (newAgeGroup !== 'over18') {
+            toast({
+                title: "Age Group Updated",
+                description: ageDescription,
+            });
+        }
 
-        if (newAgeGroup === 'over18' && appUser) {
-            setAppUser({ parentalPin: null, parentEmail: null });
-            router.push('/');
+        if (newAgeGroup === 'over18') {
+            await updateChildData({ ageGroup: newAgeGroup, parentalPin: null, parentEmail: null });
+        } else {
+            await updateChildData({ ageGroup: newAgeGroup });
         }
     };
 
@@ -111,9 +205,9 @@ export default function ParentDashboardPage() {
         setIsConfirmingAgeChange(false);
     };
 
-    const handleTierChange = (newTier: 'free' | 'pro') => {
-        if (appUser) {
-            setAppUser({ membershipTier: newTier, proTrialEndDate: null });
+    const handleTierChange = async (newTier: 'free' | 'pro') => {
+        if (childData) {
+            await updateChildData({ membershipTier: newTier, proTrialEndDate: null });
             toast({
                 title: `Membership Updated!`,
                 description: `Your child is now on the ${newTier === 'pro' ? 'Pro' : 'Free'} plan.`,
@@ -121,7 +215,7 @@ export default function ParentDashboardPage() {
         }
     };
 
-    if (authLoading || !appUser) {
+    if (authLoading || loading || !childData) {
         return (
             <main className="min-h-dvh bg-background flex items-center justify-center">
                 <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
@@ -129,7 +223,8 @@ export default function ParentDashboardPage() {
         );
     }
 
-    const visibility = appUser.featureVisibility ?? { insights: true, friends: true, communityMode: true };
+    const visibility = childData.featureVisibility ?? { insights: true, friends: true, communityMode: true };
+    const chatHistory = childData.chatHistory || [];
 
     return (
         <main className="min-h-dvh bg-background">
@@ -137,9 +232,12 @@ export default function ParentDashboardPage() {
                 <div className="p-6 h-dvh overflow-y-auto pb-24 custom-scrollbar">
                     <div className="flex items-center gap-4 mb-6">
                         <ShieldAlert className="h-10 w-10 text-primary" />
-                        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                            Parent Dashboard
-                        </h1>
+                        <div>
+                            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                                Parent Dashboard
+                            </h1>
+                            <p className="text-sm text-muted-foreground">Managing: {childData.name}</p>
+                        </div>
                     </div>
 
                     <Card className="bg-card/80 backdrop-blur-sm">
@@ -184,9 +282,9 @@ export default function ParentDashboardPage() {
                             <CardDescription>Adjust your child's age group for a tailored experience.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {appUser.ageGroup ? (
+                            {childData.ageGroup ? (
                                 <RadioGroup
-                                    value={appUser.ageGroup}
+                                    value={childData.ageGroup}
                                     onValueChange={(value) => {
                                         setPendingAgeGroup(value as 'under14' | '14to17' | 'over18');
                                         setIsConfirmingAgeChange(true);
@@ -298,20 +396,20 @@ export default function ParentDashboardPage() {
                                         {filteredMessengerHistory.map((chat) => (
                                             <div key={chat.friendId} className="space-y-2">
                                                 <h4 className="font-semibold text-sm text-primary border-b pb-1 mb-2 sticky top-0 bg-background/95 backdrop-blur z-10">
-                                                    Chat with {appUser?.friends.find(f => f.id === chat.friendId)?.name || 'Unknown Friend'}
+                                                    Chat with {childData?.friends.find(f => f.id === chat.friendId)?.name || 'Unknown Friend'}
                                                 </h4>
                                                 {chat.messages.map((message) => (
-                                                    <div key={message.id} className={cn("flex items-start gap-3 text-sm", message.senderId === appUser?.userId ? "justify-end" : "justify-start")}>
-                                                        {message.senderId !== appUser?.userId && (
+                                                    <div key={message.id} className={cn("flex items-start gap-3 text-sm", message.senderId === childData?.userId ? "justify-end" : "justify-start")}>
+                                                        {message.senderId !== childData?.userId && (
                                                             <Avatar className="w-6 h-6 border">
-                                                                <AvatarFallback>{appUser?.friends.find(f => f.id === chat.friendId)?.name.slice(0, 1) || '?'}</AvatarFallback>
+                                                                <AvatarFallback>{childData?.friends.find(f => f.id === chat.friendId)?.name.slice(0, 1) || '?'}</AvatarFallback>
                                                             </Avatar>
                                                         )}
-                                                        <div className={cn("max-w-[80%] rounded-lg p-2", message.senderId === appUser?.userId ? "bg-indigo-100 text-indigo-900" : "bg-muted text-card-foreground")}>
+                                                        <div className={cn("max-w-[80%] rounded-lg p-2", message.senderId === childData?.userId ? "bg-indigo-100 text-indigo-900" : "bg-muted text-card-foreground")}>
                                                             <p>{message.content}</p>
                                                             <span className="text-[10px] opacity-70 block mt-1">{message.timestamp}</span>
                                                         </div>
-                                                        {message.senderId === appUser?.userId && (
+                                                        {message.senderId === childData?.userId && (
                                                             <Avatar className="w-6 h-6 border">
                                                                 <AvatarFallback>Me</AvatarFallback>
                                                             </Avatar>
@@ -330,9 +428,9 @@ export default function ParentDashboardPage() {
 
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
-                    <Button onClick={() => router.push('/')} className="w-full bg-primary hover:bg-primary/90">
+                    <Button onClick={() => router.push('/parent-home?showList=true')} className="w-full bg-primary hover:bg-primary/90">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to App
+                        Back to Children List
                     </Button>
                 </div>
             </div>
@@ -340,7 +438,7 @@ export default function ParentDashboardPage() {
                 open={isMembershipModalOpen}
                 onOpenChange={setIsMembershipModalOpen}
                 onUpgrade={() => handleTierChange('pro')}
-                currentTier={appUser.membershipTier}
+                currentTier={childData.membershipTier}
             />
             <AlertDialog open={isConfirmingAgeChange} onOpenChange={(isOpen) => { if (!isOpen) setPendingAgeGroup(null); setIsConfirmingAgeChange(isOpen); }}>
                 <AlertDialogContent>
