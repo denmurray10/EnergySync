@@ -42,38 +42,14 @@ export default function ParentHomePage() {
             }
 
             try {
-                const parentEmailNormalized = firebaseUser.email.toLowerCase().trim();
-                console.log('Fetching children for parent email:', parentEmailNormalized);
+                console.log('Fetching children for parent email:', firebaseUser.email);
 
                 // Query for all users where parentEmail matches the logged-in parent's email
                 const usersRef = collection(firestore, 'users');
                 const q = query(usersRef, where('parentEmail', '==', firebaseUser.email));
-                let querySnapshot = await getDocs(q);
+                const querySnapshot = await getDocs(q);
 
-                console.log('Exact match query returned', querySnapshot.size, 'documents');
-
-                // If no exact match, try case-insensitive search by fetching all and filtering
-                if (querySnapshot.size === 0) {
-                    console.log('No exact match found, trying case-insensitive search...');
-                    const allUsersQuery = query(usersRef);
-                    const allUsersSnapshot = await getDocs(allUsersQuery);
-
-                    const matchingDocs: any[] = [];
-                    allUsersSnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        if (data.parentEmail && data.parentEmail.toLowerCase().trim() === parentEmailNormalized) {
-                            matchingDocs.push(doc);
-                        }
-                    });
-
-                    console.log('Case-insensitive search found', matchingDocs.length, 'documents');
-
-                    // Create a pseudo snapshot for compatibility
-                    querySnapshot = {
-                        size: matchingDocs.length,
-                        forEach: (callback: any) => matchingDocs.forEach(callback)
-                    } as any;
-                }
+                console.log('Query returned', querySnapshot.size, 'documents');
 
                 const childAccounts: ChildAccount[] = [];
                 querySnapshot.forEach((doc) => {
