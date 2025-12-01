@@ -33,7 +33,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, LoaderCircle, Star, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Sparkles, LoaderCircle, Star, Calendar as CalendarIcon, ArrowLeft, ArrowRight, Check, Trash2 } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
@@ -80,9 +80,10 @@ type AddEventModalProps = {
   friends: Friend[];
   editEvent?: UpcomingEvent | null;
   onUpdateEvent?: (id: number, data: Omit<UpcomingEvent, 'id' | 'conflictRisk' | 'bufferSuggested'>) => void;
+  onDeleteEvent?: (id: number) => void;
 };
 
-export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup, friends, editEvent, onUpdateEvent }: AddEventModalProps) {
+export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, ageGroup, friends, editEvent, onUpdateEvent, onDeleteEvent }: AddEventModalProps) {
   const { toast } = useToast();
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [step, setStep] = useState(0);
@@ -445,7 +446,12 @@ export function AddEventModal({ open, onOpenChange, onLogEvent, isProMember, age
               {renderStepContent()}
             </div>
             <DialogFooter className="pt-8 gap-2 sm:justify-between">
-              <div>
+              <div className="flex gap-2">
+                {editEvent && onDeleteEvent && (
+                  <Button type="button" variant="destructive" size="icon" onClick={() => { onDeleteEvent(editEvent.id); handleOpenChange(false); }}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
                 {step > 0 && (
                   <Button type="button" variant="outline" onClick={() => setStep(s => s - 1)}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back

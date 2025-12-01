@@ -30,6 +30,7 @@ import {
 import { differenceInDays } from 'date-fns';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
+import { PendingFriendRequests } from '@/components/pending-friend-requests';
 
 
 export default function ParentDashboardPage() {
@@ -273,6 +274,10 @@ export default function ParentDashboardPage() {
                         </CardContent>
                     </Card>
 
+                    <div className="mt-6">
+                        <PendingFriendRequests childUserId={childData.userId} />
+                    </div>
+
                     <Card className="mt-6 bg-card/80 backdrop-blur-sm">
                         <CardHeader>
                             <CardTitle className="flex items-center text-xl">
@@ -428,9 +433,9 @@ export default function ParentDashboardPage() {
 
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t">
-                    <Button onClick={() => router.push('/parent-home?showList=true')} className="w-full bg-primary hover:bg-primary/90">
+                    <Button onClick={() => router.push(childId ? '/parent-home?showList=true' : '/')} className="w-full bg-primary hover:bg-primary/90">
                         <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Children List
+                        {childId ? 'Back to Children List' : 'Back to App'}
                     </Button>
                 </div>
             </div>

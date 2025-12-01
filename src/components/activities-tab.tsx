@@ -4,7 +4,7 @@
 import { useState, useMemo } from "react";
 import type { Activity, UpcomingEvent } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Camera, Pencil, Calendar, History } from "lucide-react";
+import { PlusCircle, Camera, Pencil, Calendar, History, Trash2 } from "lucide-react";
 import { ProFeatureWrapper } from "@/components/pro-feature-wrapper";
 import { format, parse, isValid } from "date-fns";
 import {
@@ -26,6 +26,7 @@ type ActivitiesTabProps = {
   isProMember: boolean;
   onEditActivity: (activity: Activity) => void;
   onEditEvent?: (event: UpcomingEvent) => void;
+  onDeleteActivity?: (activityId: number) => void;
   ageGroup: 'under14' | '14to17' | 'over18' | null;
 };
 
@@ -147,8 +148,9 @@ const isTomorrow = (dateString: string): boolean => {
   return false;
 };
 
-export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMember, onEditActivity, onEditEvent, ageGroup }: ActivitiesTabProps) {
+export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMember, onEditActivity, onEditEvent, onDeleteActivity, ageGroup }: ActivitiesTabProps) {
   const [viewMode, setViewMode] = useState<'upcoming' | 'history'>('upcoming');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
 
   const filteredHistory = useMemo(() => {
     const sevenDaysAgo = new Date();
@@ -306,6 +308,17 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
                       <Pencil className="h-4 w-4" />
                       <span className="sr-only">Edit activity</span>
                     </Button>
+                    {onDeleteActivity && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:bg-red-100 hover:text-red-600"
+                        onClick={() => setDeleteConfirmId(activity.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Delete activity</span>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -317,6 +330,31 @@ export function ActivitiesTab({ activities, upcomingEvents, openModal, isProMemb
           )
         )}
       </div>
+
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Activity?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this activity from your history? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteConfirmId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirmId !== null && onDeleteActivity) {
+                  onDeleteActivity(deleteConfirmId);
+                  setDeleteConfirmId(null);
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

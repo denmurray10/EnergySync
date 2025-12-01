@@ -34,7 +34,8 @@ import { ImageCheckinModal } from "@/components/image-checkin-modal";
 import { AddEventModal } from "@/components/add-event-modal";
 import { PetCustomizationModal } from "@/components/pet-customization-modal";
 import { PetSettingsModal } from "@/components/pet-settings-modal";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, ShieldAlert } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { AgeGateModal } from "@/components/age-gate-modal";
 import { QRCodeModal } from "@/components/qr-code-modal";
 import { ReadinessSurveyModal } from "@/components/readiness-survey-modal";
@@ -55,7 +56,8 @@ export default function HomePage() {
     friends, setFriends, chatHistory, addChatMessage, signOut, reminders, setReminders,
     petTasks, setPetTasks, gainPetExp, addJourneyEntry,
     activities, setActivities, upcomingEvents, setUpcomingEvents,
-    messengerHistory, setMessengerHistory, updateDailyChallengeProgress
+    messengerHistory, setMessengerHistory, updateDailyChallengeProgress,
+    sendFriendRequest
   } = useAuth();
 
   const [showTutorial, setShowTutorial] = useState(false);
@@ -209,7 +211,13 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!authLoading && firebaseUser && !appUser) {
-      router.push('/parent-home');
+      // Prevent redirecting child accounts to parent dashboard
+      // Child accounts use a fake email domain constructed in login page
+      const isChildAccount = firebaseUser.email?.includes('.fake-user.com');
+
+      if (!isChildAccount) {
+        router.push('/parent-home');
+      }
     }
   }, [firebaseUser, appUser, authLoading, router]);
 
@@ -841,10 +849,28 @@ export default function HomePage() {
   };
 
 
-  if (authLoading || !appUser) {
+  if (authLoading) {
     return (
       <main className="min-h-dvh bg-background flex items-center justify-center">
         <LoaderCircle className="w-12 h-12 animate-spin text-primary" />
+      </main>
+    );
+  }
+
+  if (!appUser) {
+    return (
+      <main className="min-h-dvh bg-background flex flex-col items-center justify-center p-6 text-center">
+        <div className="mb-4 bg-red-100 p-4 rounded-full dark:bg-red-900/20">
+          <ShieldAlert className="w-12 h-12 text-red-500" />
+        </div>
+        <h1 className="text-2xl font-bold mb-2">Profile Not Found</h1>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          We found your login, but your profile data seems to be missing.
+          Please ask your parent to verify your account setup.
+        </p>
+        <Button onClick={() => signOut()} variant="outline">
+          Sign Out
+        </Button>
       </main>
     );
   }
@@ -889,6 +915,7 @@ export default function HomePage() {
               isProMember={isProMember}
               onEditActivity={handleEditActivity}
               onEditEvent={handleEditEvent}
+              onDeleteActivity={handleDeleteActivity}
               ageGroup={appUser.ageGroup}
             />
           )}
@@ -956,6 +983,33 @@ export default function HomePage() {
         </div>
 
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} petEnabled={appUser.petEnabled} communityMode={communityMode} featureVisibility={appUser.featureVisibility} />
+
+        <AddActivityModal
+          open={modals.addActivity}
+          onOpenChange={() => closeModal('addActivity')}
+          onLogActivity={handleLogActivity}
+          onUpdateActivity={handleUpdateActivity}
+          editActivity={editActivity}
+          isProMember={isProMember}
+          ageGroup={appUser.ageGroup}
+        />
+        <ImageCheckinModal
+          open={modals.imageCheckin}
+          onOpenChange={() => closeModal('imageCheckin')}
+          onLogActivity={handleLogActivity}
+          ageGroup={appUser.ageGroup}
+        />
+        <AddEventModal
+          open={modals.addEvent}
+          onOpenChange={() => closeModal('addEvent')}
+          onLogEvent={handleLogEvent}
+          onUpdateEvent={handleUpdateEvent}
+          editEvent={editEvent}
+          ageGroup={appUser.ageGroup}
+          isProMember={isProMember}
+          friends={friends}
+          onDeleteEvent={handleDeleteEvent}
+        />
 
         <RechargeModal
           open={modals.recharge}
@@ -1040,6 +1094,7 @@ export default function HomePage() {
             open={modals.qrCode}
             onOpenChange={() => closeModal('qrCode')}
             user={appUser}
+            onScanComplete={sendFriendRequest}
           />
         )}
         <AgeGateModal open={false} onSelect={() => { }} onOpenChange={() => { }} />

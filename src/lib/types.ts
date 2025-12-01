@@ -210,3 +210,13 @@ export interface Friend {
   isFavorite?: boolean;
   hasUpdatedToday?: boolean;
 }
+
+export interface PendingFriendRequest {
+  id: string;
+  fromUserId: string;
+  fromUserName: string;
+  fromUserAvatar: string;
+  toUserId: string;
+  timestamp: string;
+  status: 'pending' | 'approved' | 'rejected';
+}

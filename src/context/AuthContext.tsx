@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback,
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getDoc, setDoc, updateDoc, doc } from 'firebase/firestore';
 import { auth, firestore } from '@/lib/firebase';
-import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder, MessengerChat, Achievement } from '@/lib/types';
+import type { User, Friend, ChatMessage, PetTask, JourneyEntry, Activity, UpcomingEvent, Reminder, MessengerChat, Achievement, PendingFriendRequest } from '@/lib/types';
 import { INITIAL_FRIENDS, INITIAL_PET_TASKS, INITIAL_ACTIVITIES, INITIAL_UPCOMING_EVENTS, INITIAL_ACHIEVEMENTS } from '@/lib/data';
 import { generateDailyChallenges } from '@/lib/daily-challenges';
 import { useToast } from '@/hooks/use-toast';
@@ -35,6 +35,8 @@ interface AuthContextType {
   updateDailyChallengeProgress: (type: string, amount: number) => void;
   achievements: Achievement[];
   unlockAchievement: (name: string) => void;
+  sendFriendRequest: (targetUserId: string) => Promise<void>;
+  getPendingFriendRequests: () => PendingFriendRequest[];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -365,6 +367,91 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const reminders = localAppUser?.reminders ?? [];
   const messengerHistory = localAppUser?.messengerHistory ?? [];
 
+  const sendFriendRequest = useCallback(async (scannedData: string) => {
+    if (!localAppUser || !auth.currentUser) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to send friend requests.',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      // Parse scanned QR data
+      let targetUserId: string;
+      let targetUserName: string;
+      let targetUserAvatar: string;
+
+      try {
+        const parsedData = JSON.parse(scannedData);
+        targetUserId = parsedData.userId;
+        targetUserName = parsedData.name;
+        targetUserAvatar = parsedData.avatar || '';
+      } catch {
+        // Fallback for old format (just userId)
+        targetUserId = scannedData;
+        targetUserName = 'Friend';
+        targetUserAvatar = '';
+      }
+
+      // Don't send request to yourself
+      if (targetUserId === localAppUser.userId) {
+        toast({
+          title: 'Invalid Request',
+          description: "You can't send a friend request to yourself!",
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Check if already friends
+      if (localAppUser.friends.some(f => f.id === targetUserId)) {
+        toast({
+          title: 'Already Friends',
+          description: `You're already friends with this user!`,
+        });
+        return;
+      }
+
+      // Create friend request in Firestore (collection: friendRequests)
+      const requestId = `${localAppUser.userId}_${targetUserId}_${Date.now()}`;
+      const requestRef = doc(firestore, 'friendRequests', requestId);
+
+      const friendRequest: PendingFriendRequest = {
+        id: requestId,
+        fromUserId: localAppUser.userId,
+        fromUserName: localAppUser.name,
+        fromUserAvatar: localAppUser.avatar || '',
+        toUserId: targetUserId,
+        timestamp: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      await setDoc(requestRef, friendRequest);
+
+      toast({
+        title: 'Friend Request Sent! 🤝',
+        description: `Your request has been sent! ${targetUserName}'s parent will need to approve it.`,
+      });
+
+      unlockAchievement('Social Butterfly');
+    } catch (error: any) {
+      console.error('Error sending friend request:', error);
+      toast({
+        title: 'Request Failed',
+        description: 'Could not send friend request. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  }, [localAppUser, toast]);
+
+  const getPendingFriendRequests = useCallback((): PendingFriendRequest[] => {
+    // This will be populated from Firestore in a real implementation
+    // For now, returning empty array
+    return [];
+  }, []);
+
   const unlockAchievement = useCallback((name: string) => {
     if (!localAppUser) return;
 
@@ -411,7 +498,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setMessengerHistory,
     updateDailyChallengeProgress,
     achievements,
-    unlockAchievement
+    unlockAchievement,
+    sendFriendRequest,
+    getPendingFriendRequests
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
